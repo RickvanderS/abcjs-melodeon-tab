@@ -171,6 +171,71 @@ function checkVoiceKeySig(voices, ii) {
   return voices[ii-1].children[0];
 }
 
+TabRenderer.prototype.doScan = function () {
+//TODO: This function should not do permanent changes
+	
+  var staffs = this.line.staff;
+  if (staffs) {
+    // give up on staffline=0 in key 
+    var firstStaff = staffs[0];
+    if (firstStaff) {
+      if (firstStaff.clef) {
+        if (firstStaff.clef.stafflines == 0) {
+          this.plugin._super.setError("No tablatures when stafflines=0");
+          return; 
+        }
+      }
+    }
+    staffs.splice(
+      staffs.length, 0,
+      this.tabStaff
+    );
+  }
+  var staffGroup = this.line.staffGroup;
+
+  var voices = staffGroup.voices;
+  var firstVoice = voices[0];
+  // take lyrics into account if any
+  var lyricsHeight = getLyricHeight(firstVoice);
+  var padd = 3;
+  var prevIndex = this.staffIndex;
+  var previousStaff = staffGroup.staffs[prevIndex];
+  var tabTop = this.tabSize + padd - previousStaff.bottom - lyricsHeight;
+  if (previousStaff.isTabStaff) {
+    tabTop = previousStaff.top;
+  }
+  var staffGroupInfos = {
+    bottom: -1,
+    isTabStaff: true,
+    specialY: initSpecialY(),
+    lines: this.plugin.nbLines,
+    linePitch: this.plugin.linePitch,
+    dy: 0.15,
+    top: tabTop,
+  };
+  var nextTabPos = 0;
+  staffGroup.height += this.tabSize + padd;
+  var parentStaff = getLastStaff(staffGroup.staffs, nextTabPos); 
+  var nbVoices = 1;
+  if (isMultiVoiceSingleStaff(staffGroup.staffs,parentStaff)) {
+    nbVoices = parentStaff.voices.length;
+  }  
+  
+  // build from staff
+  var outvoices = [];
+  for (var ii = 0; ii < nbVoices; ii++) {
+    var tabVoice = new VoiceElement(0, 0);
+    var nameHeight = buildTabName(this, tabVoice) / spacing.STEP;
+    staffGroup.staffs[this.staffIndex].top += nameHeight;
+    staffGroup.height += nameHeight * spacing.STEP;
+    tabVoice.staff = staffGroupInfos;
+//    voices.splice(voices.length, 0, tabVoice);
+    var keySig = checkVoiceKeySig(voices, this.staffIndex);
+    outvoices[ii] = [];
+    this.absolutes.scan(this.plugin, voices, ii, this.staffIndex);
+  }
+}
+
 TabRenderer.prototype.doLayout = function () {
   var staffs = this.line.staff;
   if (staffs) {

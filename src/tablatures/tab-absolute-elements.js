@@ -168,6 +168,55 @@ function buildGraceRelativesForRest(plugin,abs,absChild,graceNotes,tabVoice) {
   }
 }
 
+TabAbsoluteElements.prototype.scan = function (plugin,
+  staffAbsolute,
+  voiceIndex,
+  staffIndex) {
+
+  var source = staffAbsolute[staffIndex+voiceIndex];
+  
+  var transposer = null;
+
+  plugin.semantics.StartScan();
+  for (var ii = 0; ii < source.children.length; ii++) {
+    var absChild = source.children[ii];
+    
+    switch (absChild.type) {
+      case 'staff-extra key-signature':
+        // refresh key accidentals
+        this.accidentals = absChild.abcelem.accidentals;
+        plugin.semantics.strings.accidentals = this.accidentals;
+        if (plugin.transpose) {
+          transposer = new Transposer(
+            absChild.abcelem.accidentals,
+            plugin.transpose 
+          );
+        }
+        break;
+      case 'bar':
+	    plugin.semantics.strings.measureAccidentals = {}
+		plugin.semantics.MarkBar();
+        break;
+      case 'note':
+        var abs = cloneAbsolute(absChild);
+        abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
+        abs.lyricDim = lyricsDim(absChild);
+        var pitches = absChild.abcelem.pitches;
+        var graceNotes = absChild.abcelem.gracenotes;
+        // check transpose
+        abs.type = 'tabNumber';
+        tabPos = convertToNumber(plugin, pitches, graceNotes);   
+        if (tabPos.error) return;
+        if (tabPos.graces) {
+          // add graces to last note in notes
+          var posNote = tabPos.notes.length - 1;
+          tabPos.notes[posNote].graces = tabPos.graces;
+        }
+        break;
+    }
+  }
+}
+
 /**
  * Build tab absolutes by scanning current staff line absolute array
  * @param {*} staffAbsolute
@@ -189,6 +238,8 @@ TabAbsoluteElements.prototype.build = function (plugin,
       source.children.splice(0, 0, keySig);
     }  
   }
+  
+  plugin.semantics.StartBuild();
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];
     var absX = absChild.x;
@@ -234,6 +285,8 @@ TabAbsoluteElements.prototype.build = function (plugin,
           startChar: absChild.abcelem.startChar,
           abselem: cloned
         });
+		
+		plugin.semantics.MarkBar();
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);

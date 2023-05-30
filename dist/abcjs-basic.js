@@ -205,6 +205,8 @@ module.exports = animation;
  */
 var ViolinTablature = __webpack_require__(/*! ../tablatures/instruments/violin/tab-violin */ "./src/tablatures/instruments/violin/tab-violin.js");
 var GuitarTablature = __webpack_require__(/*! ../tablatures/instruments/guitar/tab-guitar */ "./src/tablatures/instruments/guitar/tab-guitar.js");
+var HarmonicaTablature = __webpack_require__(/*! ../tablatures/instruments/harmonica/tab-harmonica */ "./src/tablatures/instruments/harmonica/tab-harmonica.js");
+var MelodeonTablature = __webpack_require__(/*! ../tablatures/instruments/melodeon/tab-melodeon */ "./src/tablatures/instruments/melodeon/tab-melodeon.js");
 
 /* extend the table below when adding a new instrument plugin */
 
@@ -213,7 +215,9 @@ var pluginTab = {
   'violin': 'ViolinTab',
   'fiddle': 'ViolinTab',
   'mandolin': 'ViolinTab',
-  'guitar': 'GuitarTab'
+  'guitar': 'GuitarTab',
+  'harmonica': 'HarmonicaTab',
+  'melodeon': 'MelodeonTab'
 };
 var abcTablatures = {
   inited: false,
@@ -293,23 +297,31 @@ var abcTablatures = {
    */
   layoutTablatures: function layoutTablatures(renderer, abcTune) {
     var tabs = abcTune.tablatures;
-    // chack tabs request for each staffs
-    for (var ii = 0; ii < abcTune.lines.length; ii++) {
-      var line = abcTune.lines[ii];
-      var curStaff = line.staff;
-      if (curStaff) {
-        for (var jj = 0; jj < curStaff.length; jj++) {
-          if (tabs[jj]) {
-            // tablature requested for staff
-            var tabPlugin = tabs[jj];
-            if (tabPlugin.instance == null) {
-              tabPlugin.instance = new tabPlugin.classz();
-              // plugin.init(tune, tuneNumber, args, ii);
-              // call initer first
-              tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, jj);
+    for (var k = 0; k < 2; ++k) {
+      //Iterate twice for melodeon logic
+
+      // chack tabs request for each staffs
+      for (var ii = 0; ii < abcTune.lines.length; ii++) {
+        var line = abcTune.lines[ii];
+        var curStaff = line.staff;
+        if (curStaff) {
+          for (var jj = 0; jj < curStaff.length; jj++) {
+            if (tabs[jj]) {
+              // tablature requested for staff
+              var tabPlugin = tabs[jj];
+              if (tabPlugin.instance == null) {
+                tabPlugin.instance = new tabPlugin.classz();
+                // plugin.init(tune, tuneNumber, args, ii);
+                // call initer first
+                tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, jj);
+              }
+              if (k == 0) {
+                tabPlugin.instance.scan(renderer, line, jj);
+              } else {
+                // render next
+                tabPlugin.instance.render(renderer, line, jj);
+              }
             }
-            // render next
-            tabPlugin.instance.render(renderer, line, jj);
           }
         }
       }
@@ -323,6 +335,8 @@ var abcTablatures = {
     if (!this.inited) {
       this.register(new ViolinTablature());
       this.register(new GuitarTablature());
+      this.register(new HarmonicaTablature());
+      this.register(new MelodeonTablature());
       this.inited = true;
     }
   }
@@ -15322,6 +15336,9 @@ GuitarPatterns.prototype.stringToPitch = function (stringNumber) {
   var converter = this.strings;
   return converter.stringToPitch(stringNumber);
 };
+GuitarPatterns.prototype.MarkBar = function () {};
+GuitarPatterns.prototype.StartBuild = function () {};
+GuitarPatterns.prototype.StartScan = function () {};
 module.exports = GuitarPatterns;
 
 /***/ }),
@@ -15359,6 +15376,7 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   var semantics = new GuitarPatterns(this);
   this.semantics = semantics;
 };
+Plugin.prototype.scan = function (renderer, line, staffIndex) {};
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;
@@ -15377,6 +15395,1016 @@ var AbcGuitarTab = function AbcGuitarTab() {
   };
 };
 module.exports = AbcGuitarTab;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/harmonica/harmonica-patterns.js":
+/*!********************************************************************!*\
+  !*** ./src/tablatures/instruments/harmonica/harmonica-patterns.js ***!
+  \********************************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var StringPatterns = __webpack_require__(/*! ../string-patterns */ "./src/tablatures/instruments/string-patterns.js");
+var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instruments/tab-note.js");
+function HarmonicaPatterns(plugin) {
+  this.tuning = plugin._super.params.tuning;
+  this.measureAccidentals = {};
+  if (!this.tuning) {
+    this.tuning = ['C'];
+  }
+  plugin.tuning = this.tuning;
+  this.strings = new StringPatterns(plugin);
+}
+
+//Lookup individual notes
+function noteToHole(noteName, tuning) {
+  if (tuning == "C") {
+    //Octave 4
+    if (noteName == 'C') return '1';
+    if (noteName == '^C' || noteName == '_D') return '-1\'';
+    if (noteName == 'D') return '-1';
+    if (noteName == '^D' || noteName == '_E') return '';
+    if (noteName == 'E') return '2';
+    if (noteName == 'F') return '-2\'\'';
+    if (noteName == '^F' || noteName == '_G') return '-2\'';
+    if (noteName == 'G') return '3'; //Or '-2'
+    if (noteName == '^G' || noteName == '_A') return '-3\'\'\'';
+    if (noteName == 'A') return '-3\'\'';
+    if (noteName == '^A' || noteName == '_B') return '-3\'';
+    if (noteName == 'B') return '-3';
+
+    //Octave 5
+    if (noteName == 'c') return '4';
+    if (noteName == '^c' || noteName == '_d') return '-4\'';
+    if (noteName == 'd') return '-4';
+    if (noteName == '^d' || noteName == '_e') return '';
+    if (noteName == 'e') return '5';
+    if (noteName == 'f') return '-5';
+    if (noteName == '^f' || noteName == '_g') return '';
+    if (noteName == 'g') return '6';
+    if (noteName == '^g' || noteName == '_a') return '';
+    if (noteName == 'a') return '-6';
+    if (noteName == '^a' || noteName == '_b') return '-6\'';
+    if (noteName == 'b') return '-7';
+
+    //Octave 6
+    if (noteName == 'c\'') return '7';
+    if (noteName == '^c\'' || noteName == '_d\'') return '';
+    if (noteName == 'd\'') return '-8';
+    if (noteName == '^d\'' || noteName == '_e\'') return '8\'';
+    if (noteName == 'e\'') return '8';
+    if (noteName == 'f\'') return '-9';
+    if (noteName == '^f\'' || noteName == '_g\'') return '9\'';
+    if (noteName == 'g\'') return '9';
+    if (noteName == '^g\'' || noteName == '_a\'') return '';
+    if (noteName == 'a\'') return '-10';
+    if (noteName == '^a\'' || noteName == '_b\'') return '10\'\'';
+    if (noteName == 'b\'') return '10\'';
+
+    //Octave 7
+    if (noteName == 'c\'\'') return '10';
+  } else {
+    //TODO: Different tunings
+  }
+  return '';
+}
+HarmonicaPatterns.prototype.StartScan = function () {};
+HarmonicaPatterns.prototype.StartBuild = function () {};
+HarmonicaPatterns.prototype.MarkBar = function () {};
+HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
+  var error = null;
+  var retNotes = new Array();
+  var retGraces = null;
+  var tuning = this.tuning;
+  for (var i = 0; i < notes.length; ++i) {
+    var TNote = new TabNote.TabNote(notes[i].name);
+    TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+    var noteName = TNote.emitNoAccidentals();
+    if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
+    var hole = noteToHole(noteName, tuning);
+    if (hole != '') {
+      var stringNumber = -0.7;
+      var note = new TabNote.TabNote(notes[0].name);
+      var number = {
+        num: hole,
+        str: stringNumber,
+        note: note
+      };
+      retNotes.push(number);
+
+      //Only one note at a time supported
+      break;
+    }
+  }
+  return {
+    notes: retNotes,
+    graces: retGraces,
+    error: error
+  };
+};
+HarmonicaPatterns.prototype.stringToPitch = function (stringNumber) {
+  var converter = this.strings;
+  return converter.stringToPitch(stringNumber);
+};
+module.exports = HarmonicaPatterns;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/harmonica/harmonica-tablature.js":
+/*!*********************************************************************!*\
+  !*** ./src/tablatures/instruments/harmonica/harmonica-tablature.js ***!
+  \*********************************************************************/
+/***/ (function(module) {
+
+/**
+ * Layout tablature informations for draw
+ * @param {*} numLines 
+ * @param {*} lineSpace 
+ */
+
+function HarmonicaTablature(numLines, lineSpace) {
+  this.numLines = numLines;
+  this.lineSpace = lineSpace;
+  this.verticalSize = this.numLines * this.lineSpace;
+  var pitch = 3;
+  this.bar = {
+    pitch: pitch,
+    pitch2: lineSpace * numLines,
+    height: 5
+  };
+}
+
+/**
+ * return true if current line should not produce a tab
+ * @param {} line 
+ */
+HarmonicaTablature.prototype.bypass = function (line) {
+  var voices = line.staffGroup.voices;
+  if (voices.length > 0) {
+    if (voices[0].isPercussion) return true;
+  }
+  return false;
+};
+HarmonicaTablature.prototype.setRelative = function (child, relative, first) {
+  switch (child.type) {
+    case 'bar':
+      relative.pitch = this.bar.pitch + 3;
+      relative.pitch2 = this.bar.pitch2;
+      relative.height = this.height;
+      break;
+    case 'symbol':
+      var top = this.bar.pitch2 * 2.5;
+      if (child.name == 'dots.dot') {
+        if (first) {
+          relative.pitch = top - 10;
+          return false;
+        } else {
+          relative.pitch = top - 13;
+          return true;
+        }
+      }
+      break;
+  }
+  return first;
+};
+module.exports = HarmonicaTablature;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/harmonica/tab-harmonica.js":
+/*!***************************************************************!*\
+  !*** ./src/tablatures/instruments/harmonica/tab-harmonica.js ***!
+  \***************************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+/*
+Emit tab for Harmonica staff
+*/
+var HarmonicaTablature = __webpack_require__(/*! ./harmonica-tablature */ "./src/tablatures/instruments/harmonica/harmonica-tablature.js");
+var TabCommon = __webpack_require__(/*! ../../tab-common */ "./src/tablatures/tab-common.js");
+var TabRenderer = __webpack_require__(/*! ../../tab-renderer */ "./src/tablatures/tab-renderer.js");
+var HarmonicaPatterns = __webpack_require__(/*! ./harmonica-patterns */ "./src/tablatures/instruments/harmonica/harmonica-patterns.js");
+
+/**
+* upon init mainly store provided instances for later usage
+* @param {*} abcTune  the parsed tune AST tree
+*  @param {*} tuneNumber  the parsed tune AST tree
+* @param {*} params  complementary args provided to Tablature Plugin
+*/
+Plugin.prototype.init = function (abcTune, tuneNumber, params) {
+  var _super = new TabCommon(abcTune, tuneNumber, params);
+  this._super = _super;
+  this.abcTune = abcTune;
+  this.linePitch = 8;
+  this.nbLines = 1;
+  this.isTabBig = false;
+  this.capo = params.capo;
+  this.transpose = params.visualTranspose;
+  this.tablature = new HarmonicaTablature(this.nbLines, this.linePitch);
+  var semantics = new HarmonicaPatterns(this);
+  this.semantics = semantics;
+};
+Plugin.prototype.scan = function (renderer, line, staffIndex) {};
+Plugin.prototype.render = function (renderer, line, staffIndex) {
+  if (this._super.inError) return;
+  if (this.tablature.bypass(line)) return;
+  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doLayout();
+};
+function Plugin() {}
+
+//
+// Tablature plugin definition
+//
+var AbcHarmonicaTab = function AbcHarmonicaTab() {
+  return {
+    name: 'HarmonicaTab',
+    tablature: Plugin
+  };
+};
+module.exports = AbcHarmonicaTab;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/melodeon/melodeon-patterns.js":
+/*!******************************************************************!*\
+  !*** ./src/tablatures/instruments/melodeon/melodeon-patterns.js ***!
+  \******************************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+var StringPatterns = __webpack_require__(/*! ../string-patterns */ "./src/tablatures/instruments/string-patterns.js");
+var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instruments/tab-note.js");
+function MelodeonPatterns(plugin) {
+  this.tuning = plugin._super.params.tuning;
+  this.measureAccidentals = {};
+  this.PrevBar = true;
+  this.PrevPush = true;
+  this.PrevRow = 0;
+  this.PrevNumber = 6;
+  this.FingerNumber1 = 0;
+  this.FingerNumber4 = 0;
+  this.Scan = false;
+  this.BarIndex = -1;
+  this.aBars = new Array();
+  if (!this.tuning) {
+    this.tuning = ['CF'];
+  }
+  plugin.tuning = this.tuning;
+  this.strings = new StringPatterns(plugin);
+}
+function noteToPushButtonRow1(noteName, rowtuning) {
+  console.log("conv " + noteName);
+  if (rowtuning == "C") {
+    //Octave 3
+    if (noteName == "G,") return "2";
+
+    //Octave 4
+    if (noteName == "C") return "3";
+    if (noteName == "E") return "4";
+    if (noteName == "^F" || noteName == "_G") return "1";
+    if (noteName == "G") return "5";
+
+    //Octave 5
+    if (noteName == "c") return "6";
+    if (noteName == "e") return "7";
+    if (noteName == "g") return "8";
+
+    //Octave 6
+    if (noteName == "c'") return "9";
+    if (noteName == "e'") return "10";
+    if (noteName == "g'") return "11";
+  } else if (rowtuning == "G") {
+    //TODO:
+  } else if (rowtuning == "A") {
+    //TODO:
+  }
+  return "";
+}
+function noteToPullButtonRow1(noteName, rowtuning) {
+  if (rowtuning == "C") {
+    //Octave 3
+    if (noteName == "B,") return "2";
+
+    //Octave 4
+    if (noteName == "D") return "3";
+    if (noteName == "F") return "4";
+    if (noteName == "^G" || noteName == "_A") return "1";
+    if (noteName == "A") return "5";
+    if (noteName == "B") return "6";
+
+    //Octave 5
+    if (noteName == "d") return "7";
+    if (noteName == "f") return "8";
+    if (noteName == "a") return "9";
+    if (noteName == "b") return "10";
+
+    //Octave 6
+    if (noteName == "d'") return "11";
+  } else if (rowtuning == "G") {
+    //TODO:
+  } else if (rowtuning == "A") {
+    //TODO:
+  }
+  return "";
+}
+function noteToPushButtonRow2(noteName, rowtuning) {
+  if (rowtuning == "F5") {
+    //Octave 4
+    if (noteName == "C") return "2'";
+    if (noteName == "F") return "3'";
+    if (noteName == "A") return "4'";
+    if (noteName == "d") return "5'";
+
+    //Octave 5
+    if (noteName == "^d" || noteName == "_e") return "1'";
+    if (noteName == "f") return "6'";
+    if (noteName == "a") return "7'";
+    if (noteName == "c'") return "8'";
+
+    //Octave 6
+    if (noteName == "f'") return "9'";
+    if (noteName == "a'") return "10'";
+  } else if (rowtuning == "C") {
+    //TODO:
+  } else if (rowtuning == "D") {
+    //TODO:
+  }
+  return "";
+}
+function noteToPullButtonRow2(noteName, rowtuning) {
+  if (rowtuning == "F5") {
+    //Octave 3
+    if (noteName == "E") return "2'";
+
+    //Octave 4
+    if (noteName == "G") return "3'";
+    if (noteName == "^A" || noteName == "_B") return "4'";
+    if (noteName == "c") return "5'";
+    if (noteName == "^c" || noteName == "_d") return "1'";
+    if (noteName == "e") return "6'";
+
+    //Octave 5
+    if (noteName == "g") return "7'";
+    if (noteName == "^a" || noteName == "_b") return "8'";
+
+    //Octave 6
+    if (noteName == "d'") return "9'";
+    if (noteName == "e'") return "10'";
+  } else if (rowtuning == "C") {
+    //TODO:
+  } else if (rowtuning == "D") {
+    //TODO:
+  }
+  return "";
+}
+MelodeonPatterns.prototype.FingerMove = function (ButtonNumber) {
+  if (this.FingerNumber1 == 0 || this.FingerNumber4 == 0) return 0;
+  if (ButtonNumber > this.FingerNumber1 + 3) return ButtonNumber - (this.FingerNumber1 + 3);
+  if (ButtonNumber < this.FingerNumber4 - 3) return this.FingerNumber4 - 3 - ButtonNumber;
+  return 0;
+};
+MelodeonPatterns.prototype.notesToNumber2 = function (notes) {
+  var rowtuning1 = '';
+  if (this.tuning.length >= 1) rowtuning1 = this.tuning[0];
+  var rowtuning2 = '';
+  if (this.tuning.length >= 2) rowtuning2 = this.tuning[1];
+  retNotes = [];
+  for (var i = 0; i < notes.length; i++) {
+    //Obtain all possible ways to play this note
+    var push1 = noteToPushButtonRow1(notes[i], rowtuning1);
+    var push2 = noteToPushButtonRow2(notes[i], rowtuning2);
+    var pull1 = noteToPullButtonRow1(notes[i], rowtuning1);
+    var pull2 = noteToPullButtonRow2(notes[i], rowtuning2);
+
+    //Parse button numbers
+    var Push1Number = push1 != "" ? Math.abs(parseInt(push1)) : 10000;
+    var Push2Number = push2 != "" ? Math.abs(parseInt(push2)) : 10000;
+    var Pull1Number = pull1 != "" ? Math.abs(parseInt(pull1)) : 10000;
+    var Pull2Number = pull2 != "" ? Math.abs(parseInt(pull2)) : 10000;
+
+    //Calculate distance from previous button
+    var Push1Dist = Math.abs(Push1Number - this.PrevNumber);
+    var Push2Dist = Math.abs(Push2Number - this.PrevNumber);
+    var Pull1Dist = Math.abs(Pull1Number - this.PrevNumber);
+    var Pull2Dist = Math.abs(Pull2Number - this.PrevNumber);
+
+    //Really don't like having to move hand position
+    var FingerMovePenalty = 3;
+    if (this.FingerNumber1 != 0 && this.FingerNumber4 != 0) {
+      var FingerMovePush1 = this.FingerMove(Push1Number);
+      var FingerMovePush2 = this.FingerMove(Push2Number);
+      var FingerMovePull1 = this.FingerMove(Pull1Number);
+      var FingerMovePull2 = this.FingerMove(Pull2Number);
+      Push1Dist += FingerMovePush1 * FingerMovePenalty;
+      Push2Dist += FingerMovePush2 * FingerMovePenalty;
+      Pull1Dist += FingerMovePull1 * FingerMovePenalty;
+      Pull2Dist += FingerMovePull2 * FingerMovePenalty;
+    }
+
+    //Prefer not to change rows
+    var RowChangePenalty = 0;
+    if (this.PrevRow != 0) {
+      if (this.PrevRow != 1) {
+        Push1Dist += RowChangePenalty;
+        Pull1Dist += RowChangePenalty;
+      }
+      if (this.PrevRow != 2) {
+        Push2Dist += RowChangePenalty;
+        Pull2Dist += RowChangePenalty;
+      }
+    }
+    if (!this.PrevBar) {
+      //Prefer not to change direction
+      var DirChangePenalty = 10;
+      if (this.PrevPush == false) {
+        Push1Dist += DirChangePenalty;
+        Push2Dist += DirChangePenalty;
+      } else {
+        Pull1Dist += DirChangePenalty;
+        Pull2Dist += DirChangePenalty;
+      }
+    } else {
+      //Like changing directions at bars
+      var DirChangeBonus = 5;
+      if (this.PrevPush == false) {
+        Push1Dist -= DirChangeBonus;
+        Push2Dist -= DirChangeBonus;
+      } else {
+        Pull1Dist -= DirChangeBonus;
+        Pull2Dist -= DirChangeBonus;
+      }
+    }
+
+    //Choose the easiest option
+    var Push = true;
+    var Row = 0;
+    var Button = '';
+    if (Push1Dist <= Push2Dist && Push1Dist <= Pull1Dist && Push1Dist <= Pull2Dist) {
+      Push = true;
+      Row = 1;
+      Button = push1;
+    } else if (Push2Dist <= Push1Dist && Push2Dist <= Pull1Dist && Push2Dist <= Pull2Dist) {
+      Push = true;
+      Row = 2;
+      Button = push2;
+    } else if (Pull1Dist <= Push1Dist && Pull1Dist <= Push2Dist && Pull1Dist <= Pull2Dist) {
+      Push = false;
+      Row = 1;
+      Button = pull1;
+    } else if (Pull2Dist <= Push1Dist && Pull2Dist <= Push2Dist && Pull2Dist <= Pull1Dist) {
+      Push = false;
+      Row = 2;
+      Button = pull2;
+    }
+
+    //If a way was found add it
+    if (Button != '') {
+      //Add the tab note
+      var stringNumber = Push ? 0.3 : 1.0;
+      var note = new TabNote.TabNote(notes[0].name);
+      var number = {
+        num: Button,
+        str: stringNumber,
+        note: note
+      };
+      retNotes.push(number);
+
+      //Set previous direction, row and button number
+      ButtonNumber = parseInt(Button);
+      this.PrevPush = Push;
+      this.PrevRow = Row;
+      this.PrevNumber = ButtonNumber;
+      this.PrevBar = false;
+
+      //Update hand position
+      if (this.FingerNumber4 == 0 || ButtonNumber > this.FingerNumber4) {
+        this.FingerNumber4 = ButtonNumber;
+        if (this.FingerNumber1 != 0 && this.FingerNumber1 < this.FingerNumber4 - 3) this.FingerNumber1 = this.FingerNumber4 - 3;
+      }
+      if (this.FingerNumber1 == 0 || ButtonNumber < this.FingerNumber1) {
+        this.FingerNumber1 = ButtonNumber;
+        if (this.FingerNumber4 != 0 && this.FingerNumber4 > this.FingerNumber1 + 3) this.FingerNumber4 = this.FingerNumber1 + 3;
+      }
+
+      //Only one note at a time supported
+      break;
+    }
+  }
+  return retNotes;
+};
+MelodeonPatterns.prototype.StartScan = function () {
+  if (!this.Scan) {
+    //Clear
+    this.aBars = new Array();
+    this.BarIndex = -1;
+  }
+  this.Scan = true;
+};
+function PrevNonEmptyBarIndex(aBars, Index) {
+  for (var PrevIndex = Index - 1; PrevIndex >= 0; --PrevIndex) {
+    if (aBars[PrevIndex].notes.length > 0) return PrevIndex;
+  }
+  return -1;
+}
+function NextNonEmptyBarIndex(aBars, Index) {
+  for (var NextIndex = Index + 1; NextIndex < aBars.length; ++NextIndex) {
+    if (aBars[NextIndex].notes.length > 0) return NextIndex;
+  }
+  return -1;
+}
+function FirstLast(Bar, Push) {
+  if (Push) {
+    if (Bar.notes[0].push1 != '') {
+      FirstR = 1;
+      First = parseInt(Bar.notes[0].push1);
+    } else {
+      FirstR = 2;
+      First = parseInt(Bar.notes[0].push2);
+    }
+  } else {
+    if (Bar.notes[0].pull1 != '') {
+      FirstR = 1;
+      First = parseInt(Bar.notes[0].pull1);
+    } else {
+      FirstR = 2;
+      First = parseInt(Bar.notes[0].pull2);
+    }
+  }
+  if (Push) {
+    if (Bar.notes[Bar.notes.length - 1].push1 != '') {
+      LastR = 1;
+      Last = parseInt(Bar.notes[Bar.notes.length - 1].push1);
+    } else {
+      LastR = 2;
+      Last = parseInt(Bar.notes[Bar.notes.length - 1].push2);
+    }
+  } else {
+    if (Bar.notes[Bar.notes.length - 1].pull1 != '') {
+      LastR = 1;
+      Last = parseInt(Bar.notes[Bar.notes.length - 1].pull1);
+    } else {
+      LastR = 2;
+      Last = parseInt(Bar.notes[Bar.notes.length - 1].pull2);
+    }
+  }
+  return {
+    FirstRow: FirstR,
+    FirstButton: First,
+    LastRow: LastR,
+    LastButton: Last
+  };
+}
+function ChosenBarNumbers(Bar, Push) {
+  Low = 100;
+  High = 0;
+  for (var NoteIndex = 0; NoteIndex < Bar.notes.length; ++NoteIndex) {
+    var Num = 0;
+    if (Push) {
+      if (Bar.notes[NoteIndex].push1 != '') Num = parseInt(Bar.notes[NoteIndex].push1);else Num = parseInt(Bar.notes[NoteIndex].push2);
+    } else {
+      if (Bar.notes[NoteIndex].pull1 != '') Num = parseInt(Bar.notes[NoteIndex].pull1);else Num = parseInt(Bar.notes[NoteIndex].pull2);
+    }
+    if (Num != 0) {
+      if (Num < Low) Low = Num;
+      if (Num > High) High = Num;
+    }
+  }
+  return {
+    LowButton: Low,
+    HighButton: High
+  };
+}
+function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
+  var BeforeLow = 0;
+  var BeforeHigh = 0;
+  var PrevLast = 0;
+  var PrevLastRow = 0;
+  var PrevBarIndex = PrevNonEmptyBarIndex(aBars, BarIndex);
+  if (AllowPrev && PrevBarIndex >= 0 && aBars[PrevBarIndex].chosen) {
+    var Ch = ChosenBarNumbers(aBars[PrevBarIndex], aBars[PrevBarIndex].push);
+    BeforeLow = Ch.LowButton;
+    BeforeHigh = Ch.HighButton;
+    var Ch = FirstLast(aBars[PrevBarIndex], aBars[PrevBarIndex].push);
+    PrevLast = Ch.LastButton;
+    PrevLastRow = Ch.LastRow;
+  }
+  var AfterLow = 0;
+  var AfterHigh = 0;
+  var NextFirst = 0;
+  var NextFirstRow = 0;
+  var NextBarIndex = NextNonEmptyBarIndex(aBars, BarIndex);
+  if (AllowNext && NextBarIndex >= 0 && aBars[NextBarIndex].chosen) {
+    var Ch = ChosenBarNumbers(aBars[NextBarIndex], aBars[NextBarIndex].push);
+    AfterLow = Ch.LowButton;
+    AfterHigh = Ch.HighButton;
+    var Ch = FirstLast(aBars[NextBarIndex], aBars[NextBarIndex].push);
+    NextFirst = Ch.FirstButton;
+    NextFirstRow = Ch.FirstRow;
+  }
+  var Ch = ChosenBarNumbers(aBars[BarIndex], true);
+  var PushLow = Ch.LowButton;
+  var PushHigh = Ch.HighButton;
+  var Ch = ChosenBarNumbers(aBars[BarIndex], false);
+  var PullLow = Ch.LowButton;
+  var PullHigh = Ch.HighButton;
+  var Ch = FirstLast(aBars[BarIndex], true);
+  var PushFirst = Ch.FirstButton;
+  var PushFirstRow = Ch.FirstRow;
+  var PushLast = Ch.LastButton;
+  var PushLastRow = Ch.LastRow;
+  var Ch = FirstLast(aBars[BarIndex], false);
+  var PullFirst = Ch.FirstButton;
+  var PullFirstRow = Ch.FirstRow;
+  var PullLast = Ch.LastButton;
+  var PullLastRow = Ch.LastRow;
+  if (PrevLast != 0 || NextFirst != 0) {
+    if (NeedBoth && (PrevLast == 0 || NextFirst == 0)) return false;
+    aBars[BarIndex].chosen = true;
+    var PushDistance = 0;
+    var PullDistance = 0;
+    if (PrevLast != 0) {
+      PushDistance += Math.abs(PushFirst - PrevLast);
+      if (PushFirstRow != PrevLastRow) PushDistance += 0.5;
+      PullDistance += Math.abs(PullFirst - PrevLast);
+      if (PullFirstRow != PrevLastRow) PullDistance += 0.5;
+    } else AllowPrev = false;
+    if (NextFirst != 0) {
+      PushDistance += Math.abs(PushLast - NextFirst);
+      if (PushLastRow != NextFirstRow) PushDistance += 0.5;
+      PullDistance += Math.abs(PullLast - NextFirst);
+      if (PullLastRow != NextFirstRow) PullDistance += 0.5;
+    } else AllowNext = false;
+    if (PushDistance <= PullDistance) aBars[BarIndex].push = true;else aBars[BarIndex].push = false;
+    return true;
+  }
+  return false;
+
+  /*if (BeforeLow != 0 || AfterLow != 0) {
+  	BarsChosen++;
+  	this.aBars[BarIndex].chosen = true;
+  	var PushDistance = 0;
+  	var PullDistance = 0;
+  	
+  	if (BeforeLow != 0) {
+  		PushDistance += Math.abs(PushLow - BeforeLow) + Math.abs(PushHigh - BeforeHigh);
+  		PullDistance += Math.abs(PullLow - BeforeLow) + Math.abs(PullHigh - BeforeHigh);
+  	}
+  	if (AfterLow != 0) {
+  		PushDistance += Math.abs(PushLow - AfterLow) + Math.abs(PushHigh - AfterHigh);
+  		PullDistance += Math.abs(PullLow - AfterLow) + Math.abs(PullHigh - AfterHigh);
+  	}
+  	
+  	if (PushDistance <= PullDistance)
+  		this.aBars[BarIndex].push = true;
+  	else
+  		this.aBars[BarIndex].push = false;
+  }*/
+}
+
+MelodeonPatterns.prototype.StartBuild = function () {
+  if (this.Scan) {
+    console.log("bars:" + this.aBars.length);
+
+    //Count push/pull possibilities
+    //TODO: Set left and right finger numbers
+    for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+      for (var NoteIndex = 0; NoteIndex < this.aBars[BarIndex].notes.length; ++NoteIndex) {
+        this.aBars[BarIndex].notecount++;
+        if (this.aBars[BarIndex].notes[NoteIndex].push1 != '' || this.aBars[BarIndex].notes[NoteIndex].push2 != '') this.aBars[BarIndex].pushcount++;
+        if (this.aBars[BarIndex].notes[NoteIndex].pull1 != '' || this.aBars[BarIndex].notes[NoteIndex].pull2 != '') this.aBars[BarIndex].pullcount++;
+      }
+    }
+
+    //Set bars to push or pull if we can do only push or only pull per bar
+    var BarsChosen = 0;
+    for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+      //Directly set it if only one possibility makes sense
+      if (this.aBars[BarIndex].pushcount != this.aBars[BarIndex].pullcount) {
+        if (this.aBars[BarIndex].pushcount == this.aBars[BarIndex].notecount) {
+          this.aBars[BarIndex].chosen = true;
+          this.aBars[BarIndex].push = true;
+          BarsChosen++;
+        } else if (this.aBars[BarIndex].pullcount == this.aBars[BarIndex].notecount) {
+          this.aBars[BarIndex].chosen = true;
+          this.aBars[BarIndex].push = false;
+          BarsChosen++;
+        }
+      }
+    }
+
+    //If no bars are chosen, try to choose one with only push or only pull
+    if (BarsChosen == 0) {
+      for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+        if (this.aBars[BarIndex].notecount > 0) {
+          if (this.aBars[BarIndex].pushcount == this.aBars[BarIndex].notecount) {
+            this.aBars[BarIndex].chosen = true;
+            this.aBars[BarIndex].push = true;
+            BarsChosen++;
+            break;
+          } else if (this.aBars[BarIndex].pullcount == this.aBars[BarIndex].notecount) {
+            this.aBars[BarIndex].chosen = true;
+            this.aBars[BarIndex].push = false;
+            BarsChosen++;
+            break;
+          }
+        }
+      }
+
+      //If no bars are chosen, try to choose one
+      if (BarsChosen == 0) {
+        for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+          if (this.aBars[BarIndex].notecount > 0) {
+            if (this.aBars[BarIndex].pushcount > this.aBars[BarIndex].pullcount) {
+              this.aBars[BarIndex].chosen = true;
+              this.aBars[BarIndex].push = true;
+              BarsChosen++;
+              break;
+            } else {
+              this.aBars[BarIndex].chosen = true;
+              this.aBars[BarIndex].push = false;
+              BarsChosen++;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    //Set empty bars
+    for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+      if (this.aBars[BarIndex].pushcount == 0 && this.aBars[BarIndex].pullcount == 0) {
+        this.aBars[BarIndex].chosen = true;
+        this.aBars[BarIndex].push = true;
+        BarsChosen++;
+      }
+    }
+
+    //Choose all other bars
+    while (BarsChosen < this.aBars.length) {
+      //In between defined bars
+      var AnyChosen = true;
+      while (AnyChosen) {
+        AnyChosen = false;
+        for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+          if (this.aBars[BarIndex].chosen) continue;
+          if (BarChoose(this.aBars, BarIndex, true, true, true)) {
+            BarsChosen++;
+            AnyChosen = true;
+          }
+        }
+      }
+
+      //Before defined bars
+      if (AnyChosen == false) {
+        for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+          if (this.aBars[BarIndex].chosen) continue;
+          if (BarChoose(this.aBars, BarIndex, false, false, true)) {
+            BarsChosen++;
+            AnyChosen = true;
+          }
+        }
+      }
+
+      //After defined bars
+      if (AnyChosen == false) {
+        for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+          if (this.aBars[BarIndex].chosen) continue;
+          if (BarChoose(this.aBars, BarIndex, false, true, false)) {
+            BarsChosen++;
+            AnyChosen = true;
+          }
+        }
+      }
+    }
+
+    //Set bars to push or pull if we can do only push and only pull per bar
+    /*		for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+    			if (this.aBars[BarIndex].Chosen)
+    				continue;
+    			
+    			//TODO: Distance between first/last bar note detection
+    			if (this.aBars[BarIndex].pushcount == this.aBars[BarIndex].notecount && BarIndex != 2 && BarIndex != 3) {
+    				this.aBars[BarIndex].chosen = true;
+    				this.aBars[BarIndex].push   = true;
+    			}
+    			else if (this.aBars[BarIndex].pushcount == this.aBars[BarIndex].notecount) {
+    				this.aBars[BarIndex].chosen = true;
+    				this.aBars[BarIndex].push   = false;
+    			}
+    			
+    		}*/
+
+    //TODO: Handle push and pull in a bar, minimize the number of direction changes
+
+    //TODO: Run optimization algorithm
+    this.BarIndex = 0;
+  }
+  this.Scan = false;
+};
+MelodeonPatterns.prototype.MarkBar = function () {
+  this.PrevBar = true;
+  if (this.Scan) {
+    this.aBars.push({
+      notes: new Array(),
+      notecount: 0,
+      pushcount: 0,
+      pullcount: 0,
+      chosen: false,
+      push: false
+    });
+  } else {}
+  this.BarIndex++;
+};
+MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
+  var error = null;
+  var retNotes = new Array();
+  var retGraces = null;
+  var rowtuning1 = '';
+  if (this.tuning.length >= 1) rowtuning1 = this.tuning[0];
+  var rowtuning2 = '';
+  if (this.tuning.length >= 2) rowtuning2 = this.tuning[1];
+  if (this.Scan) {
+    if (this.aBars.length == 0) this.MarkBar();
+    for (var i = 0; i < notes.length; ++i) {
+      var TNote = new TabNote.TabNote(notes[i].name);
+      TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+      var noteName = TNote.emitNoAccidentals();
+      if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
+      this.aBars[this.BarIndex].notes.push({
+        note: notes[i],
+        push1: noteToPushButtonRow1(noteName, rowtuning1),
+        push2: noteToPushButtonRow2(noteName, rowtuning2),
+        pull1: noteToPullButtonRow1(noteName, rowtuning1),
+        pull2: noteToPullButtonRow2(noteName, rowtuning2)
+      });
+    }
+  } else {
+    if (this.aBars[this.BarIndex].chosen) {
+      var TNote = new TabNote.TabNote(notes[0].name);
+      TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+      var noteName = TNote.emitNoAccidentals();
+      if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
+      push1 = noteToPushButtonRow1(noteName, rowtuning1);
+      push2 = noteToPushButtonRow2(noteName, rowtuning2);
+      pull1 = noteToPullButtonRow1(noteName, rowtuning1);
+      pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+
+      //Choose push or pull, prefer chosen option in the bar, except when this is not possible
+      Push = this.aBars[this.BarIndex].push;
+      if (Push && push1 == '' && push2 == '') Push = false;
+      if (!Push && pull1 == '' && pull2 == '') Push = true;
+
+      //Choose the button
+      Button = '';
+      if (Push) {
+        if (push1 != '') Button = push1;else Button = push2;
+      } else {
+        if (pull1 != '') Button = pull1;else Button = pull2;
+      }
+
+      //Add the tab note
+      var stringNumber = Push ? 0.3 : 1.0;
+      var note = new TabNote.TabNote(notes[0].name);
+      var number = {
+        num: Button,
+        str: stringNumber,
+        note: note
+      };
+      retNotes.push(number);
+    }
+  }
+  return {
+    notes: retNotes,
+    graces: retGraces,
+    error: error
+  };
+};
+MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
+  var converter = this.strings;
+  return converter.stringToPitch(stringNumber);
+};
+module.exports = MelodeonPatterns;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/melodeon/melodeon-tablature.js":
+/*!*******************************************************************!*\
+  !*** ./src/tablatures/instruments/melodeon/melodeon-tablature.js ***!
+  \*******************************************************************/
+/***/ (function(module) {
+
+/**
+ * Layout tablature informations for draw
+ * @param {*} numLines 
+ * @param {*} lineSpace 
+ */
+
+function MelodeonTablature(numLines, lineSpace) {
+  this.numLines = numLines;
+  this.lineSpace = lineSpace;
+  this.verticalSize = this.numLines * this.lineSpace;
+  var pitch = 3;
+  this.bar = {
+    pitch: pitch,
+    pitch2: lineSpace * numLines,
+    height: 5
+  };
+}
+
+/**
+ * return true if current line should not produce a tab
+ * @param {} line 
+ */
+MelodeonTablature.prototype.bypass = function (line) {
+  var voices = line.staffGroup.voices;
+  if (voices.length > 0) {
+    if (voices[0].isPercussion) return true;
+  }
+  return false;
+};
+MelodeonTablature.prototype.setRelative = function (child, relative, first) {
+  switch (child.type) {
+    case 'bar':
+      relative.pitch = this.bar.pitch + 3;
+      relative.pitch2 = this.bar.pitch2;
+      relative.height = this.height;
+      break;
+    case 'symbol':
+      var top = this.bar.pitch2 * 2.5;
+      if (child.name == 'dots.dot') {
+        if (first) {
+          relative.pitch = top - 10;
+          return false;
+        } else {
+          relative.pitch = top - 13;
+          return true;
+        }
+      }
+      break;
+  }
+  return first;
+};
+module.exports = MelodeonTablature;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/melodeon/tab-melodeon.js":
+/*!*************************************************************!*\
+  !*** ./src/tablatures/instruments/melodeon/tab-melodeon.js ***!
+  \*************************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+/*
+Emit tab for Melodeon staff
+*/
+var MelodeonTablature = __webpack_require__(/*! ./melodeon-tablature */ "./src/tablatures/instruments/melodeon/melodeon-tablature.js");
+var TabCommon = __webpack_require__(/*! ../../tab-common */ "./src/tablatures/tab-common.js");
+var TabRenderer = __webpack_require__(/*! ../../tab-renderer */ "./src/tablatures/tab-renderer.js");
+var MelodeonPatterns = __webpack_require__(/*! ./melodeon-patterns */ "./src/tablatures/instruments/melodeon/melodeon-patterns.js");
+
+/**
+* upon init mainly store provided instances for later usage
+* @param {*} abcTune  the parsed tune AST tree
+*  @param {*} tuneNumber  the parsed tune AST tree
+* @param {*} params  complementary args provided to Tablature Plugin
+*/
+Plugin.prototype.init = function (abcTune, tuneNumber, params) {
+  var _super = new TabCommon(abcTune, tuneNumber, params);
+  this._super = _super;
+  this.abcTune = abcTune;
+  this.linePitch = 8;
+  this.nbLines = 1;
+  this.isTabBig = false;
+  this.capo = params.capo;
+  this.transpose = params.visualTranspose;
+  this.tablature = new MelodeonTablature(this.nbLines, this.linePitch);
+  var semantics = new MelodeonPatterns(this);
+  this.semantics = semantics;
+};
+Plugin.prototype.scan = function (renderer, line, staffIndex) {
+  if (this._super.inError) return;
+  if (this.tablature.bypass(line)) return;
+  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doScan();
+};
+Plugin.prototype.render = function (renderer, line, staffIndex) {
+  if (this._super.inError) return;
+  if (this.tablature.bypass(line)) return;
+  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doLayout();
+};
+function Plugin() {}
+
+//
+// Tablature plugin definition
+//
+var AbcMelodeonTab = function AbcMelodeonTab() {
+  return {
+    name: 'MelodeonTab',
+    tablature: Plugin
+  };
+};
+module.exports = AbcMelodeonTab;
 
 /***/ }),
 
@@ -16247,6 +17275,44 @@ function buildGraceRelativesForRest(plugin, abs, absChild, graceNotes, tabVoice)
     tabVoice.push(defGrace);
   }
 }
+TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex, staffIndex) {
+  var source = staffAbsolute[staffIndex + voiceIndex];
+  var transposer = null;
+  plugin.semantics.StartScan();
+  for (var ii = 0; ii < source.children.length; ii++) {
+    var absChild = source.children[ii];
+    switch (absChild.type) {
+      case 'staff-extra key-signature':
+        // refresh key accidentals
+        this.accidentals = absChild.abcelem.accidentals;
+        plugin.semantics.strings.accidentals = this.accidentals;
+        if (plugin.transpose) {
+          transposer = new Transposer(absChild.abcelem.accidentals, plugin.transpose);
+        }
+        break;
+      case 'bar':
+        plugin.semantics.strings.measureAccidentals = {};
+        plugin.semantics.MarkBar();
+        break;
+      case 'note':
+        var abs = cloneAbsolute(absChild);
+        abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
+        abs.lyricDim = lyricsDim(absChild);
+        var pitches = absChild.abcelem.pitches;
+        var graceNotes = absChild.abcelem.gracenotes;
+        // check transpose
+        abs.type = 'tabNumber';
+        tabPos = convertToNumber(plugin, pitches, graceNotes);
+        if (tabPos.error) return;
+        if (tabPos.graces) {
+          // add graces to last note in notes
+          var posNote = tabPos.notes.length - 1;
+          tabPos.notes[posNote].graces = tabPos.graces;
+        }
+        break;
+    }
+  }
+};
 
 /**
  * Build tab absolutes by scanning current staff line absolute array
@@ -16264,6 +17330,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
       source.children.splice(0, 0, keySig);
     }
   }
+  plugin.semantics.StartBuild();
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];
     var absX = absChild.x;
@@ -16309,6 +17376,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
           startChar: absChild.abcelem.startChar,
           abselem: cloned
         });
+        plugin.semantics.MarkBar();
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);
@@ -16583,6 +17651,66 @@ function checkVoiceKeySig(voices, ii) {
   }
   return voices[ii - 1].children[0];
 }
+TabRenderer.prototype.doScan = function () {
+  //TODO: This function should not do permanent changes
+
+  var staffs = this.line.staff;
+  if (staffs) {
+    // give up on staffline=0 in key 
+    var firstStaff = staffs[0];
+    if (firstStaff) {
+      if (firstStaff.clef) {
+        if (firstStaff.clef.stafflines == 0) {
+          this.plugin._super.setError("No tablatures when stafflines=0");
+          return;
+        }
+      }
+    }
+    staffs.splice(staffs.length, 0, this.tabStaff);
+  }
+  var staffGroup = this.line.staffGroup;
+  var voices = staffGroup.voices;
+  var firstVoice = voices[0];
+  // take lyrics into account if any
+  var lyricsHeight = getLyricHeight(firstVoice);
+  var padd = 3;
+  var prevIndex = this.staffIndex;
+  var previousStaff = staffGroup.staffs[prevIndex];
+  var tabTop = this.tabSize + padd - previousStaff.bottom - lyricsHeight;
+  if (previousStaff.isTabStaff) {
+    tabTop = previousStaff.top;
+  }
+  var staffGroupInfos = {
+    bottom: -1,
+    isTabStaff: true,
+    specialY: initSpecialY(),
+    lines: this.plugin.nbLines,
+    linePitch: this.plugin.linePitch,
+    dy: 0.15,
+    top: tabTop
+  };
+  var nextTabPos = 0;
+  staffGroup.height += this.tabSize + padd;
+  var parentStaff = getLastStaff(staffGroup.staffs, nextTabPos);
+  var nbVoices = 1;
+  if (isMultiVoiceSingleStaff(staffGroup.staffs, parentStaff)) {
+    nbVoices = parentStaff.voices.length;
+  }
+
+  // build from staff
+  var outvoices = [];
+  for (var ii = 0; ii < nbVoices; ii++) {
+    var tabVoice = new VoiceElement(0, 0);
+    var nameHeight = buildTabName(this, tabVoice) / spacing.STEP;
+    staffGroup.staffs[this.staffIndex].top += nameHeight;
+    staffGroup.height += nameHeight * spacing.STEP;
+    tabVoice.staff = staffGroupInfos;
+    //    voices.splice(voices.length, 0, tabVoice);
+    var keySig = checkVoiceKeySig(voices, this.staffIndex);
+    outvoices[ii] = [];
+    this.absolutes.scan(this.plugin, voices, ii, this.staffIndex);
+  }
+};
 TabRenderer.prototype.doLayout = function () {
   var staffs = this.line.staff;
   if (staffs) {
@@ -25157,6 +26285,7 @@ Renderer.prototype.initVerticalSpace = function () {
   are automatic.
   <float> must be between 0 (natural spacing)
   and 1 (max shrinking).
+  
   // This next value is used to compute the natural spacing of
   // the notes. The base spacing of the crotchet is always
   // 40 pts. When the duration of a note type is twice the
@@ -25168,7 +26297,9 @@ Renderer.prototype.initVerticalSpace = function () {
   // semiquaver is 20 pts.
   // Setting this value to 1 sets all note spacing to 40 pts.
   noteSpacingFactor: 1.414, // Set the note spacing factor to <float> (range 1..2).
+  
   scale <float> Default: 0.75 Set the page scale factor. Note that the header and footer are not scaled.
+  
   stretchlast <float>Default: 0.8
   Stretch the last music line of a tune when it exceeds
   the <float> fraction of the page width.

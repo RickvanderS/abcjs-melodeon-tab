@@ -143,8 +143,8 @@ function graceInRest( absElem ) {
   return null;
 }
 
-function convertToNumber(plugin, pitches, graceNotes) {
-  var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes);
+function convertToNumber(plugin, pitches, graceNotes, chord) {
+  var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes, chord);
   if (tabPos.error) {
     plugin._super.setError(tabPos.error);
     return tabPos; // give up on error here
@@ -203,9 +203,10 @@ TabAbsoluteElements.prototype.scan = function (plugin,
         abs.lyricDim = lyricsDim(absChild);
         var pitches = absChild.abcelem.pitches;
         var graceNotes = absChild.abcelem.gracenotes;
+        var chord = absChild.abcelem.chord;
         // check transpose
         abs.type = 'tabNumber';
-        tabPos = convertToNumber(plugin, pitches, graceNotes);   
+        tabPos = convertToNumber(plugin, pitches, graceNotes, chord);   
         if (tabPos.error) return;
         if (tabPos.graces) {
           // add graces to last note in notes
@@ -292,7 +293,7 @@ TabAbsoluteElements.prototype.build = function (plugin,
         var restGraces = graceInRest(absChild);
         if (restGraces) {
           // to number conversion 
-          tabPos = convertToNumber(plugin, null, restGraces);
+          tabPos = convertToNumber(plugin, null, restGraces, null);
           if (tabPos.error) return;
           // build relative for grace
           defGrace = { el_type: "note", startChar: absChild.abcelem.startChar, endChar: absChild.abcelem.endChar, notes: [], grace: true };
@@ -305,9 +306,10 @@ TabAbsoluteElements.prototype.build = function (plugin,
         abs.lyricDim = lyricsDim(absChild);
         var pitches = absChild.abcelem.pitches;
         var graceNotes = absChild.abcelem.gracenotes;
+        var chord = absChild.abcelem.chord;
         abs.type = 'tabNumber';
         // to number conversion 
-        tabPos = convertToNumber(plugin, pitches, graceNotes);   
+        tabPos = convertToNumber(plugin, pitches, graceNotes, chord);
         if (tabPos.error) return;
         if (tabPos.graces) {
           // add graces to last note in notes

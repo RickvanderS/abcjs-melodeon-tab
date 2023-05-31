@@ -1,3 +1,2 @@
-- Chords to tab generation instead of only graces and notes (used to determine push/pull)
 - Different melodeon tunings (calculated from patterns instead of hard coding)
 - Test other instruments still work

@@ -15649,7 +15649,22 @@ function MelodeonPatterns(plugin) {
   if (!this.tuning) {
     this.tuning = ['CF'];
   }
+  this.PrevChord = "";
   plugin.tuning = this.tuning;
+  this.push_chords = new Array();
+  this.pull_chords = new Array();
+  if (this.tuning.includes('C')) {
+    this.push_chords.push("C");
+    this.pull_chords.push("G");
+    this.push_chords.push("A");
+    this.pull_chords.push("Dm");
+  }
+  if (this.tuning.includes('F') || this.tuning.includes('F5')) {
+    this.push_chords.push("F");
+    this.pull_chords.push("C");
+    this.push_chords.push("B♭");
+    this.pull_chords.push("B♭");
+  }
   this.strings = new StringPatterns(plugin);
 }
 function noteToPushButtonRow1(noteName, rowtuning) {
@@ -16215,10 +16230,17 @@ MelodeonPatterns.prototype.MarkBar = function () {
   } else {}
   this.BarIndex++;
 };
-MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
+MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var error = null;
   var retNotes = new Array();
   var retGraces = null;
+  if (chord && chord.length > 0) PrevChord = chord[0].name;
+  can_push = this.push_chords.includes(PrevChord);
+  can_pull = this.pull_chords.includes(PrevChord);
+  if (!can_push && !can_pull) {
+    can_push = true;
+    can_pull = true;
+  }
   var rowtuning1 = '';
   if (this.tuning.length >= 1) rowtuning1 = this.tuning[0];
   var rowtuning2 = '';
@@ -16227,27 +16249,47 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
     if (this.aBars.length == 0) this.MarkBar();
     for (var i = 0; i < notes.length; ++i) {
       var TNote = new TabNote.TabNote(notes[i].name);
-      TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+      TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
       var noteName = TNote.emitNoAccidentals();
       if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
+      _push1 = noteToPushButtonRow1(noteName, rowtuning1);
+      _push2 = noteToPushButtonRow2(noteName, rowtuning2);
+      _pull1 = noteToPullButtonRow1(noteName, rowtuning1);
+      _pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+      if (!can_push) {
+        _push1 = "";
+        _push2 = "";
+      }
+      if (!can_pull) {
+        _pull1 = "";
+        _pull2 = "";
+      }
       this.aBars[this.BarIndex].notes.push({
         note: notes[i],
-        push1: noteToPushButtonRow1(noteName, rowtuning1),
-        push2: noteToPushButtonRow2(noteName, rowtuning2),
-        pull1: noteToPullButtonRow1(noteName, rowtuning1),
-        pull2: noteToPullButtonRow2(noteName, rowtuning2)
+        push1: _push1,
+        push2: _push2,
+        pull1: _pull1,
+        pull2: _pull2
       });
     }
   } else {
     if (this.aBars[this.BarIndex].chosen) {
       var TNote = new TabNote.TabNote(notes[0].name);
-      TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+      TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
       var noteName = TNote.emitNoAccidentals();
       if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
       push1 = noteToPushButtonRow1(noteName, rowtuning1);
       push2 = noteToPushButtonRow2(noteName, rowtuning2);
       pull1 = noteToPullButtonRow1(noteName, rowtuning1);
       pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+      if (!can_push) {
+        push1 = "";
+        push2 = "";
+      }
+      if (!can_pull) {
+        pull1 = "";
+        pull2 = "";
+      }
 
       //Choose push or pull, prefer chosen option in the bar, except when this is not possible
       Push = this.aBars[this.BarIndex].push;
@@ -17245,8 +17287,8 @@ function graceInRest(absElem) {
   }
   return null;
 }
-function convertToNumber(plugin, pitches, graceNotes) {
-  var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes);
+function convertToNumber(plugin, pitches, graceNotes, chord) {
+  var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes, chord);
   if (tabPos.error) {
     plugin._super.setError(tabPos.error);
     return tabPos; // give up on error here
@@ -17300,9 +17342,10 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
         abs.lyricDim = lyricsDim(absChild);
         var pitches = absChild.abcelem.pitches;
         var graceNotes = absChild.abcelem.gracenotes;
+        var chord = absChild.abcelem.chord;
         // check transpose
         abs.type = 'tabNumber';
-        tabPos = convertToNumber(plugin, pitches, graceNotes);
+        tabPos = convertToNumber(plugin, pitches, graceNotes, chord);
         if (tabPos.error) return;
         if (tabPos.graces) {
           // add graces to last note in notes
@@ -17382,7 +17425,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
         var restGraces = graceInRest(absChild);
         if (restGraces) {
           // to number conversion 
-          tabPos = convertToNumber(plugin, null, restGraces);
+          tabPos = convertToNumber(plugin, null, restGraces, null);
           if (tabPos.error) return;
           // build relative for grace
           defGrace = {
@@ -17401,9 +17444,10 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
         abs.lyricDim = lyricsDim(absChild);
         var pitches = absChild.abcelem.pitches;
         var graceNotes = absChild.abcelem.gracenotes;
+        var chord = absChild.abcelem.chord;
         abs.type = 'tabNumber';
         // to number conversion 
-        tabPos = convertToNumber(plugin, pitches, graceNotes);
+        tabPos = convertToNumber(plugin, pitches, graceNotes, chord);
         if (tabPos.error) return;
         if (tabPos.graces) {
           // add graces to last note in notes

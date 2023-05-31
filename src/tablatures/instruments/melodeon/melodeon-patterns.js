@@ -19,8 +19,27 @@ function MelodeonPatterns(plugin) {
   if (!this.tuning) {
     this.tuning = ['CF'];
   }
+  
+  this.PrevChord = "";
 
   plugin.tuning = this.tuning;
+  
+  this.push_chords = new Array;
+  this.pull_chords = new Array;
+  if (this.tuning.includes('C')) {
+    this.push_chords.push("C");
+    this.pull_chords.push("G");
+    this.push_chords.push("A");
+    this.pull_chords.push("Dm");
+  }
+  if (this.tuning.includes('F') || this.tuning.includes('F5')) {
+    this.push_chords.push("F");
+    this.pull_chords.push("C");
+    this.push_chords.push("B♭");
+    this.pull_chords.push("B♭");
+  }
+  
+  
   this.strings = new StringPatterns(plugin);
 }
 
@@ -738,11 +757,23 @@ MelodeonPatterns.prototype.MarkBar = function () {
 	this.BarIndex++;
 }
 
-MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
+MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var error     = null; 
   var retNotes  = new Array;
   var retGraces = null;
   
+  if (chord && chord.length > 0)
+    PrevChord = chord[0].name;
+
+  can_push = this.push_chords.includes(PrevChord);
+  can_pull = this.pull_chords.includes(PrevChord);
+  if (!can_push && !can_pull) {
+    can_push = true;
+    can_pull = true;
+  }
+
+
+   
   var rowtuning1 = '';
   if (this.tuning.length >= 1)
      rowtuning1 = this.tuning[0];
@@ -756,20 +787,34 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
 	  
 	  for (var i = 0; i < notes.length; ++i) {
 		  var TNote = new TabNote.TabNote(notes[i].name);
-		  TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+		  TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
 		  var noteName = TNote.emitNoAccidentals();
 		if (TNote.acc > 0)
 		    noteName = "^" + noteName;
 		else if (TNote.acc < 0)
 		    noteName = "_" + noteName;
+		
+		_push1 = noteToPushButtonRow1(noteName, rowtuning1);
+		_push2 = noteToPushButtonRow2(noteName, rowtuning2);
+		_pull1 = noteToPullButtonRow1(noteName, rowtuning1);
+		_pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+		
+		if (!can_push) {
+			_push1 = "";
+			_push2 = "";
+		}
+		if (!can_pull) {
+			_pull1 = "";
+			_pull2 = "";
+		}
 		  
 		  this.aBars[this.BarIndex].notes.push(
 			  {
 				note : notes[i],
-				push1: noteToPushButtonRow1(noteName, rowtuning1),
-				push2: noteToPushButtonRow2(noteName, rowtuning2),
-				pull1: noteToPullButtonRow1(noteName, rowtuning1),
-				pull2: noteToPullButtonRow2(noteName, rowtuning2)
+				push1: _push1,
+				push2: _push2,
+				pull1: _pull1,
+				pull2: _pull2
 			  }
 		  );
 	  }
@@ -777,7 +822,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
   else {
 	if (this.aBars[this.BarIndex].chosen) {
 		var TNote = new TabNote.TabNote(notes[0].name);
-		TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+		TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
 		var noteName = TNote.emitNoAccidentals();
 		if (TNote.acc > 0)
 		    noteName = "^" + noteName;
@@ -788,6 +833,15 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces) {
 		push2 = noteToPushButtonRow2(noteName, rowtuning2);
 		pull1 = noteToPullButtonRow1(noteName, rowtuning1);
 		pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+		
+		if (!can_push) {
+			push1 = "";
+			push2 = "";
+		}
+		if (!can_pull) {
+			pull1 = "";
+			pull2 = "";
+		}
 
 		//Choose push or pull, prefer chosen option in the bar, except when this is not possible
 		Push   = this.aBars[this.BarIndex].push;

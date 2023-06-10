@@ -763,10 +763,10 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var retGraces = null;
   
   if (chord && chord.length > 0)
-    PrevChord = chord[0].name;
+    this.PrevChord = chord[0].name;
 
-  can_push = this.push_chords.includes(PrevChord);
-  can_pull = this.pull_chords.includes(PrevChord);
+  can_push = this.push_chords.includes(this.PrevChord);
+  can_pull = this.pull_chords.includes(this.PrevChord);
   if (!can_push && !can_pull) {
     can_push = true;
     can_pull = true;

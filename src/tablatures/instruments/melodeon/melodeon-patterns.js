@@ -29,7 +29,11 @@ function MelodeonPatterns(plugin) {
   if (this.tuning.includes('C')) {
     this.push_chords.push("C");
     this.pull_chords.push("G");
+    this.pull_chords.push("Gm");
+    this.pull_chords.push("Gm7");
     this.push_chords.push("A");
+    this.push_chords.push("Am");
+    this.push_chords.push("Am7");
     this.pull_chords.push("Dm");
   }
   if (this.tuning.includes('F') || this.tuning.includes('F5')) {

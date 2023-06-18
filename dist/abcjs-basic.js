@@ -15669,10 +15669,26 @@ function MelodeonPatterns(plugin) {
     this.pull_chords.push("B"); // B♭ pull
   }
 
-  this.strings = new StringPatterns(plugin);
+  //GC chords
+  if (this.tuning[0] == "G") {
+    this.push_chords.push("G"); // G push
+    this.pull_chords.push("D"); // D / Dm7
+    this.push_chords.push("E"); // E / Em7
+    this.pull_chords.push("A"); // Am
+  }
+
+  if (this.tuning[1] == "C" || this.tuning[1] == "C5") {
+    this.push_chords.push("C");
+    this.pull_chords.push("G"); // G pull
+    this.push_chords.push("F"); // F push
+    this.pull_chords.push("F"); // F pull
+  }
+
+  this.strings = {
+    accidentals: new Array()
+  };
 }
 function noteToPushButtonRow1(noteName, rowtuning) {
-  console.log("conv " + noteName);
   if (rowtuning == "C") {
     //Octave 3
     if (noteName == "G,") return "2";
@@ -15693,7 +15709,24 @@ function noteToPushButtonRow1(noteName, rowtuning) {
     if (noteName == "e'") return "10";
     if (noteName == "g'") return "11";
   } else if (rowtuning == "G") {
-    //TODO:
+    //Octave 3
+    if (noteName == "D,") return "2";
+    if (noteName == "G,") return "3";
+    if (noteName == "B,") return "4";
+
+    //Octave 4
+    if (noteName == "^C" || noteName == "_D") return "1";
+    if (noteName == "D") return "5";
+    if (noteName == "G") return "6";
+    if (noteName == "B") return "7";
+
+    //Octave 5
+    if (noteName == "d") return "8";
+    if (noteName == "g") return "9";
+    if (noteName == "b") return "10";
+
+    //Octave 6
+    if (noteName == "d'") return "11";
   } else if (rowtuning == "A") {
     //TODO:
   }
@@ -15720,7 +15753,22 @@ function noteToPullButtonRow1(noteName, rowtuning) {
     //Octave 6
     if (noteName == "d'") return "11";
   } else if (rowtuning == "G") {
-    //TODO:
+    //Octave 3
+    if (noteName == "^F," || noteName == "_G,") return "2";
+    if (noteName == "A,") return "3";
+
+    //Octave 4
+    if (noteName == "C") return "4";
+    if (noteName == "^D" || noteName == "_E") return "1";
+    if (noteName == "E") return "5";
+    if (noteName == "^F" || noteName == "_G") return "6";
+    if (noteName == "A") return "7";
+
+    //Octave 5
+    if (noteName == "c") return "8";
+    if (noteName == "e") return "9";
+    if (noteName == "^f" || noteName == "_g") return "10";
+    if (noteName == "a") return "11";
   } else if (rowtuning == "A") {
     //TODO:
   }
@@ -15743,8 +15791,22 @@ function noteToPushButtonRow2(noteName, rowtuning) {
     //Octave 6
     if (noteName == "f'") return "9'";
     if (noteName == "a'") return "10'";
-  } else if (rowtuning == "C") {
-    //TODO:
+  } else if (rowtuning == "C5") {
+    //Octave 4
+    if (noteName == "G,") return "2'";
+    if (noteName == "C") return "3'";
+    if (noteName == "E") return "4'";
+    if (noteName == "A") return "5'";
+    if (noteName == "^A" || noteName == "_B") return "1'";
+
+    //Octave 5
+    if (noteName == "c") return "6'";
+    if (noteName == "e") return "7'";
+    if (noteName == "g") return "8'";
+
+    //Octave 6
+    if (noteName == "c'") return "9'";
+    if (noteName == "e'") return "10'";
   } else if (rowtuning == "D") {
     //TODO:
   }
@@ -15752,25 +15814,37 @@ function noteToPushButtonRow2(noteName, rowtuning) {
 }
 function noteToPullButtonRow2(noteName, rowtuning) {
   if (rowtuning == "F5") {
-    //Octave 3
-    if (noteName == "E") return "2'";
-
     //Octave 4
+    if (noteName == "E") return "2'";
     if (noteName == "G") return "3'";
     if (noteName == "^A" || noteName == "_B") return "4'";
+
+    //Octave 5
     if (noteName == "c") return "5'";
     if (noteName == "^c" || noteName == "_d") return "1'";
     if (noteName == "e") return "6'";
-
-    //Octave 5
     if (noteName == "g") return "7'";
     if (noteName == "^a" || noteName == "_b") return "8'";
 
     //Octave 6
     if (noteName == "d'") return "9'";
     if (noteName == "e'") return "10'";
-  } else if (rowtuning == "C") {
-    //TODO:
+  } else if (rowtuning == "C5") {
+    //Octave 3
+    if (noteName == "B,") return "2'";
+
+    //Octave 4
+    if (noteName == "D") return "3'";
+    if (noteName == "F") return "4'";
+    if (noteName == "G") return "5'";
+    if (noteName == "^G" || noteName == "_A") return "1'";
+    if (noteName == "B") return "6'";
+
+    //Octave 5
+    if (noteName == "d") return "7'";
+    if (noteName == "f") return "8'";
+    if (noteName == "a") return "9'";
+    if (noteName == "b") return "10'";
   } else if (rowtuning == "D") {
     //TODO:
   }
@@ -16245,8 +16319,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       if (this.push_chords[i].startsWith(this.PrevChord[0])) can_push = true;
     }
   }
+  can_pull = false;
   if (!this.PrevChord.endsWith("-") && this.PrevChord.lenght != 0) {
-    can_pull = false;
     for (var i = 0; i < this.pull_chords.length; i++) {
       if (this.pull_chords[i].startsWith(this.PrevChord[0])) can_pull = true;
     }
@@ -16336,8 +16410,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   };
 };
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
-  var converter = this.strings;
-  return converter.stringToPitch(stringNumber);
+  if (stringNumber < 1) return 10.9;
+  return 5.3;
 };
 module.exports = MelodeonPatterns;
 
@@ -17585,7 +17659,10 @@ function buildTabName(self, dest) {
   var stringSemantics = self.plugin.semantics.strings;
   var controller = self.renderer.controller;
   var textSize = controller.getTextSize;
-  var tabName = stringSemantics.tabInfos(self.plugin);
+  var tabName = "";
+  if (typeof stringSemantics.tabInfos !== 'undefined') {
+    tabName = stringSemantics.tabInfos(self.plugin);
+  }
   var size = textSize.calc(tabName, 'tablabelfont', 'text instrumentname');
   dest.tabNameInfos = {
     textSize: size,

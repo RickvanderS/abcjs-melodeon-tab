@@ -15653,22 +15653,22 @@ function MelodeonPatterns(plugin) {
   plugin.tuning = this.tuning;
   this.push_chords = new Array();
   this.pull_chords = new Array();
-  if (this.tuning.includes('C')) {
-    this.push_chords.push("C");
-    this.pull_chords.push("G");
-    this.pull_chords.push("Gm");
-    this.pull_chords.push("Gm7");
-    this.push_chords.push("A");
-    this.push_chords.push("Am");
-    this.push_chords.push("Am7");
-    this.pull_chords.push("Dm");
+
+  //CF chords
+  if (this.tuning[0] == "C") {
+    this.push_chords.push("C"); // C push
+    this.pull_chords.push("G"); // G / Gm7
+    this.push_chords.push("A"); // A / Am7
+    this.pull_chords.push("D"); // Dm
   }
-  if (this.tuning.includes('F') || this.tuning.includes('F5')) {
+
+  if (this.tuning[1] == "F" || this.tuning[1] == "F5") {
     this.push_chords.push("F");
-    this.pull_chords.push("C");
-    this.push_chords.push("B♭");
-    this.pull_chords.push("B♭");
+    this.pull_chords.push("C"); // C pull
+    this.push_chords.push("B"); // B♭ push
+    this.pull_chords.push("B"); // B♭ pull
   }
+
   this.strings = new StringPatterns(plugin);
 }
 function noteToPushButtonRow1(noteName, rowtuning) {
@@ -16239,8 +16239,18 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var retNotes = new Array();
   var retGraces = null;
   if (chord && chord.length > 0) this.PrevChord = chord[0].name;
-  can_push = this.push_chords.includes(this.PrevChord);
-  can_pull = this.pull_chords.includes(this.PrevChord);
+  can_push = false;
+  if (!this.PrevChord.endsWith("+") && this.PrevChord.lenght != 0) {
+    for (var i = 0; i < this.push_chords.length; i++) {
+      if (this.push_chords[i].startsWith(this.PrevChord[0])) can_push = true;
+    }
+  }
+  if (!this.PrevChord.endsWith("-") && this.PrevChord.lenght != 0) {
+    can_pull = false;
+    for (var i = 0; i < this.pull_chords.length; i++) {
+      if (this.pull_chords[i].startsWith(this.PrevChord[0])) can_pull = true;
+    }
+  }
   if (!can_push && !can_pull) {
     can_push = true;
     can_pull = true;

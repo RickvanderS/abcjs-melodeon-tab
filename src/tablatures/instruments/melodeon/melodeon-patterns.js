@@ -881,7 +881,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     this.PrevChord = chord[0].name;
   
   can_push = false;
-  if (!this.PrevChord.endsWith("+") && this.PrevChord.lenght != 0) {
+  if (!this.PrevChord.endsWith("<") && this.PrevChord.lenght != 0) {
     for (var i = 0; i < this.push_chords.length; i++) {
       if (this.push_chords[i].startsWith(this.PrevChord[0]))
         can_push = true;
@@ -889,7 +889,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   }
   
   can_pull = false;
-  if (!this.PrevChord.endsWith("-") && this.PrevChord.lenght != 0) {
+  if (!this.PrevChord.endsWith(">") && this.PrevChord.lenght != 0) {
     for (var i = 0; i < this.pull_chords.length; i++) {
       if (this.pull_chords[i].startsWith(this.PrevChord[0]))
         can_pull = true;

@@ -9,6 +9,12 @@ var addChord = function (getTextSize, abselem, elem, roomTaken, roomTakenRight, 
 		var chords = elem.chord[i].name.split("\n");
 		for (var j = chords.length - 1; j >= 0; j--) { // parse these in opposite order because we place them from bottom to top.
 			var chord = chords[j];
+			
+			//Strip melodeon push/pull indicator
+			if (chord.endsWith("<") || chord.endsWith(">")) {
+				chord = chord.substring(0, chord.length - 1);
+			}
+			
 			var x = 0;
 			var y;
 			var font;

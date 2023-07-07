@@ -480,9 +480,10 @@ MelodeonPatterns.prototype.StartScan = function () {
 		//Clear
 		this.aBars = new Array;
 		this.BarIndex = -1;
-		
+		this.Scan = true;
+		this.MarkBar();
 	}
-	this.Scan = true;
+	
 }
 
 function PrevNonEmptyBarIndex(aBars, Index) {
@@ -878,10 +879,12 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var retGraces = null;
   
   if (chord && chord.length > 0)
-    this.PrevChord = chord[0].name;
+    this.PrevChord = chord[0].name.trim();
   
   can_push = false;
-  if (!this.PrevChord.endsWith("<") && this.PrevChord.lenght != 0) {
+  if (!this.PrevChord.endsWith("<")) {
+    if (this.PrevChord.length == 0 || this.PrevChord == ">")
+      can_push = true;
     for (var i = 0; i < this.push_chords.length; i++) {
       if (this.push_chords[i].startsWith(this.PrevChord[0]))
         can_push = true;
@@ -889,7 +892,9 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   }
   
   can_pull = false;
-  if (!this.PrevChord.endsWith(">") && this.PrevChord.lenght != 0) {
+  if (!this.PrevChord.endsWith(">")) {
+    if (this.PrevChord.length == 0 || this.PrevChord == "<")
+      can_pull = true;
     for (var i = 0; i < this.pull_chords.length; i++) {
       if (this.pull_chords[i].startsWith(this.PrevChord[0]))
         can_pull = true;
@@ -926,14 +931,25 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		_pull1 = noteToPullButtonRow1(noteName, rowtuning1);
 		_pull2 = noteToPullButtonRow2(noteName, rowtuning2);
 		
-		if (!can_push) {
+		var ClearPush = false;
+		if (!can_push && (_pull1.length != 0 || _pull2.length != 0)) {
+			ClearPush = true;
+		}
+		var ClearPull = false;
+		if (!can_pull && (_push1.length != 0 || _push2.length != 0)) {
+			ClearPull = true;
+		}
+		
+		if (ClearPush) {
 			_push1 = "";
 			_push2 = "";
 		}
-		if (!can_pull) {
+		if (ClearPull) {
 			_pull1 = "";
 			_pull2 = "";
 		}
+
+
 		  
 		  this.aBars[this.BarIndex].notes.push(
 			  {
@@ -961,11 +977,20 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		pull1 = noteToPullButtonRow1(noteName, rowtuning1);
 		pull2 = noteToPullButtonRow2(noteName, rowtuning2);
 		
-		if (!can_push) {
+		var ClearPush = false;
+		if (!can_push && (pull1.length != 0 || pull2.length != 0)) {
+			ClearPush = true;
+		}
+		var ClearPull = false;
+		if (!can_pull && (push1.length != 0 || push2.length != 0)) {
+			ClearPull = true;
+		}
+		
+		if (ClearPush) {
 			push1 = "";
 			push2 = "";
 		}
-		if (!can_pull) {
+		if (ClearPull) {
 			pull1 = "";
 			pull2 = "";
 		}

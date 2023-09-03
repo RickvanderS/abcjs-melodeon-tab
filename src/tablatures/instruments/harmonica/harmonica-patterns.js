@@ -159,8 +159,9 @@ HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
 };
 
 HarmonicaPatterns.prototype.stringToPitch = function (stringNumber) {
-  var converter = this.strings;
-  return converter.stringToPitch(stringNumber);
+  return 9.7;
+  //var converter = this.strings;
+  //return converter.stringToPitch(stringNumber);
 };
 
 module.exports = HarmonicaPatterns;

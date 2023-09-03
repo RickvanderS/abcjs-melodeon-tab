@@ -439,7 +439,7 @@ MelodeonPatterns.prototype.notesToNumber2 = function (notes) {
     //If a way was found add it
     if (Button != '') {
       //Add the tab note
-      var stringNumber = Push ? 0.3 : 1.0;
+      var stringNumber = Push ? -1 : 1;
       var note = new TabNote.TabNote(notes[0].name);
       var number = {
         num: Button,
@@ -1018,7 +1018,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		}
 		
       //Add the tab note
-      var stringNumber = Push ? 0.3 : 1.0;
+      var stringNumber = Push ? -1 : 1;
       var note = new TabNote.TabNote(notes[0].name);
       var number = {
         num: Button,
@@ -1045,8 +1045,9 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
   if (stringNumber < 1)
-    return 10.9;
-  return 5.3;
+    return 14.7;
+  else
+    return 9.7;
 };
 
 module.exports = MelodeonPatterns;

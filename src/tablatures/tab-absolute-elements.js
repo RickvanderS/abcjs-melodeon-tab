@@ -50,7 +50,7 @@ function cloneAbsoluteAndRelatives(absSrc, plugin) {
 
 function buildTabAbsolute(plugin, absX, relX) {
   var tabIcon = 'tab.tiny';
-  var tabYPos = 7.5;
+  var tabYPos = 10;
   if (plugin.isTabBig) {
     tabIcon = 'tab.big';
     tabYPos = 10;

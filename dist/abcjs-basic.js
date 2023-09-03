@@ -15503,9 +15503,11 @@ HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
   };
 };
 HarmonicaPatterns.prototype.stringToPitch = function (stringNumber) {
-  var converter = this.strings;
-  return converter.stringToPitch(stringNumber);
+  return 9.7;
+  //var converter = this.strings;
+  //return converter.stringToPitch(stringNumber);
 };
+
 module.exports = HarmonicaPatterns;
 
 /***/ }),
@@ -15526,7 +15528,7 @@ function HarmonicaTablature(numLines, lineSpace) {
   this.numLines = numLines;
   this.lineSpace = lineSpace;
   this.verticalSize = this.numLines * this.lineSpace;
-  var pitch = 3;
+  var pitch = 5;
   this.bar = {
     pitch: pitch,
     pitch2: lineSpace * numLines,
@@ -15548,18 +15550,17 @@ HarmonicaTablature.prototype.bypass = function (line) {
 HarmonicaTablature.prototype.setRelative = function (child, relative, first) {
   switch (child.type) {
     case 'bar':
-      relative.pitch = this.bar.pitch + 3;
+      relative.pitch = this.bar.pitch;
       relative.pitch2 = this.bar.pitch2;
       relative.height = this.height;
       break;
     case 'symbol':
-      var top = this.bar.pitch2 * 2.5;
       if (child.name == 'dots.dot') {
         if (first) {
-          relative.pitch = top - 10;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 4 * 1;
           return false;
         } else {
-          relative.pitch = top - 13;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 4 * 3;
           return true;
         }
       }
@@ -15595,8 +15596,8 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   var _super = new TabCommon(abcTune, tuneNumber, params);
   this._super = _super;
   this.abcTune = abcTune;
-  this.linePitch = 8;
-  this.nbLines = 1;
+  this.linePitch = 5;
+  this.nbLines = 2;
   this.isTabBig = false;
   this.capo = params.capo;
   this.transpose = params.visualTranspose;
@@ -15953,7 +15954,7 @@ MelodeonPatterns.prototype.notesToNumber2 = function (notes) {
     //If a way was found add it
     if (Button != '') {
       //Add the tab note
-      var stringNumber = Push ? 0.3 : 1.0;
+      var stringNumber = Push ? -1 : 1;
       var note = new TabNote.TabNote(notes[0].name);
       var number = {
         num: Button,
@@ -16412,7 +16413,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       }
 
       //Add the tab note
-      var stringNumber = Push ? 0.3 : 1.0;
+      var stringNumber = Push ? -1 : 1;
       var note = new TabNote.TabNote(notes[0].name);
       var number = {
         num: Button,
@@ -16429,8 +16430,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   };
 };
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
-  if (stringNumber < 1) return 10.9;
-  return 5.3;
+  if (stringNumber < 1) return 14.7;else return 9.7;
 };
 module.exports = MelodeonPatterns;
 
@@ -16452,7 +16452,7 @@ function MelodeonTablature(numLines, lineSpace) {
   this.numLines = numLines;
   this.lineSpace = lineSpace;
   this.verticalSize = this.numLines * this.lineSpace;
-  var pitch = 3;
+  var pitch = 5;
   this.bar = {
     pitch: pitch,
     pitch2: lineSpace * numLines,
@@ -16474,7 +16474,7 @@ MelodeonTablature.prototype.bypass = function (line) {
 MelodeonTablature.prototype.setRelative = function (child, relative, first) {
   switch (child.type) {
     case 'bar':
-      relative.pitch = this.bar.pitch + 3;
+      relative.pitch = this.bar.pitch;
       relative.pitch2 = this.bar.pitch2;
       relative.height = this.height;
       break;
@@ -16482,10 +16482,10 @@ MelodeonTablature.prototype.setRelative = function (child, relative, first) {
       var top = this.bar.pitch2 * 2.5;
       if (child.name == 'dots.dot') {
         if (first) {
-          relative.pitch = top - 10;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 3;
           return false;
         } else {
-          relative.pitch = top - 13;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 5;
           return true;
         }
       }
@@ -16521,8 +16521,8 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   var _super = new TabCommon(abcTune, tuneNumber, params);
   this._super = _super;
   this.abcTune = abcTune;
-  this.linePitch = 8;
-  this.nbLines = 1;
+  this.linePitch = 5;
+  this.nbLines = 3;
   this.isTabBig = false;
   this.capo = params.capo;
   this.transpose = params.visualTranspose;
@@ -17304,7 +17304,7 @@ function cloneAbsoluteAndRelatives(absSrc, plugin) {
 }
 function buildTabAbsolute(plugin, absX, relX) {
   var tabIcon = 'tab.tiny';
-  var tabYPos = 7.5;
+  var tabYPos = 10;
   if (plugin.isTabBig) {
     tabIcon = 'tab.big';
     tabYPos = 10;
@@ -17824,27 +17824,27 @@ TabRenderer.prototype.doScan = function () {
   }
   var staffGroup = this.line.staffGroup;
   var voices = staffGroup.voices;
-  var firstVoice = voices[0];
-  // take lyrics into account if any
-  var lyricsHeight = getLyricHeight(firstVoice);
-  var padd = 3;
-  var prevIndex = this.staffIndex;
-  var previousStaff = staffGroup.staffs[prevIndex];
-  var tabTop = this.tabSize + padd - previousStaff.bottom - lyricsHeight;
-  if (previousStaff.isTabStaff) {
-    tabTop = previousStaff.top;
-  }
-  var staffGroupInfos = {
-    bottom: -1,
-    isTabStaff: true,
-    specialY: initSpecialY(),
-    lines: this.plugin.nbLines,
-    linePitch: this.plugin.linePitch,
-    dy: 0.15,
-    top: tabTop
-  };
+  /*  var firstVoice = voices[0];
+    // take lyrics into account if any
+    var lyricsHeight = getLyricHeight(firstVoice);
+    var padd = 3;
+    var prevIndex = this.staffIndex;
+    var previousStaff = staffGroup.staffs[prevIndex];
+    var tabTop = this.tabSize + padd - previousStaff.bottom - lyricsHeight;
+    if (previousStaff.isTabStaff) {
+      tabTop = previousStaff.top;
+    }
+    var staffGroupInfos = {
+      bottom: -1,
+      isTabStaff: true,
+      specialY: initSpecialY(),
+      lines: this.plugin.nbLines,
+      linePitch: this.plugin.linePitch,
+      dy: 0.15,
+      top: tabTop,
+    };*/
   var nextTabPos = 0;
-  staffGroup.height += this.tabSize + padd;
+  //  staffGroup.height += this.tabSize + padd;
   var parentStaff = getLastStaff(staffGroup.staffs, nextTabPos);
   var nbVoices = 1;
   if (isMultiVoiceSingleStaff(staffGroup.staffs, parentStaff)) {
@@ -17854,14 +17854,14 @@ TabRenderer.prototype.doScan = function () {
   // build from staff
   var outvoices = [];
   for (var ii = 0; ii < nbVoices; ii++) {
-    var tabVoice = new VoiceElement(0, 0);
-    var nameHeight = buildTabName(this, tabVoice) / spacing.STEP;
-    staffGroup.staffs[this.staffIndex].top += nameHeight;
-    staffGroup.height += nameHeight * spacing.STEP;
-    tabVoice.staff = staffGroupInfos;
+    //    var tabVoice = new VoiceElement(0, 0);
+    //    var nameHeight = buildTabName(this, tabVoice) / spacing.STEP;
+    //    staffGroup.staffs[this.staffIndex].top += nameHeight;
+    //    staffGroup.height += nameHeight * spacing.STEP;
+    //    tabVoice.staff = staffGroupInfos;
     //    voices.splice(voices.length, 0, tabVoice);
-    var keySig = checkVoiceKeySig(voices, this.staffIndex);
-    outvoices[ii] = [];
+    //    var keySig = checkVoiceKeySig(voices, this.staffIndex);
+    //    outvoices[ii] = [];
     this.absolutes.scan(this.plugin, voices, ii, this.staffIndex);
   }
 };

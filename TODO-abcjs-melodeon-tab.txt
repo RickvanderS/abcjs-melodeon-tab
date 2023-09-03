@@ -1,3 +1,6 @@
+- Draw arrows for push and pull after the TAB symbol
+- Do not repeat same note connected with - over |
 - Minimize the number of changes in non-melodeon source files
 - Different melodeon tunings (calculated from patterns instead of hard coding)
+- Melodeon button rotations optional 5' 1 1' etc.
 - Test other instruments still work

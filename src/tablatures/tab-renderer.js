@@ -197,7 +197,7 @@ TabRenderer.prototype.doScan = function () {
   var staffGroup = this.line.staffGroup;
 
   var voices = staffGroup.voices;
-  var firstVoice = voices[0];
+/*  var firstVoice = voices[0];
   // take lyrics into account if any
   var lyricsHeight = getLyricHeight(firstVoice);
   var padd = 3;
@@ -215,26 +215,26 @@ TabRenderer.prototype.doScan = function () {
     linePitch: this.plugin.linePitch,
     dy: 0.15,
     top: tabTop,
-  };
+  };*/
   var nextTabPos = 0;
-  staffGroup.height += this.tabSize + padd;
+//  staffGroup.height += this.tabSize + padd;
   var parentStaff = getLastStaff(staffGroup.staffs, nextTabPos); 
   var nbVoices = 1;
   if (isMultiVoiceSingleStaff(staffGroup.staffs,parentStaff)) {
     nbVoices = parentStaff.voices.length;
-  }  
+  }
   
   // build from staff
   var outvoices = [];
   for (var ii = 0; ii < nbVoices; ii++) {
-    var tabVoice = new VoiceElement(0, 0);
-    var nameHeight = buildTabName(this, tabVoice) / spacing.STEP;
-    staffGroup.staffs[this.staffIndex].top += nameHeight;
-    staffGroup.height += nameHeight * spacing.STEP;
-    tabVoice.staff = staffGroupInfos;
+//    var tabVoice = new VoiceElement(0, 0);
+//    var nameHeight = buildTabName(this, tabVoice) / spacing.STEP;
+//    staffGroup.staffs[this.staffIndex].top += nameHeight;
+//    staffGroup.height += nameHeight * spacing.STEP;
+//    tabVoice.staff = staffGroupInfos;
 //    voices.splice(voices.length, 0, tabVoice);
-    var keySig = checkVoiceKeySig(voices, this.staffIndex);
-    outvoices[ii] = [];
+//    var keySig = checkVoiceKeySig(voices, this.staffIndex);
+//    outvoices[ii] = [];
     this.absolutes.scan(this.plugin, voices, ii, this.staffIndex);
   }
 }

@@ -9,7 +9,7 @@ function MelodeonTablature(numLines, lineSpace) {
   this.numLines = numLines;
   this.lineSpace = lineSpace;
   this.verticalSize = this.numLines * this.lineSpace;
-  var pitch = 3;
+  var pitch = 5;
   this.bar = {
     pitch: pitch,
     pitch2: lineSpace * numLines,
@@ -33,7 +33,7 @@ MelodeonTablature.prototype.bypass = function (line) {
 MelodeonTablature.prototype.setRelative = function (child, relative, first) {
   switch (child.type) {
     case 'bar':
-      relative.pitch = this.bar.pitch + 3;
+      relative.pitch = this.bar.pitch;
       relative.pitch2 = this.bar.pitch2;
       relative.height = this.height;
       break;
@@ -41,10 +41,10 @@ MelodeonTablature.prototype.setRelative = function (child, relative, first) {
       var top = this.bar.pitch2 * 2.5;
       if (child.name == 'dots.dot') {
         if (first) {
-          relative.pitch = top - 10;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 3;
           return false;
         } else {
-          relative.pitch = top - 13;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 5;
           return true;
         }
       }

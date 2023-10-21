@@ -15635,9 +15635,147 @@ module.exports = AbcHarmonicaTab;
 
 var StringPatterns = __webpack_require__(/*! ../string-patterns */ "./src/tablatures/instruments/string-patterns.js");
 var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instruments/tab-note.js");
+var transposeChordName = __webpack_require__(/*! ../../../parse/transpose-chord */ "./src/parse/transpose-chord.js");
+var allNotes = __webpack_require__(/*! ../../../parse/all-notes */ "./src/parse/all-notes.js");
 function MelodeonPatterns(plugin) {
   this.tuning = plugin._super.params.tuning;
   this.measureAccidentals = {};
+
+  //Set default tuning if not specified
+  if (!this.tuning) {
+    this.tuning = new Array();
+    this.tuning.push("G");
+    this.tuning.push("C5");
+  }
+  plugin.tuning = this.tuning;
+
+  //For non-GC figure out how to transpose
+  var TransposeHalfSteps = 0;
+  if (this.tuning[0].substring(0, 2) == "Eb" && this.tuning[1].substring(0, 2) == "Ab") TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "E" && this.tuning[1].substring(0, 1) == "A") TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "F" && this.tuning[1].substring(0, 2) == "Bb") TransposeHalfSteps = -2;else if (this.tuning[0].substring(0, 1) == "G" && this.tuning[1].substring(0, 2) == "bB") TransposeHalfSteps = -1;else if (this.tuning[0].substring(0, 1) == "G" && this.tuning[1].substring(0, 1) == "C")
+    //France, South America
+    TransposeHalfSteps = 0;else if (this.tuning[0].substring(0, 2) == "Ab" && this.tuning[1].substring(0, 2) == "Db") TransposeHalfSteps = 1;else if (this.tuning[0].substring(0, 1) == "A" && this.tuning[1].substring(0, 1) == "D") TransposeHalfSteps = 2;else if (this.tuning[0].substring(0, 2) == "Bb" && this.tuning[1].substring(0, 2) == "Eb") TransposeHalfSteps = 3;else if (this.tuning[0].substring(0, 1) == "B" && this.tuning[1].substring(0, 1) == "E") TransposeHalfSteps = 4;else if (this.tuning[0].substring(0, 1) == "C" && this.tuning[1].substring(0, 1) == "F")
+    //Netherlands, Germany
+    TransposeHalfSteps = 5;else if (this.tuning[0].substring(0, 2) == "Dd" && this.tuning[1].substring(0, 2) == "Gb") TransposeHalfSteps = 6;else if (this.tuning[0].substring(0, 1) == "D" && this.tuning[1].substring(0, 1) == "G")
+    //English
+    TransposeHalfSteps = 7;else ; //Error
+
+  //Define left hand chords for GC melodeon
+  this.push_chords = new Array();
+  this.pull_chords = new Array();
+  this.push_chords.push("G"); // G push
+  this.pull_chords.push("D"); // D / Dm7
+  this.push_chords.push("E"); // E / Em7
+  this.pull_chords.push("A"); // Am
+  this.push_chords.push("C");
+  this.pull_chords.push("G"); // G pull
+  this.push_chords.push("F"); // F push
+  this.pull_chords.push("F"); // F pull
+
+  //Define right hand buttons for GC melodeon
+  var push_row1 = new Array();
+  var pull_row1 = new Array();
+  push_row1.push("^C"); // 1
+  pull_row1.push("_E");
+  push_row1.push("D,"); // 2
+  pull_row1.push("^F,");
+  push_row1.push("G,"); // 3
+  pull_row1.push("A,");
+  push_row1.push("B,"); // 4
+  pull_row1.push("C");
+  push_row1.push("D"); // 5
+  pull_row1.push("E");
+  push_row1.push("G"); // 6
+  pull_row1.push("^F");
+  push_row1.push("B"); // 7
+  pull_row1.push("A");
+  push_row1.push("d"); // 8
+  pull_row1.push("c");
+  push_row1.push("g"); // 9
+  pull_row1.push("e");
+  push_row1.push("b"); // 10
+  pull_row1.push("^f");
+  push_row1.push("d'"); // 11
+  pull_row1.push("a");
+  var push_row2 = new Array();
+  var pull_row2 = new Array();
+  push_row2.push("_B"); // 1'
+  pull_row2.push("^G");
+  push_row2.push("G,"); // 2'
+  pull_row2.push("B,");
+  push_row2.push("C"); // 3'
+  pull_row2.push("D");
+  push_row2.push("E"); // 4'
+  pull_row2.push("F");
+  push_row2.push("G"); // 5'
+  pull_row2.push("A");
+  push_row2.push("c"); // 6'
+  pull_row2.push("B");
+  push_row2.push("e"); // 7'
+  pull_row2.push("d");
+  push_row2.push("g"); // 8'
+  pull_row2.push("f");
+  push_row2.push("c'"); // 9'
+  pull_row2.push("a");
+  push_row2.push("e'"); // 10'
+  pull_row2.push("b");
+
+  //Transpose left hand chords if required
+  if (TransposeHalfSteps != 0) {
+    for (var i = 0; i < this.push_chords.length; ++i) {
+      this.push_chords[i] = transposeChordName(this.push_chords[i], TransposeHalfSteps, true, true);
+    }
+    for (var _i = 0; _i < this.pull_chords.length; ++_i) {
+      this.pull_chords[_i] = transposeChordName(this.pull_chords[_i], TransposeHalfSteps, true, true);
+    }
+  }
+
+  //Define right hand notes from the note names, transpose if required
+  var TransposeLookup = CreateTransposeLookup();
+  this.push_row1 = new Array();
+  for (var _i2 = 0; _i2 < push_row1.length; ++_i2) {
+    this.push_row1.push(TransposeNameToNote(push_row1[_i2], TransposeHalfSteps, TransposeLookup));
+  }
+  this.pull_row1 = new Array();
+  for (var _i3 = 0; _i3 < pull_row1.length; ++_i3) {
+    this.pull_row1.push(TransposeNameToNote(pull_row1[_i3], TransposeHalfSteps, TransposeLookup));
+  }
+  this.push_row2 = new Array();
+  for (var _i4 = 0; _i4 < push_row2.length; ++_i4) {
+    this.push_row2.push(TransposeNameToNote(push_row2[_i4], TransposeHalfSteps, TransposeLookup));
+  }
+  this.pull_row2 = new Array();
+  for (var _i5 = 0; _i5 < pull_row2.length; ++_i5) {
+    this.pull_row2.push(TransposeNameToNote(pull_row2[_i5], TransposeHalfSteps, TransposeLookup));
+  }
+
+  //Handle button push/pull inversions for each row
+  var TuneRow1 = this.tuning[0];
+  for (var _i6 = this.push_row1.length; _i6 >= 1; --_i6) {
+    var Pos = TuneRow1.search(_i6.toString());
+    if (Pos >= 0) {
+      var Tmp = this.push_row1[_i6 - 1];
+      this.push_row1[_i6 - 1] = this.pull_row1[_i6 - 1];
+      this.pull_row1[_i6 - 1] = Tmp;
+      TuneRow1 = TuneRow1.substr(0, Pos) + TuneRow1.substr(Pos + _i6.toString().length);
+    }
+  }
+  var TuneRow2 = this.tuning[1];
+  for (var _i7 = this.push_row2.length; _i7 >= 1; --_i7) {
+    var _Pos = TuneRow2.search(_i7.toString());
+    if (_Pos >= 0) {
+      var _Tmp = this.push_row2[_i7 - 1];
+      this.push_row2[_i7 - 1] = this.pull_row2[_i7 - 1];
+      this.pull_row2[_i7 - 1] = _Tmp;
+      TuneRow2 = TuneRow2.substr(0, _Pos) + TuneRow2.substr(_Pos + _i7.toString().length);
+    }
+  }
+
+  //console.log(this.push_row1);
+  //console.log(this.pull_row1);
+  //console.log(this.push_row2);
+  //console.log(this.pull_row2);
+
+  //State variables
   this.PrevBar = true;
   this.PrevPush = true;
   this.PrevRow = 0;
@@ -15647,210 +15785,63 @@ function MelodeonPatterns(plugin) {
   this.Scan = false;
   this.BarIndex = -1;
   this.aBars = new Array();
-  if (!this.tuning) {
-    this.tuning = ['CF'];
-  }
   this.PrevChord = "";
-  plugin.tuning = this.tuning;
-  this.push_chords = new Array();
-  this.pull_chords = new Array();
-
-  //CF chords
-  if (this.tuning[0] == "C") {
-    this.push_chords.push("C"); // C push
-    this.pull_chords.push("G"); // G / Gm7
-    this.push_chords.push("A"); // A / Am7
-    this.pull_chords.push("D"); // Dm
-  }
-
-  if (this.tuning[1] == "F" || this.tuning[1] == "F5") {
-    this.push_chords.push("F");
-    this.pull_chords.push("C"); // C pull
-    this.push_chords.push("B"); // B♭ push
-    this.pull_chords.push("B"); // B♭ pull
-  }
-
-  //GC chords
-  if (this.tuning[0] == "G") {
-    this.push_chords.push("G"); // G push
-    this.pull_chords.push("D"); // D / Dm7
-    this.push_chords.push("E"); // E / Em7
-    this.pull_chords.push("A"); // Am
-  }
-
-  if (this.tuning[1] == "C" || this.tuning[1] == "C5") {
-    this.push_chords.push("C");
-    this.pull_chords.push("G"); // G pull
-    this.push_chords.push("F"); // F push
-    this.pull_chords.push("F"); // F pull
-  }
-
   this.strings = {
     accidentals: new Array()
   };
 }
-function noteToPushButtonRow1(noteName, rowtuning) {
-  if (rowtuning == "C") {
-    //Octave 3
-    if (noteName == "G,") return "2";
+function CreateTransposeLookup() {
+  TransposeLookup = new Array();
+  for (var i = 0; i < 7 * 8; ++i) {
+    noteName = allNotes.noteName(i);
+    TransposeLookup.push({
+      SharpName: noteName,
+      FlatName: noteName
+    });
+    note = allNotes.noteName(i).toLowerCase()[0];
+    if (note == 'c' || note == 'd' || note == 'f' || note == 'g' || note == 'a') {
+      NextNoteName = allNotes.noteName(i + 1);
+      TransposeLookup.push({
+        SharpName: "^" + noteName,
+        FlatName: "_" + NextNoteName
+      });
+    }
+  }
+  return TransposeLookup;
+}
+function TransposeNameToNote(noteName, TransposeHalfSteps, TransposeLookup) {
+  for (var i = 0; i < TransposeLookup.length; ++i) {
+    if (TransposeLookup[i].SharpName == noteName || TransposeLookup[i].FlatName == noteName) return TransposeLookup[i + TransposeHalfSteps];
+  }
 
-    //Octave 4
-    if (noteName == "C") return "3";
-    if (noteName == "E") return "4";
-    if (noteName == "^F" || noteName == "_G") return "1";
-    if (noteName == "G") return "5";
-
-    //Octave 5
-    if (noteName == "c") return "6";
-    if (noteName == "e") return "7";
-    if (noteName == "g") return "8";
-
-    //Octave 6
-    if (noteName == "c'") return "9";
-    if (noteName == "e'") return "10";
-    if (noteName == "g'") return "11";
-  } else if (rowtuning == "G") {
-    //Octave 3
-    if (noteName == "D,") return "2";
-    if (noteName == "G,") return "3";
-    if (noteName == "B,") return "4";
-
-    //Octave 4
-    if (noteName == "^C" || noteName == "_D") return "1";
-    if (noteName == "D") return "5";
-    if (noteName == "G") return "6";
-    if (noteName == "B") return "7";
-
-    //Octave 5
-    if (noteName == "d") return "8";
-    if (noteName == "g") return "9";
-    if (noteName == "b") return "10";
-
-    //Octave 6
-    if (noteName == "d'") return "11";
-  } else if (rowtuning == "A") {
-    //TODO:
+  //Error
+  console.log("err");
+  return {};
+}
+function noteToButton(noteName, LookupArray) {
+  for (var i = 0; i < LookupArray.length; ++i) {
+    if (LookupArray[i].SharpName == noteName || LookupArray[i].FlatName == noteName) {
+      return (i + 1).toString();
+    }
   }
   return "";
 }
-function noteToPullButtonRow1(noteName, rowtuning) {
-  if (rowtuning == "C") {
-    //Octave 3
-    if (noteName == "B,") return "2";
-
-    //Octave 4
-    if (noteName == "D") return "3";
-    if (noteName == "F") return "4";
-    if (noteName == "^G" || noteName == "_A") return "1";
-    if (noteName == "A") return "5";
-    if (noteName == "B") return "6";
-
-    //Octave 5
-    if (noteName == "d") return "7";
-    if (noteName == "f") return "8";
-    if (noteName == "a") return "9";
-    if (noteName == "b") return "10";
-
-    //Octave 6
-    if (noteName == "d'") return "11";
-  } else if (rowtuning == "G") {
-    //Octave 3
-    if (noteName == "^F," || noteName == "_G,") return "2";
-    if (noteName == "A,") return "3";
-
-    //Octave 4
-    if (noteName == "C") return "4";
-    if (noteName == "^D" || noteName == "_E") return "1";
-    if (noteName == "E") return "5";
-    if (noteName == "^F" || noteName == "_G") return "6";
-    if (noteName == "A") return "7";
-
-    //Octave 5
-    if (noteName == "c") return "8";
-    if (noteName == "e") return "9";
-    if (noteName == "^f" || noteName == "_g") return "10";
-    if (noteName == "a") return "11";
-  } else if (rowtuning == "A") {
-    //TODO:
-  }
-  return "";
-}
-function noteToPushButtonRow2(noteName, rowtuning) {
-  if (rowtuning == "F5") {
-    //Octave 4
-    if (noteName == "C") return "2'";
-    if (noteName == "F") return "3'";
-    if (noteName == "A") return "4'";
-    if (noteName == "d") return "5'";
-
-    //Octave 5
-    if (noteName == "^d" || noteName == "_e") return "1'";
-    if (noteName == "f") return "6'";
-    if (noteName == "a") return "7'";
-    if (noteName == "c'") return "8'";
-
-    //Octave 6
-    if (noteName == "f'") return "9'";
-    if (noteName == "a'") return "10'";
-  } else if (rowtuning == "C5") {
-    //Octave 4
-    if (noteName == "G,") return "2'";
-    if (noteName == "C") return "3'";
-    if (noteName == "E") return "4'";
-    if (noteName == "A") return "5'";
-    if (noteName == "^A" || noteName == "_B") return "1'";
-
-    //Octave 5
-    if (noteName == "c") return "6'";
-    if (noteName == "e") return "7'";
-    if (noteName == "g") return "8'";
-
-    //Octave 6
-    if (noteName == "c'") return "9'";
-    if (noteName == "e'") return "10'";
-  } else if (rowtuning == "D") {
-    //TODO:
-  }
-  return "";
-}
-function noteToPullButtonRow2(noteName, rowtuning) {
-  if (rowtuning == "F5") {
-    //Octave 4
-    if (noteName == "E") return "2'";
-    if (noteName == "G") return "3'";
-    if (noteName == "^A" || noteName == "_B") return "4'";
-
-    //Octave 5
-    if (noteName == "c") return "5'";
-    if (noteName == "^c" || noteName == "_d") return "1'";
-    if (noteName == "e") return "6'";
-    if (noteName == "g") return "7'";
-    if (noteName == "^a" || noteName == "_b") return "8'";
-
-    //Octave 6
-    if (noteName == "d'") return "9'";
-    if (noteName == "e'") return "10'";
-  } else if (rowtuning == "C5") {
-    //Octave 3
-    if (noteName == "B,") return "2'";
-
-    //Octave 4
-    if (noteName == "D") return "3'";
-    if (noteName == "F") return "4'";
-    if (noteName == "G") return "5'";
-    if (noteName == "^G" || noteName == "_A") return "1'";
-    if (noteName == "B") return "6'";
-
-    //Octave 5
-    if (noteName == "d") return "7'";
-    if (noteName == "f") return "8'";
-    if (noteName == "a") return "9'";
-    if (noteName == "b") return "10'";
-  } else if (rowtuning == "D") {
-    //TODO:
-  }
-  return "";
-}
+MelodeonPatterns.prototype.noteToPushButtonRow1 = function (noteName) {
+  return noteToButton(noteName, this.push_row1);
+};
+MelodeonPatterns.prototype.noteToPullButtonRow1 = function (noteName) {
+  return noteToButton(noteName, this.pull_row1);
+};
+MelodeonPatterns.prototype.noteToPushButtonRow2 = function (noteName) {
+  var ButtonNumber = noteToButton(noteName, this.push_row2);
+  if (ButtonNumber.length > 0) ButtonNumber += "'";
+  return ButtonNumber;
+};
+MelodeonPatterns.prototype.noteToPullButtonRow2 = function (noteName) {
+  var ButtonNumber = noteToButton(noteName, this.pull_row2);
+  if (ButtonNumber.length > 0) ButtonNumber += "'";
+  return ButtonNumber;
+};
 MelodeonPatterns.prototype.FingerMove = function (ButtonNumber) {
   if (this.FingerNumber1 == 0 || this.FingerNumber4 == 0) return 0;
   if (ButtonNumber > this.FingerNumber1 + 3) return ButtonNumber - (this.FingerNumber1 + 3);
@@ -15858,17 +15849,13 @@ MelodeonPatterns.prototype.FingerMove = function (ButtonNumber) {
   return 0;
 };
 MelodeonPatterns.prototype.notesToNumber2 = function (notes) {
-  var rowtuning1 = '';
-  if (this.tuning.length >= 1) rowtuning1 = this.tuning[0];
-  var rowtuning2 = '';
-  if (this.tuning.length >= 2) rowtuning2 = this.tuning[1];
   retNotes = [];
   for (var i = 0; i < notes.length; i++) {
     //Obtain all possible ways to play this note
-    var push1 = noteToPushButtonRow1(notes[i], rowtuning1);
-    var push2 = noteToPushButtonRow2(notes[i], rowtuning2);
-    var pull1 = noteToPullButtonRow1(notes[i], rowtuning1);
-    var pull2 = noteToPullButtonRow2(notes[i], rowtuning2);
+    var push1 = this.noteToPushButtonRow1(notes[i]);
+    var push2 = this.noteToPushButtonRow2(notes[i]);
+    var pull1 = this.noteToPullButtonRow1(notes[i]);
+    var pull2 = this.noteToPullButtonRow2(notes[i]);
 
     //Parse button numbers
     var Push1Number = push1 != "" ? Math.abs(parseInt(push1)) : 10000;
@@ -16333,10 +16320,6 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     can_push = true;
     can_pull = true;
   }
-  var rowtuning1 = '';
-  if (this.tuning.length >= 1) rowtuning1 = this.tuning[0];
-  var rowtuning2 = '';
-  if (this.tuning.length >= 2) rowtuning2 = this.tuning[1];
   if (this.Scan) {
     if (this.aBars.length == 0) this.MarkBar();
     for (var i = 0; i < notes.length; ++i) {
@@ -16344,10 +16327,10 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
       var noteName = TNote.emitNoAccidentals();
       if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
-      _push1 = noteToPushButtonRow1(noteName, rowtuning1);
-      _push2 = noteToPushButtonRow2(noteName, rowtuning2);
-      _pull1 = noteToPullButtonRow1(noteName, rowtuning1);
-      _pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+      _push1 = this.noteToPushButtonRow1(noteName);
+      _push2 = this.noteToPushButtonRow2(noteName);
+      _pull1 = this.noteToPullButtonRow1(noteName);
+      _pull2 = this.noteToPullButtonRow2(noteName);
       var ClearPush = false;
       if (!can_push && (_pull1.length != 0 || _pull2.length != 0)) {
         ClearPush = true;
@@ -16378,10 +16361,10 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
       var noteName = TNote.emitNoAccidentals();
       if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
-      push1 = noteToPushButtonRow1(noteName, rowtuning1);
-      push2 = noteToPushButtonRow2(noteName, rowtuning2);
-      pull1 = noteToPullButtonRow1(noteName, rowtuning1);
-      pull2 = noteToPullButtonRow2(noteName, rowtuning2);
+      push1 = this.noteToPushButtonRow1(noteName);
+      push2 = this.noteToPushButtonRow2(noteName);
+      pull1 = this.noteToPullButtonRow1(noteName);
+      pull2 = this.noteToPullButtonRow2(noteName);
       var ClearPush = false;
       if (!can_push && (pull1.length != 0 || pull2.length != 0)) {
         ClearPush = true;

@@ -175,8 +175,6 @@ TabAbsoluteElements.prototype.scan = function (plugin,
 
   var source = staffAbsolute[staffIndex+voiceIndex];
   
-  var transposer = null;
-
   plugin.semantics.StartScan();
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];
@@ -186,12 +184,6 @@ TabAbsoluteElements.prototype.scan = function (plugin,
         // refresh key accidentals
         this.accidentals = absChild.abcelem.accidentals;
         plugin.semantics.strings.accidentals = this.accidentals;
-        if (plugin.transpose) {
-          transposer = new Transposer(
-            absChild.abcelem.accidentals,
-            plugin.transpose 
-          );
-        }
         break;
       case 'bar':
 	    plugin.semantics.strings.measureAccidentals = {}

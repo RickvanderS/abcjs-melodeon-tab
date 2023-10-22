@@ -32,29 +32,30 @@ function MelodeonPatterns(plugin) {
   let pull_row2 = new Array;
   if (this.tuning.length == 1) {
     //For non-G figure out how to transpose
-    if      (this.tuning[0].substring(0, 2) == "Bb" || this.tuning[0].substring(0, 2) == "A#")
+    Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
+    if      (Row1Tuning == "Bb" || Row1Tuning == "A#")
       TransposeHalfSteps = -9;
-    else if (this.tuning[0].substring(0, 1) == "B"                                           )
+    else if (Row1Tuning == "B"                       )
       TransposeHalfSteps = -8;
-    else if (this.tuning[0].substring(0, 1) == "C"                                           )
+    else if (Row1Tuning == "C"                       )
       TransposeHalfSteps = -7;
-    else if (this.tuning[0].substring(0, 2) == "Db" || this.tuning[0].substring(0, 2) == "C#")
+    else if (Row1Tuning == "Db" || Row1Tuning == "C#")
       TransposeHalfSteps = -6;
-    else if (this.tuning[0].substring(0, 1) == "D"                                           )
+    else if (Row1Tuning == "D"                       )
       TransposeHalfSteps = -5;
-    else if (this.tuning[0].substring(0, 2) == "Eb" || this.tuning[0].substring(0, 2) == "D#")
+    else if (Row1Tuning == "Eb" || Row1Tuning == "D#")
       TransposeHalfSteps = -4;
-    else if (this.tuning[0].substring(0, 1) == "E"                                           )
+    else if (Row1Tuning == "E"                       )
       TransposeHalfSteps = -3;
-    else if (this.tuning[0].substring(0, 1) == "F"                                           )
+    else if (Row1Tuning == "F"                       )
       TransposeHalfSteps = -2;
-    else if (this.tuning[0].substring(0, 2) == "Gb" || this.tuning[0].substring(0, 2) == "F#")
+    else if (Row1Tuning == "Gb" || Row1Tuning == "F#")
       TransposeHalfSteps = -1;
-    else if (this.tuning[0].substring(0, 1) == "G"                                           )
+    else if (Row1Tuning == "G"                       )
       TransposeHalfSteps =  0;
-    else if (this.tuning[0].substring(0, 2) == "Ab" || this.tuning[0].substring(0, 2) == "G#")
+    else if (Row1Tuning == "Ab" || Row1Tuning == "G#")
       TransposeHalfSteps =  1;
-    else if (this.tuning[0].substring(0, 1) == "A"                                           )
+    else if (Row1Tuning == "A"                       )
       TransposeHalfSteps =  2;
     else {
       console.error('1 row melodeon with tuning \'' + this.tuning[0] + '\' is not supported');
@@ -90,30 +91,32 @@ function MelodeonPatterns(plugin) {
     pull_row1.push("^f" );
   }
   else if (this.tuning.length == 2) {
-    //For non-GC figure out how to transpose
-    if      ((this.tuning[0].substring(0, 2) == "Eb" || this.tuning[0].substring(0, 2) == "D#") && (this.tuning[1].substring(0, 2) == "Ab" || this.tuning[1].substring(0, 2) == "G#")) //Very rare
+    //For non-G/C figure out how to transpose
+    Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
+    Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
+    if      ((Row1Tuning == "Eb" || Row1Tuning == "D#") && (Row2Tuning == "Ab" || Row2Tuning == "G#")) //Very rare
       TransposeHalfSteps = -3;
-    else if ((this.tuning[0].substring(0, 1) == "E"                                           ) && (this.tuning[1].substring(0, 1) == "A"                                           )) //Very rare
+    else if ((Row1Tuning == "E"                       ) && (Row2Tuning == "A"                       )) //Very rare
       TransposeHalfSteps = -3;
-    else if ((this.tuning[0].substring(0, 1) == "F"                                           ) && (this.tuning[1].substring(0, 2) == "Bb" || this.tuning[1].substring(0, 2) == "A#"))
+    else if ((Row1Tuning == "F"                       ) && (Row2Tuning == "Bb" || Row2Tuning == "A#"))
       TransposeHalfSteps = -2;
-    else if ((this.tuning[0].substring(0, 2) == "Gb" || this.tuning[0].substring(0, 2) == "F#") && (this.tuning[1].substring(0, 1) == "B"                                           )) //Very rare
+    else if ((Row1Tuning == "Gb" || Row1Tuning == "F#") && (Row2Tuning == "B"                       )) //Very rare
       TransposeHalfSteps = -1;
-    else if ((this.tuning[0].substring(0, 1) == "G"                                           ) && (this.tuning[1].substring(0, 1) == "C"                                           )) //France, South America
+    else if ((Row1Tuning == "G"                       ) && (Row2Tuning == "C"                       )) //France, South America
       TransposeHalfSteps =  0;
-    else if ((this.tuning[0].substring(0, 2) == "Ab" || this.tuning[0].substring(0, 2) == "G#") && (this.tuning[1].substring(0, 2) == "Db" || this.tuning[1].substring(0, 2) == "C#")) //Very rare
+    else if ((Row1Tuning == "Ab" || Row1Tuning == "G#") && (Row2Tuning == "Db" || Row2Tuning == "C#")) //Very rare
       TransposeHalfSteps =  1;
-    else if ((this.tuning[0].substring(0, 1) == "A"                                           ) && (this.tuning[1].substring(0, 1) == "D"                                           )) //France
+    else if ((Row1Tuning == "A"                       ) && (Row2Tuning == "D"                       )) //France
       TransposeHalfSteps =  2;
-    else if ((this.tuning[0].substring(0, 2) == "Bb" || this.tuning[0].substring(0, 2) == "A#") && (this.tuning[1].substring(0, 2) == "Eb" || this.tuning[1].substring(0, 2) == "D#"))
+    else if ((Row1Tuning == "Bb" || Row1Tuning == "A#") && (Row2Tuning == "Eb" || Row2Tuning == "D#"))
       TransposeHalfSteps =  3;
-    else if ((this.tuning[0].substring(0, 1) == "B"                                           ) && (this.tuning[1].substring(0, 1) == "E"                                           )) //Very rare
+    else if ((Row1Tuning == "B"                       ) && (Row2Tuning == "E"                       )) //Very rare
       TransposeHalfSteps =  4;
-    else if ((this.tuning[0].substring(0, 1) == "C"                                           ) && (this.tuning[1].substring(0, 1) == "F"                                           )) //Netherlands, Germany
+    else if ((Row1Tuning == "C"                       ) && (Row2Tuning == "F"                       )) //Netherlands, Germany
       TransposeHalfSteps =  5;
-    else if ((this.tuning[0].substring(0, 2) == "Db" || this.tuning[0].substring(0, 2) == "C#") && (this.tuning[1].substring(0, 2) == "Gb" || this.tuning[1].substring(0, 2) == "F#")) //Very rare
+    else if ((Row1Tuning == "Db" || Row1Tuning == "C#") && (Row2Tuning == "Gb" || Row2Tuning == "F#")) //Very rare
       TransposeHalfSteps =  6;
-    else if ((this.tuning[0].substring(0, 1) == "D"                                           ) && (this.tuning[1].substring(0, 1) == "G"                                           )) //England
+    else if ((Row1Tuning == "D"                       ) && (Row2Tuning == "G"                       )) //England
       TransposeHalfSteps =  7;
     else {
       console.error('2 row melodeon with row1 tuning \'' + this.tuning[0] + '\' and row2 tuning \'' + this.tuning[1] + '\' is not supported');

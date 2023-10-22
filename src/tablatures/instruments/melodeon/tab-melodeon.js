@@ -19,7 +19,7 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   this.linePitch = 5;
   this.nbLines = 3;
   this.isTabBig = false;
-  this.capo = params.capo;
+  this.chinacc = params.chinacc;
   this.transpose = params.visualTranspose;
   this.tablature = new MelodeonTablature(this.nbLines,
     this.linePitch);

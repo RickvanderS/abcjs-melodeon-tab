@@ -15638,86 +15638,132 @@ var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instrumen
 var transposeChordName = __webpack_require__(/*! ../../../parse/transpose-chord */ "./src/parse/transpose-chord.js");
 var allNotes = __webpack_require__(/*! ../../../parse/all-notes */ "./src/parse/all-notes.js");
 function MelodeonPatterns(plugin) {
-  this.tuning = plugin._super.params.tuning;
   this.measureAccidentals = {};
 
   //Set default tuning if not specified
+  this.tuning = plugin._super.params.tuning;
   if (!this.tuning) {
     this.tuning = new Array();
     this.tuning.push("G");
     this.tuning.push("C5");
+    plugin.tuning = this.tuning;
   }
-  plugin.tuning = this.tuning;
 
-  //For non-GC figure out how to transpose
+  //Set default chin accidentals of not specified
+  this.chinacc = plugin._super.params.chinacc;
+  if (!this.chinacc === null) {
+    this.chinacc = true;
+    plugin.chinacc = this.chinacc;
+  }
+
+  //Lookup melodeon notes
   var TransposeHalfSteps = 0;
-  if (this.tuning[0].substring(0, 2) == "Eb" && this.tuning[1].substring(0, 2) == "Ab") TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "E" && this.tuning[1].substring(0, 1) == "A") TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "F" && this.tuning[1].substring(0, 2) == "Bb") TransposeHalfSteps = -2;else if (this.tuning[0].substring(0, 1) == "G" && this.tuning[1].substring(0, 2) == "bB") TransposeHalfSteps = -1;else if (this.tuning[0].substring(0, 1) == "G" && this.tuning[1].substring(0, 1) == "C")
-    //France, South America
-    TransposeHalfSteps = 0;else if (this.tuning[0].substring(0, 2) == "Ab" && this.tuning[1].substring(0, 2) == "Db") TransposeHalfSteps = 1;else if (this.tuning[0].substring(0, 1) == "A" && this.tuning[1].substring(0, 1) == "D") TransposeHalfSteps = 2;else if (this.tuning[0].substring(0, 2) == "Bb" && this.tuning[1].substring(0, 2) == "Eb") TransposeHalfSteps = 3;else if (this.tuning[0].substring(0, 1) == "B" && this.tuning[1].substring(0, 1) == "E") TransposeHalfSteps = 4;else if (this.tuning[0].substring(0, 1) == "C" && this.tuning[1].substring(0, 1) == "F")
-    //Netherlands, Germany
-    TransposeHalfSteps = 5;else if (this.tuning[0].substring(0, 2) == "Dd" && this.tuning[1].substring(0, 2) == "Gb") TransposeHalfSteps = 6;else if (this.tuning[0].substring(0, 1) == "D" && this.tuning[1].substring(0, 1) == "G")
-    //English
-    TransposeHalfSteps = 7;else ; //Error
-
-  //Define left hand chords for GC melodeon
   this.push_chords = new Array();
   this.pull_chords = new Array();
-  this.push_chords.push("G"); // G push
-  this.pull_chords.push("D"); // D / Dm7
-  this.push_chords.push("E"); // E / Em7
-  this.pull_chords.push("A"); // Am
-  this.push_chords.push("C");
-  this.pull_chords.push("G"); // G pull
-  this.push_chords.push("F"); // F push
-  this.pull_chords.push("F"); // F pull
-
-  //Define right hand buttons for GC melodeon
   var push_row1 = new Array();
   var pull_row1 = new Array();
-  push_row1.push("^C"); // 1
-  pull_row1.push("_E");
-  push_row1.push("D,"); // 2
-  pull_row1.push("^F,");
-  push_row1.push("G,"); // 3
-  pull_row1.push("A,");
-  push_row1.push("B,"); // 4
-  pull_row1.push("C");
-  push_row1.push("D"); // 5
-  pull_row1.push("E");
-  push_row1.push("G"); // 6
-  pull_row1.push("^F");
-  push_row1.push("B"); // 7
-  pull_row1.push("A");
-  push_row1.push("d"); // 8
-  pull_row1.push("c");
-  push_row1.push("g"); // 9
-  pull_row1.push("e");
-  push_row1.push("b"); // 10
-  pull_row1.push("^f");
-  push_row1.push("d'"); // 11
-  pull_row1.push("a");
   var push_row2 = new Array();
   var pull_row2 = new Array();
-  push_row2.push("_B"); // 1'
-  pull_row2.push("^G");
-  push_row2.push("G,"); // 2'
-  pull_row2.push("B,");
-  push_row2.push("C"); // 3'
-  pull_row2.push("D");
-  push_row2.push("E"); // 4'
-  pull_row2.push("F");
-  push_row2.push("G"); // 5'
-  pull_row2.push("A");
-  push_row2.push("c"); // 6'
-  pull_row2.push("B");
-  push_row2.push("e"); // 7'
-  pull_row2.push("d");
-  push_row2.push("g"); // 8'
-  pull_row2.push("f");
-  push_row2.push("c'"); // 9'
-  pull_row2.push("a");
-  push_row2.push("e'"); // 10'
-  pull_row2.push("b");
+  if (this.tuning.length == 1) {
+    console.error('1 row melodeons are not supported');
+    return;
+  } else if (this.tuning.length == 2) {
+    //For non-GC figure out how to transpose
+    if ((this.tuning[0].substring(0, 2) == "Eb" || this.tuning[0].substring(0, 2) == "D#") && (this.tuning[1].substring(0, 2) == "Ab" || this.tuning[1].substring(0, 2) == "G#"))
+      //Very rare
+      TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "E" && this.tuning[1].substring(0, 1) == "A")
+      //Very rare
+      TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "F" && (this.tuning[1].substring(0, 2) == "Bb" || this.tuning[1].substring(0, 2) == "A#")) TransposeHalfSteps = -2;else if ((this.tuning[0].substring(0, 2) == "Gb" || this.tuning[0].substring(0, 2) == "F#") && this.tuning[1].substring(0, 1) == "B")
+      //Very rare
+      TransposeHalfSteps = -1;else if (this.tuning[0].substring(0, 1) == "G" && this.tuning[1].substring(0, 1) == "C")
+      //France, South America
+      TransposeHalfSteps = 0;else if ((this.tuning[0].substring(0, 2) == "Ab" || this.tuning[0].substring(0, 2) == "G#") && (this.tuning[1].substring(0, 2) == "Db" || this.tuning[1].substring(0, 2) == "C#"))
+      //Very rare
+      TransposeHalfSteps = 1;else if (this.tuning[0].substring(0, 1) == "A" && this.tuning[1].substring(0, 1) == "D")
+      //France
+      TransposeHalfSteps = 2;else if ((this.tuning[0].substring(0, 2) == "Bb" || this.tuning[0].substring(0, 2) == "A#") && (this.tuning[1].substring(0, 2) == "Eb" || this.tuning[1].substring(0, 2) == "D#")) TransposeHalfSteps = 3;else if (this.tuning[0].substring(0, 1) == "B" && this.tuning[1].substring(0, 1) == "E")
+      //Very rare
+      TransposeHalfSteps = 4;else if (this.tuning[0].substring(0, 1) == "C" && this.tuning[1].substring(0, 1) == "F")
+      //Netherlands, Germany
+      TransposeHalfSteps = 5;else if ((this.tuning[0].substring(0, 2) == "Db" || this.tuning[0].substring(0, 2) == "C#") && (this.tuning[1].substring(0, 2) == "Gb" || this.tuning[1].substring(0, 2) == "F#"))
+      //Very rare
+      TransposeHalfSteps = 6;else if (this.tuning[0].substring(0, 1) == "D" && this.tuning[1].substring(0, 1) == "G")
+      //England
+      TransposeHalfSteps = 7;else {
+      console.error('2 row melodeon has unsupported combination of rows');
+      return;
+    }
+
+    //Define left hand chords for GC melodeon
+    this.push_chords.push("G"); // G push
+    this.pull_chords.push("D"); // D / Dm7
+    this.push_chords.push("E"); // E / Em7
+    this.pull_chords.push("A"); // Am
+    this.push_chords.push("C");
+    this.pull_chords.push("G"); // G pull
+    this.push_chords.push("F"); // F push
+    this.pull_chords.push("F"); // F pull
+
+    //Define right hand buttons for GC melodeon
+    if (this.chinacc) {
+      push_row1.push("^C"); // 1
+      pull_row1.push("_E");
+    } else {
+      push_row1.push("B,,"); // 1
+      pull_row1.push("D,");
+    }
+    push_row1.push("D,"); // 2
+    pull_row1.push("^F,");
+    push_row1.push("G,"); // 3
+    pull_row1.push("A,");
+    push_row1.push("B,"); // 4
+    pull_row1.push("C");
+    push_row1.push("D"); // 5
+    pull_row1.push("E");
+    push_row1.push("G"); // 6
+    pull_row1.push("^F");
+    push_row1.push("B"); // 7
+    pull_row1.push("A");
+    push_row1.push("d"); // 8
+    pull_row1.push("c");
+    push_row1.push("g"); // 9
+    pull_row1.push("e");
+    push_row1.push("b"); // 10
+    pull_row1.push("^f");
+    push_row1.push("d'"); // 11
+    pull_row1.push("a");
+    if (this.chinacc) {
+      push_row2.push("_B"); // 1'
+      pull_row2.push("^G");
+    } else {
+      push_row2.push("E,"); // 1'
+      pull_row2.push("G,");
+    }
+    push_row2.push("G,"); // 2'
+    pull_row2.push("B,");
+    push_row2.push("C"); // 3'
+    pull_row2.push("D");
+    push_row2.push("E"); // 4'
+    pull_row2.push("F");
+    push_row2.push("G"); // 5'
+    pull_row2.push("A");
+    push_row2.push("c"); // 6'
+    pull_row2.push("B");
+    push_row2.push("e"); // 7'
+    pull_row2.push("d");
+    push_row2.push("g"); // 8'
+    pull_row2.push("f");
+    push_row2.push("c'"); // 9'
+    pull_row2.push("a");
+    push_row2.push("e'"); // 10'
+    pull_row2.push("b");
+  } else if (this.tuning.length == 3) {
+    console.error('3 row melodeons are not supported');
+    return;
+  } else {
+    console.error('Too many melodeon rows defined');
+    return;
+  }
 
   //Transpose left hand chords if required
   if (TransposeHalfSteps != 0) {
@@ -16145,7 +16191,7 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 
 MelodeonPatterns.prototype.StartBuild = function () {
   if (this.Scan) {
-    console.log("bars:" + this.aBars.length);
+    //console.log("bars:" + this.aBars.length);
 
     //Count push/pull possibilities
     //TODO: Set left and right finger numbers
@@ -16507,7 +16553,7 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   this.linePitch = 5;
   this.nbLines = 3;
   this.isTabBig = false;
-  this.capo = params.capo;
+  this.chinacc = params.chinacc;
   this.transpose = params.visualTranspose;
   this.tablature = new MelodeonTablature(this.nbLines, this.linePitch);
   var semantics = new MelodeonPatterns(this);

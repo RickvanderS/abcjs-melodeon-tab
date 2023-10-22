@@ -15689,8 +15689,39 @@ function MelodeonPatterns(plugin) {
   var push_row2 = new Array();
   var pull_row2 = new Array();
   if (this.tuning.length == 1) {
-    console.error('1 row melodeons are not supported');
-    return;
+    //For non-G figure out how to transpose
+    if (this.tuning[0].substring(0, 2) == "Bb" || this.tuning[0].substring(0, 2) == "A#") TransposeHalfSteps = -9;else if (this.tuning[0].substring(0, 1) == "B") TransposeHalfSteps = -8;else if (this.tuning[0].substring(0, 1) == "C") TransposeHalfSteps = -7;else if (this.tuning[0].substring(0, 2) == "Db" || this.tuning[0].substring(0, 2) == "C#") TransposeHalfSteps = -6;else if (this.tuning[0].substring(0, 1) == "D") TransposeHalfSteps = -5;else if (this.tuning[0].substring(0, 2) == "Eb" || this.tuning[0].substring(0, 2) == "D#") TransposeHalfSteps = -4;else if (this.tuning[0].substring(0, 1) == "E") TransposeHalfSteps = -3;else if (this.tuning[0].substring(0, 1) == "F") TransposeHalfSteps = -2;else if (this.tuning[0].substring(0, 2) == "Gb" || this.tuning[0].substring(0, 2) == "F#") TransposeHalfSteps = -1;else if (this.tuning[0].substring(0, 1) == "G") TransposeHalfSteps = 0;else if (this.tuning[0].substring(0, 2) == "Ab" || this.tuning[0].substring(0, 2) == "G#") TransposeHalfSteps = 1;else if (this.tuning[0].substring(0, 1) == "A") TransposeHalfSteps = 2;else {
+      console.error('1 row melodeon with tuning \'' + this.tuning[0] + '\' is not supported');
+      return;
+    }
+
+    //Define left hand chords for G melodeon with 4 base buttons
+    this.push_chords.push("G"); // G push
+    this.pull_chords.push("D"); // D
+    this.push_chords.push("C"); // C push
+    this.pull_chords.push("C"); // C pull
+
+    //Define right hand buttons for G melodeon
+    push_row1.push("B,,"); // 1
+    pull_row1.push("D,");
+    push_row1.push("D,"); // 2
+    pull_row1.push("^F,");
+    push_row1.push("G,"); // 3
+    pull_row1.push("A,");
+    push_row1.push("B,"); // 4
+    pull_row1.push("C");
+    push_row1.push("D"); // 5
+    pull_row1.push("E");
+    push_row1.push("G"); // 6
+    pull_row1.push("^F");
+    push_row1.push("B"); // 7
+    pull_row1.push("A");
+    push_row1.push("d"); // 8
+    pull_row1.push("c");
+    push_row1.push("g"); // 9
+    pull_row1.push("e");
+    push_row1.push("b"); // 10
+    pull_row1.push("^f");
   } else if (this.tuning.length == 2) {
     //For non-GC figure out how to transpose
     if ((this.tuning[0].substring(0, 2) == "Eb" || this.tuning[0].substring(0, 2) == "D#") && (this.tuning[1].substring(0, 2) == "Ab" || this.tuning[1].substring(0, 2) == "G#"))
@@ -15714,11 +15745,11 @@ function MelodeonPatterns(plugin) {
       TransposeHalfSteps = 6;else if (this.tuning[0].substring(0, 1) == "D" && this.tuning[1].substring(0, 1) == "G")
       //England
       TransposeHalfSteps = 7;else {
-      console.error('2 row melodeon has unsupported combination of rows');
+      console.error('2 row melodeon with row1 tuning \'' + this.tuning[0] + '\' and row2 tuning \'' + this.tuning[1] + '\' is not supported');
       return;
     }
 
-    //Define left hand chords for GC melodeon
+    //Define left hand chords for G/C melodeon with 8 base buttons
     this.push_chords.push("G"); // G push
     this.pull_chords.push("D"); // D / Dm7
     this.push_chords.push("E"); // E / Em7
@@ -15728,7 +15759,7 @@ function MelodeonPatterns(plugin) {
     this.push_chords.push("F"); // F push
     this.pull_chords.push("F"); // F pull
 
-    //Define right hand buttons for GC melodeon
+    //Define right hand buttons for G/C melodeon
     if (this.chinacc) {
       push_row1.push("^C"); // 1
       pull_row1.push("_E");

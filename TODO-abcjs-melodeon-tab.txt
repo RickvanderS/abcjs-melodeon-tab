@@ -1,4 +1,3 @@
-- Draw arrows for push and pull after the TAB symbol
 - Do not repeat same note connected with - over |
 - Annotation to prefer melodion row row1=* row2=' row3='', in chord or using !
 - 1 row melodeon

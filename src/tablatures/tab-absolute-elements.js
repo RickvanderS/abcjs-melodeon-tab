@@ -50,7 +50,7 @@ function cloneAbsoluteAndRelatives(absSrc, plugin) {
 
 function buildTabAbsolute(plugin, absX, relX) {
   var tabIcon = 'tab.tiny';
-  var tabYPos = 10;
+  var tabYPos = 7.5;
   if (plugin.isTabBig) {
     tabIcon = 'tab.big';
     tabYPos = 10;
@@ -241,7 +241,10 @@ TabAbsoluteElements.prototype.build = function (plugin,
     //   relX = absChild.children[0].x;
     // }
     if ( (absChild.isClef) ) {
-      dest.children.push(buildTabAbsolute(plugin, absX, relX));
+      if (plugin.buildTabAbsolute)
+        dest.children.push(plugin.buildTabAbsolute(absX, relX));
+      else
+        dest.children.push(buildTabAbsolute(plugin, absX, relX));
       if (absChild.abcelem.type.indexOf('-8') >= 0) plugin.semantics.strings.clefTranspose = -12
       if (absChild.abcelem.type.indexOf('+8') >= 0) plugin.semantics.strings.clefTranspose = 12
     }

@@ -5,6 +5,8 @@ var HarmonicaTablature = require('./harmonica-tablature');
 var TabCommon = require('../../tab-common');
 var TabRenderer = require('../../tab-renderer');
 var HarmonicaPatterns = require('./harmonica-patterns');
+var AbsoluteElement = require('../../../write/creation/elements/absolute-element');
+var RelativeElement = require('../../../write/creation/elements/relative-element');
 
 /**
 * upon init mainly store provided instances for later usage
@@ -27,6 +29,29 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   var semantics = new HarmonicaPatterns(this);
   this.semantics = semantics;
 };
+
+Plugin.prototype.buildTabAbsolute = function (absX, relX) {
+  var tabIcon = 'tab.tiny';
+  var tabYPos = 10;
+  if (this.isTabBig) {
+    tabIcon = 'tab.big';
+    tabYPos = 10;
+  }
+  var element = {
+    el_type: "tab",
+    icon: tabIcon,
+    Ypos: tabYPos
+  };
+  var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
+  tabAbsolute.x = absX;
+  var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+  tabRelative.x = relX;
+  tabAbsolute.children.push(tabRelative);
+  if (tabAbsolute.abcelem.el_type == 'tab') {
+    tabRelative.pitch = tabYPos;
+  }
+  return tabAbsolute;
+}
 
 Plugin.prototype.scan = function (renderer, line, staffIndex) {
 

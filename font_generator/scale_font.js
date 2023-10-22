@@ -16,6 +16,8 @@ var glyphnames = {
   "\ue113":"accidentals.halfflat",
   "\ue114":"accidentals.dblflat",
   "\ue116":"accidentals.dblsharp",
+  "\ue119":"tab.push",
+  "\ue11a":"tab.pull",
   "\ue121":"dots.dot",
   "\ue124":"noteheads.dbl",
   "\ue125":"noteheads.whole",

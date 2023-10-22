@@ -15585,6 +15585,8 @@ var HarmonicaTablature = __webpack_require__(/*! ./harmonica-tablature */ "./src
 var TabCommon = __webpack_require__(/*! ../../tab-common */ "./src/tablatures/tab-common.js");
 var TabRenderer = __webpack_require__(/*! ../../tab-renderer */ "./src/tablatures/tab-renderer.js");
 var HarmonicaPatterns = __webpack_require__(/*! ./harmonica-patterns */ "./src/tablatures/instruments/harmonica/harmonica-patterns.js");
+var AbsoluteElement = __webpack_require__(/*! ../../../write/creation/elements/absolute-element */ "./src/write/creation/elements/absolute-element.js");
+var RelativeElement = __webpack_require__(/*! ../../../write/creation/elements/relative-element */ "./src/write/creation/elements/relative-element.js");
 
 /**
 * upon init mainly store provided instances for later usage
@@ -15604,6 +15606,28 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   this.tablature = new HarmonicaTablature(this.nbLines, this.linePitch);
   var semantics = new HarmonicaPatterns(this);
   this.semantics = semantics;
+};
+Plugin.prototype.buildTabAbsolute = function (absX, relX) {
+  var tabIcon = 'tab.tiny';
+  var tabYPos = 10;
+  if (this.isTabBig) {
+    tabIcon = 'tab.big';
+    tabYPos = 10;
+  }
+  var element = {
+    el_type: "tab",
+    icon: tabIcon,
+    Ypos: tabYPos
+  };
+  var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
+  tabAbsolute.x = absX;
+  var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+  tabRelative.x = relX;
+  tabAbsolute.children.push(tabRelative);
+  if (tabAbsolute.abcelem.el_type == 'tab') {
+    tabRelative.pitch = tabYPos;
+  }
+  return tabAbsolute;
 };
 Plugin.prototype.scan = function (renderer, line, staffIndex) {};
 Plugin.prototype.render = function (renderer, line, staffIndex) {
@@ -16539,6 +16563,8 @@ var MelodeonTablature = __webpack_require__(/*! ./melodeon-tablature */ "./src/t
 var TabCommon = __webpack_require__(/*! ../../tab-common */ "./src/tablatures/tab-common.js");
 var TabRenderer = __webpack_require__(/*! ../../tab-renderer */ "./src/tablatures/tab-renderer.js");
 var MelodeonPatterns = __webpack_require__(/*! ./melodeon-patterns */ "./src/tablatures/instruments/melodeon/melodeon-patterns.js");
+var AbsoluteElement = __webpack_require__(/*! ../../../write/creation/elements/absolute-element */ "./src/write/creation/elements/absolute-element.js");
+var RelativeElement = __webpack_require__(/*! ../../../write/creation/elements/relative-element */ "./src/write/creation/elements/relative-element.js");
 
 /**
 * upon init mainly store provided instances for later usage
@@ -16558,6 +16584,36 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   this.tablature = new MelodeonTablature(this.nbLines, this.linePitch);
   var semantics = new MelodeonPatterns(this);
   this.semantics = semantics;
+};
+Plugin.prototype.buildTabAbsolute = function (absX, relX) {
+  var tabIcon = 'tab.tiny';
+  var tabYPos = 10;
+  if (this.isTabBig) {
+    tabIcon = 'tab.big';
+    tabYPos = 10;
+  }
+  var element = {
+    el_type: "tab",
+    icon: tabIcon,
+    Ypos: tabYPos
+  };
+  var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
+  tabAbsolute.x = absX;
+  var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+  tabRelative.x = relX;
+  tabAbsolute.children.push(tabRelative);
+  tabIcon = 'tab.pull';
+  var tabRelative2 = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+  tabRelative2.x = relX + 20;
+  tabAbsolute.children.push(tabRelative2);
+  tabIcon = 'tab.push';
+  var tabRelative3 = new RelativeElement(tabIcon, 0, 0, 12.5, "tab");
+  tabRelative3.x = relX + 20 + 8.014;
+  tabAbsolute.children.push(tabRelative3);
+  if (tabAbsolute.abcelem.el_type == 'tab') {
+    tabRelative.pitch = tabYPos;
+  }
+  return tabAbsolute;
 };
 Plugin.prototype.scan = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
@@ -17333,7 +17389,7 @@ function cloneAbsoluteAndRelatives(absSrc, plugin) {
 }
 function buildTabAbsolute(plugin, absX, relX) {
   var tabIcon = 'tab.tiny';
-  var tabYPos = 10;
+  var tabYPos = 7.5;
   if (plugin.isTabBig) {
     tabIcon = 'tab.big';
     tabYPos = 10;
@@ -17514,7 +17570,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
     //   relX = absChild.children[0].x;
     // }
     if (absChild.isClef) {
-      dest.children.push(buildTabAbsolute(plugin, absX, relX));
+      if (plugin.buildTabAbsolute) dest.children.push(plugin.buildTabAbsolute(absX, relX));else dest.children.push(buildTabAbsolute(plugin, absX, relX));
       if (absChild.abcelem.type.indexOf('-8') >= 0) plugin.semantics.strings.clefTranspose = -12;
       if (absChild.abcelem.type.indexOf('+8') >= 0) plugin.semantics.strings.clefTranspose = 12;
     }
@@ -21662,6 +21718,16 @@ var glyphs = {
     d: [['M', -0.18, -3.96], ['c', 0.06, -0.03, 0.12, -0.06, 0.15, -0.06], ['c', 0.09, 0.00, 2.76, 0.27, 2.79, 0.30], ['c', 0.12, 0.03, 0.15, 0.12, 0.15, 0.51], ['c', 0.06, 0.96, 0.24, 1.59, 0.57, 2.10], ['c', 0.06, 0.09, 0.15, 0.21, 0.18, 0.24], ['l', 0.09, 0.06], ['l', 0.09, -0.06], ['c', 0.03, -0.03, 0.12, -0.15, 0.18, -0.24], ['c', 0.33, -0.51, 0.51, -1.14, 0.57, -2.10], ['c', 0.00, -0.39, 0.03, -0.45, 0.12, -0.51], ['c', 0.03, 0.00, 0.66, -0.09, 1.44, -0.15], ['c', 1.47, -0.15, 1.50, -0.15, 1.56, -0.03], ['c', 0.03, 0.06, 0.00, 0.42, -0.09, 1.44], ['c', -0.09, 0.72, -0.15, 1.35, -0.15, 1.38], ['c', 0.00, 0.03, -0.03, 0.09, -0.06, 0.12], ['c', -0.06, 0.06, -0.12, 0.09, -0.51, 0.09], ['c', -1.08, 0.06, -1.80, 0.30, -2.28, 0.75], ['l', -0.12, 0.09], ['l', 0.09, 0.09], ['c', 0.12, 0.15, 0.39, 0.33, 0.63, 0.45], ['c', 0.42, 0.18, 0.96, 0.27, 1.68, 0.33], ['c', 0.39, 0.00, 0.45, 0.03, 0.51, 0.09], ['c', 0.03, 0.03, 0.06, 0.09, 0.06, 0.12], ['c', 0.00, 0.03, 0.06, 0.66, 0.15, 1.38], ['c', 0.09, 1.02, 0.12, 1.38, 0.09, 1.44], ['c', -0.06, 0.12, -0.09, 0.12, -1.56, -0.03], ['c', -0.78, -0.06, -1.41, -0.15, -1.44, -0.15], ['c', -0.09, -0.06, -0.12, -0.12, -0.12, -0.54], ['c', -0.06, -0.93, -0.24, -1.56, -0.57, -2.07], ['c', -0.06, -0.09, -0.15, -0.21, -0.18, -0.24], ['l', -0.09, -0.06], ['l', -0.09, 0.06], ['c', -0.03, 0.03, -0.12, 0.15, -0.18, 0.24], ['c', -0.33, 0.51, -0.51, 1.14, -0.57, 2.07], ['c', 0.00, 0.42, -0.03, 0.48, -0.12, 0.54], ['c', -0.03, 0.00, -0.66, 0.09, -1.44, 0.15], ['c', -1.47, 0.15, -1.50, 0.15, -1.56, 0.03], ['c', -0.03, -0.06, 0.00, -0.42, 0.09, -1.44], ['c', 0.09, -0.72, 0.15, -1.35, 0.15, -1.38], ['c', 0.00, -0.03, 0.03, -0.09, 0.06, -0.12], ['c', 0.06, -0.06, 0.12, -0.09, 0.51, -0.09], ['c', 0.72, -0.06, 1.26, -0.15, 1.68, -0.33], ['c', 0.24, -0.12, 0.51, -0.30, 0.63, -0.45], ['l', 0.09, -0.09], ['l', -0.12, -0.09], ['c', -0.48, -0.45, -1.20, -0.69, -2.28, -0.75], ['c', -0.39, 0.00, -0.45, -0.03, -0.51, -0.09], ['c', -0.03, -0.03, -0.06, -0.09, -0.06, -0.12], ['c', 0.00, -0.03, -0.06, -0.63, -0.12, -1.38], ['c', -0.09, -0.72, -0.15, -1.35, -0.15, -1.38], ['z']],
     w: 7.95,
     h: 7.977
+  },
+  'tab.push': {
+    d: [['M', -7.17, -3.69], ['c', 0.09, -0.06, 0.24, -0.06, 0.39, -0.03], ['c', 0.06, 0.03, 0.30, 0.27, 0.57, 0.54], ['c', 0.27, 0.27, 0.63, 0.60, 0.81, 0.75], ['c', 1.47, 1.17, 3.09, 1.77, 4.98, 1.89], ['c', 0.63, 0.03, 0.72, 0.06, 0.84, 0.24], ['c', 0.12, 0.18, 0.12, 0.42, 0.00, 0.60], ['c', -0.12, 0.18, -0.21, 0.21, -0.84, 0.24], ['c', -1.89, 0.12, -3.51, 0.72, -4.98, 1.89], ['c', -0.18, 0.15, -0.54, 0.48, -0.81, 0.75], ['c', -0.48, 0.48, -0.60, 0.57, -0.78, 0.57], ['c', -0.12, 0.00, -0.30, -0.09, -0.36, -0.18], ['c', -0.15, -0.18, -0.18, -0.36, -0.09, -0.57], ['c', 0.09, -0.18, 0.93, -1.02, 1.38, -1.35], ['c', 0.81, -0.66, 1.71, -1.17, 2.61, -1.53], ['l', 0.30, -0.12], ['l', -0.30, -0.12], ['c', -0.42, -0.15, -1.02, -0.45, -1.41, -0.69], ['c', -0.75, -0.45, -1.35, -0.90, -2.04, -1.59], ['c', -0.60, -0.60, -0.69, -0.75, -0.54, -1.05], ['c', 0.06, -0.12, 0.12, -0.18, 0.27, -0.24], ['z']],
+    w: 8.014,
+    h: 7.49
+  },
+  'tab.pull': {
+    d: [['M', 6.78, -3.69], ['c', 0.27, -0.12, 0.54, 0.00, 0.66, 0.24], ['c', 0.15, 0.30, 0.06, 0.45, -0.54, 1.05], ['c', -0.69, 0.69, -1.29, 1.14, -2.04, 1.59], ['c', -0.39, 0.24, -0.99, 0.54, -1.41, 0.69], ['l', -0.30, 0.12], ['l', 0.30, 0.12], ['c', 0.90, 0.36, 1.80, 0.87, 2.64, 1.53], ['c', 0.42, 0.33, 1.26, 1.17, 1.35, 1.35], ['c', 0.09, 0.21, 0.06, 0.39, -0.09, 0.57], ['c', -0.06, 0.09, -0.24, 0.18, -0.36, 0.18], ['c', -0.18, 0.00, -0.30, -0.09, -0.78, -0.57], ['c', -0.27, -0.27, -0.63, -0.60, -0.81, -0.75], ['c', -1.47, -1.17, -3.09, -1.77, -4.98, -1.89], ['c', -0.63, -0.03, -0.72, -0.06, -0.84, -0.24], ['c', -0.12, -0.18, -0.12, -0.42, 0.00, -0.60], ['c', 0.12, -0.18, 0.21, -0.21, 0.84, -0.24], ['c', 1.89, -0.12, 3.51, -0.72, 4.98, -1.89], ['c', 0.18, -0.15, 0.54, -0.48, 0.81, -0.75], ['c', 0.27, -0.27, 0.51, -0.51, 0.57, -0.51], ['z']],
+    w: 8.014,
+    h: 7.487
   },
   'dots.dot': {
     d: [['M', 1.32, -1.68], ['c', 0.09, -0.03, 0.27, -0.06, 0.39, -0.06], ['c', 0.96, 0.00, 1.74, 0.78, 1.74, 1.71], ['c', 0.00, 0.96, -0.78, 1.74, -1.71, 1.74], ['c', -0.96, 0.00, -1.74, -0.78, -1.74, -1.71], ['c', 0.00, -0.78, 0.54, -1.50, 1.32, -1.68], ['z']],

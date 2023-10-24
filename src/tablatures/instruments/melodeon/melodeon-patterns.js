@@ -26,10 +26,14 @@ function MelodeonPatterns(plugin) {
   let TransposeHalfSteps = 0;
   this.push_chords = new Array;
   this.pull_chords = new Array;
+  this.OffsetRow2 = 0;
+  this.OffsetRow3 = 3;
   let push_row1 = new Array;
   let pull_row1 = new Array;
   let push_row2 = new Array;
   let pull_row2 = new Array;
+  let push_row3 = new Array;
+  let pull_row3 = new Array;
   if (this.tuning.length == 1) {
     //For non-G figure out how to transpose
     Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
@@ -90,7 +94,7 @@ function MelodeonPatterns(plugin) {
     push_row1.push("b"  ); // 10
     pull_row1.push("^f" );
   }
-  else if (this.tuning.length == 2) {
+  else if (this.tuning.length == 2 || this.tuning.length == 3) {
     //For non-G/C figure out how to transpose
     Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
     Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
@@ -119,10 +123,10 @@ function MelodeonPatterns(plugin) {
     else if ((Row1Tuning == "D"                       ) && (Row2Tuning == "G"                       )) //England
       TransposeHalfSteps =  7;
     else {
-      console.error('2 row melodeon with row1 tuning \'' + this.tuning[0] + '\' and row2 tuning \'' + this.tuning[1] + '\' is not supported');
+      console.error(tuning.length.toString() + ' row melodeon with row1 tuning \'' + this.tuning[0] + '\' and row2 tuning \'' + this.tuning[1] + '\' is not supported');
       return;
     }
-   
+    
     //Define left hand chords for G/C melodeon with 8 base buttons
     this.push_chords.push("G"); // G push
     this.pull_chords.push("D"); // D / Dm7
@@ -189,6 +193,56 @@ function MelodeonPatterns(plugin) {
     pull_row2.push("a" );
     push_row2.push("e'"); // 10'
     pull_row2.push("b" );
+    
+    //Lookup extra row3
+    Row3Tuning = "";
+    if (this.tuning.length == 3) {
+      Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
+      if (false && Row3Tuning == "saltarelle") {
+        this.push_chords.push("D");
+        this.pull_chords.push("C");
+        this.push_chords.push("B");
+        this.pull_chords.push("Bb"); //TODO: Check if this works
+
+        //TODO: this has button 4 start on row 1/2
+        /*
+        push_row3.push("^g"); // 1"
+        pull_row3.push("_b");
+        push_row3.push("f'" ); // 2"
+        pull_row3.push("_e'");
+
+        push_row3.push("c'" ); // 3" TODO: which octave?
+        pull_row3.push("f'" );
+
+        push_row3.push("^g'"); // 4"
+        pull_row3.push("_b'");
+        push_row3.push("f''" ); // 5"
+        pull_row3.push("_e''");*/
+      }
+      else if (Row3Tuning == "castagnari") {
+        this.push_chords.push("Ab"); //TODO: Check if this works
+        this.pull_chords.push("B");
+        this.push_chords.push("Eb"); //TODO: Check if this works
+        this.pull_chords.push("Bb"); //TODO: Check if this works
+        
+        push_row3.push("^G"); // 1"
+        pull_row3.push("_B");
+        push_row3.push("_E"); // 2"
+        pull_row3.push("^C");
+
+        push_row3.push("^A"); // 3" TODO: which octave?
+        pull_row3.push("G");
+
+        push_row3.push("^g"); // 4"
+        pull_row3.push("_b");
+        push_row3.push("_e"); // 5"
+        pull_row3.push("^c");
+      }
+      else {
+        console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');
+        return;
+      }
+    }
   }
   else if (this.tuning.length == 3) {
     console.error('3 row melodeons are not supported');
@@ -227,6 +281,14 @@ function MelodeonPatterns(plugin) {
   for (let i = 0; i < pull_row2.length; ++i) {
     this.pull_row2.push(TransposeNameToNote(pull_row2[i], TransposeHalfSteps, TransposeLookup));
   }
+  this.push_row3 = new Array;
+  for (let i = 0; i < push_row3.length; ++i) {
+    this.push_row3.push(TransposeNameToNote(push_row3[i], TransposeHalfSteps, TransposeLookup));
+  }
+  this.pull_row3 = new Array;
+  for (let i = 0; i < pull_row3.length; ++i) {
+    this.pull_row3.push(TransposeNameToNote(pull_row3[i], TransposeHalfSteps, TransposeLookup));
+  }
   
   //Handle button push/pull inversions for each row
   let TuneRow1 = this.tuning[0];
@@ -254,19 +316,79 @@ function MelodeonPatterns(plugin) {
   //console.log(this.pull_row1);
   //console.log(this.push_row2);
   //console.log(this.pull_row2);
+  //console.log(this.push_row3);
+  //console.log(this.pull_row3);
   
+  let Row1HandPosCount = Math.ceil(                  this.push_row1.length);
+  let Row2HandPosCount = Math.ceil(this.OffsetRow2 + this.push_row2.length);
+  let Row3HandPosCount = Math.ceil(this.OffsetRow3 + this.push_row3.length);
+  HandPosCount = Math.max(Row1HandPosCount, Row2HandPosCount, Row3HandPosCount);
+  HandPosCount -= 3;
+  
+  this.HandPos = new Array;
+  for (let h = 0; h < HandPosCount; ++h) {
+	this.HandPos[h] = {};
+	
+	//Easy, prefer outer row, then fingers index, middle, ring, little
+	this.HandPos[h].easy = new Array;
+	for (let Row = 1; Row <= 3; ++Row) {
+		for (let Finger = 0; Finger < 4; ++Finger) {
+			if (Row == 1) {
+				let Row1Index = h+Finger;
+				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index+1                ).toString());
+			}
+			else if (Row == 2) {
+				let Row2Index = h+Finger - this.OffsetRow2;
+				if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push((Row2Index+1+this.OffsetRow2).toString() + "'");
+				
+			}
+			else if (Row == 3) {
+				let Row3Index = h+Finger - this.OffsetRow3;
+				if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push((Row3Index+1+this.OffsetRow3).toString() + "\"");
+			}
+		}
+	}
+	
+	//Hard finger stretch
+	this.HandPos[h].hard = new Array;
+	let aFinger = [-1, 4];
+	for (let Row = 1; Row <= 3; ++Row) {
+		for (let i = 0; i < aFinger.length; ++i) {
+			let Finger = aFinger[i];
+			if (Row == 1) {
+				let Row1Index = h+Finger;
+				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].hard.push((Row1Index+1                ).toString());
+			}
+			else if (Row == 2) {
+				let Row2Index = h+Finger - this.OffsetRow2;
+				if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].hard.push((Row2Index+1+this.OffsetRow2).toString() + "'");
+				
+			}
+			else if (Row == 3) {
+				let Row3Index = h+Finger - this.OffsetRow3;
+				if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].hard.push((Row3Index+1+this.OffsetRow3).toString() + "\"");
+			}		}
+	}
+  }
+  this.HandPosIndex = -1; //Start with index finger at lowest position
+  this.LastButton = "";
+  
+    
   //State variables
-  this.PrevBar       = true;
-  this.PrevPush      = true;
-  this.PrevRow       = 0;
-  this.PrevNumber    = 6;
-  this.FingerNumber1 = 0;
-  this.FingerNumber4 = 0;
+//  this.PrevBar       = true;
+//  this.PrevPush      = true;
+//  this.PrevRow       = 0;
+//  this.PrevNumber    = 6;
+//  this.FingerNumber1 = 0;
+//  this.FingerNumber4 = 0;
   
   this.Scan   = false;
   this.BarIndex = -1;
   this.aBars    = new Array;
-  this.PrevChord = "";
+//  this.PrevChord = "";
+
+  this.ChordPush = true;
+  this.ChordPull = true;
   
   this.strings = {
     accidentals: new Array,
@@ -333,7 +455,21 @@ MelodeonPatterns.prototype.noteToPullButtonRow2 = function(noteName) {
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.FingerMove = function (ButtonNumber) {
+MelodeonPatterns.prototype.noteToPushButtonRow3 = function(noteName) {
+	let ButtonNumber = noteToButton(noteName, this.push_row3);
+	if (ButtonNumber.length > 0)
+		ButtonNumber += "\"";
+	return ButtonNumber;
+}
+
+MelodeonPatterns.prototype.noteToPullButtonRow3 = function(noteName) {
+	let ButtonNumber = noteToButton(noteName, this.pull_row3);
+	if (ButtonNumber.length > 0)
+		ButtonNumber += "\"";
+	return ButtonNumber;
+}
+
+/*MelodeonPatterns.prototype.FingerMove = function (ButtonNumber) {
   if (this.FingerNumber1 == 0 || this.FingerNumber4 == 0)
     return 0;
   if (ButtonNumber > this.FingerNumber1 + 3)
@@ -477,7 +613,7 @@ MelodeonPatterns.prototype.notesToNumber2 = function (notes) {
   }
 
   return retNotes;
-};
+};*/
 
 MelodeonPatterns.prototype.StartScan = function () {
 	if (!this.Scan) {
@@ -701,6 +837,7 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 MelodeonPatterns.prototype.StartBuild = function () {
 	if (this.Scan) {
 		//console.log("bars:" + this.aBars.length);
+		//console.log(this.aBars);
 		
 		//Count push/pull possibilities
 		//TODO: Set left and right finger numbers
@@ -849,6 +986,10 @@ MelodeonPatterns.prototype.StartBuild = function () {
 		//TODO: Handle push and pull in a bar, minimize the number of direction changes
 		
 		
+		this.HandPosIndex = -1; //Start with index finger at lowest position
+		this.LastButton = "";
+		
+		
 		
 		//TODO: Run optimization algorithm
 		this.BarIndex = 0;
@@ -857,7 +998,7 @@ MelodeonPatterns.prototype.StartBuild = function () {
 }
 
 MelodeonPatterns.prototype.MarkBar = function () {
-	this.PrevBar = true;
+//	this.PrevBar = true;
 	
 	if (this.Scan) {
 		this.aBars.push(
@@ -882,163 +1023,254 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var retNotes  = new Array;
   var retGraces = null;
   
-  if (chord && chord.length > 0)
-    this.PrevChord = chord[0].name.trim();
+  //Update chord push/pull on change
+  if (chord && chord.length > 0) {
+    let Chord = chord[0].name.trim();
   
-  can_push = false;
-  if (!this.PrevChord.endsWith("<")) {
-    if (this.PrevChord.length == 0 || this.PrevChord == ">")
-      can_push = true;
-    for (var i = 0; i < this.push_chords.length; i++) {
-      if (this.push_chords[i].startsWith(this.PrevChord[0]))
-        can_push = true;
+    //Can the current chord be played in push?
+    this.ChordPush = false;
+    if (!Chord.endsWith("<")) {
+      if (Chord.length == 0 || Chord == ">")
+        this.ChordPush = true;
+      for (var i = 0; i < this.push_chords.length; i++) {
+        if (this.push_chords[i].startsWith(Chord[0])) //TODO: Does not work be Bb, F# etc.
+          this.ChordPush = true;
+      }
     }
-  }
-  
-  can_pull = false;
-  if (!this.PrevChord.endsWith(">")) {
-    if (this.PrevChord.length == 0 || this.PrevChord == "<")
-      can_pull = true;
-    for (var i = 0; i < this.pull_chords.length; i++) {
-      if (this.pull_chords[i].startsWith(this.PrevChord[0]))
-        can_pull = true;
+    
+    //Can the current chord be played in pull?
+    this.ChordPull = false;
+    if (!Chord.endsWith(">")) {
+      if (Chord.length == 0 || Chord == "<")
+        this.ChordPull = true;
+      for (var i = 0; i < this.pull_chords.length; i++) {
+        if (this.pull_chords[i].startsWith(Chord[0])) //TODO: Does not work be Bb, F# etc.
+          this.ChordPull = true;
+      }
     }
-  }
-  
-  if (!can_push && !can_pull) {
-    can_push = true;
-    can_pull = true;
+    
+    //If chord is not recognized, assume both directions are possible
+    if (!this.ChordPush && !this.ChordPull) {
+      this.ChordPush = true;
+      this.ChordPull = true;
+    }
   }
    
   if (this.Scan) {
 	  if (this.aBars.length == 0)
 		  this.MarkBar();
-	  
-	  for (var i = 0; i < notes.length; ++i) {
-		  var TNote = new TabNote.TabNote(notes[i].name);
-		  TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
-		  var noteName = TNote.emitNoAccidentals();
-		if (TNote.acc > 0)
-		    noteName = "^" + noteName;
-		else if (TNote.acc < 0)
-		    noteName = "_" + noteName;
-		
-		_push1 = this.noteToPushButtonRow1(noteName);
-		_push2 = this.noteToPushButtonRow2(noteName);
-		_pull1 = this.noteToPullButtonRow1(noteName);
-		_pull2 = this.noteToPullButtonRow2(noteName);
-		
-		var ClearPush = false;
-		if (!can_push && (_pull1.length != 0 || _pull2.length != 0)) {
-			ClearPush = true;
-		}
-		var ClearPull = false;
-		if (!can_pull && (_push1.length != 0 || _push2.length != 0)) {
-			ClearPull = true;
-		}
-		
-		if (ClearPush) {
-			_push1 = "";
-			_push2 = "";
-		}
-		if (ClearPull) {
-			_pull1 = "";
-			_pull2 = "";
-		}
-
-
-		  
-		  this.aBars[this.BarIndex].notes.push(
-			  {
-				note : notes[i],
-				push1: _push1,
-				push2: _push2,
-				pull1: _pull1,
-				pull2: _pull2
-			  }
-		  );
-	  }
   }
-  else {
-	if (this.aBars[this.BarIndex].chosen) {
-		var TNote = new TabNote.TabNote(notes[0].name);
-		TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
-		var noteName = TNote.emitNoAccidentals();
-		if (TNote.acc > 0)
-		    noteName = "^" + noteName;
-		else if (TNote.acc < 0)
-		    noteName = "_" + noteName;
-		
-		push1 = this.noteToPushButtonRow1(noteName);
-		push2 = this.noteToPushButtonRow2(noteName);
-		pull1 = this.noteToPullButtonRow1(noteName);
-		pull2 = this.noteToPullButtonRow2(noteName);
-		
-		var ClearPush = false;
-		if (!can_push && (pull1.length != 0 || pull2.length != 0)) {
-			ClearPush = true;
-		}
-		var ClearPull = false;
-		if (!can_pull && (push1.length != 0 || push2.length != 0)) {
-			ClearPull = true;
-		}
-		
-		if (ClearPush) {
-			push1 = "";
-			push2 = "";
-		}
-		if (ClearPull) {
-			pull1 = "";
-			pull2 = "";
-		}
-
+	
+  //For all notes
+  for (var i = 0; i < notes.length; ++i) {
+	//Get the note name
+	var TNote = new TabNote.TabNote(notes[i].name);
+	TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
+	var noteName = TNote.emitNoAccidentals();
+	if (TNote.acc > 0)
+	  noteName = "^" + noteName;
+	else if (TNote.acc < 0)
+	  noteName = "_" + noteName;
+	
+	//Get possibilities for the note on all rows in both directions
+	let _push1 = this.noteToPushButtonRow1(noteName);
+	let _push2 = this.noteToPushButtonRow2(noteName);
+	let _push3 = this.noteToPushButtonRow3(noteName);
+	let _pull1 = this.noteToPullButtonRow1(noteName);
+	let _pull2 = this.noteToPullButtonRow2(noteName);
+	let _pull3 = this.noteToPullButtonRow3(noteName);
+	
+	//If the cord cannot push and there is at least one possibility of pulling the note, do not allow pushing the note
+	let ClearPush = false;
+	if (!this.ChordPush && (_pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0)) {
+		ClearPush = true;
+	}
+	
+	//If the cord cannot pull and there is at least one possibility of pushing the note, do not allow pulling the note
+	var ClearPull = false;
+	if (!this.ChordPull && (_push1.length != 0 || _push2.length != 0 || _push3.length != 0)) {
+		ClearPull = true;
+	}
+	
+	//Clear what is not allowed based on the chord
+	if (ClearPush) {
+		_push1 = "";
+		_push2 = "";
+		_push3 = "";
+	}
+	if (ClearPull) {
+		_pull1 = "";
+		_pull2 = "";
+		_pull3 = "";
+	}
+	
+	if (this.Scan) {
+		//Add the possibilities to the bar
+		this.aBars[this.BarIndex].notes.push(
+		  {
+			note : notes[i],
+			push1: _push1,
+			push2: _push2,
+			push3: _push3,
+			pull1: _pull1,
+			pull2: _pull2,
+			pull3: _pull3
+		  }
+		);
+	}
+	else if (this.aBars[this.BarIndex].chosen) {
 		//Choose push or pull, prefer chosen option in the bar, except when this is not possible
-		Push   = this.aBars[this.BarIndex].push;
-		if (Push && push1 == '' && push2 == '')
+		let Push = this.aBars[this.BarIndex].push;
+		if ( Push && _push1 == '' && _push2 == '' && _push3 == '')
 			Push = false;
-		if (!Push && pull1 == '' && pull2 == '')
+		if (!Push && _pull1 == '' && _pull2 == '' && _pull3 == '')
 			Push = true;
 		
-		//Choose the button
-		Button = '';
+		//Create array of buttons
+		let aButtons = new Array;
 		if (Push) {
-			if (push1 != '')
-				Button = push1;
-			else
-				Button = push2;
+			if (_push1 != '') aButtons.push(_push1);
+			if (_push2 != '') aButtons.push(_push2);
+			if (_push3 != '') aButtons.push(_push2);
 		}
 		else {
-			if (pull1 != '')
-				Button = pull1;
-			else
-				Button = pull2;
+			if (_pull1 != '') aButtons.push(_pull1);
+			if (_pull2 != '') aButtons.push(_pull2);
+			if (_pull3 != '') aButtons.push(_pull2);
 		}
 		
-      //Add the tab note
-      var stringNumber = Push ? -1 : 1;
-      var note = new TabNote.TabNote(notes[0].name);
-      var number = {
-        num: Button,
-        str: stringNumber,
-        note: note
-      };
-      retNotes.push(number);
+		let Button = '';
+		let Found = false;
+		if (this.HandPosIndex < 0 && aButtons.length) {
+			Button = aButtons[0];
+			
+			for (let HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
+				for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
+					
+					if (this.HandPos[HandPosIndex].easy[f] == Button) {
+						this.HandPosIndex = HandPosIndex;
+						Found = true;
+						break;
+					}
+					
+					
+				}
+			}
+			
+			
+			
+			
+		}
+		else {
+			
+			let HandPosIndex = this.HandPosIndex;
+			for (let HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
+				for (let MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
+					HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
+					if (HandPosIndex < 0 || HandPosIndex >= this.HandPos.length)
+						continue;
+					
+					let aHandPosButtons = new Array;
+					
+					//Search from easy to hard in this hand position
+					for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
+						for (let b = 0; b < aButtons.length; ++b) {
+							if (this.HandPos[HandPosIndex].easy[f] == aButtons[b]) {
+								//Set the new hand position
+								
+								aHandPosButtons.push(aButtons[b]);
+								
+							}
+						}
+					}
+					
+					if (aHandPosButtons.length) {
+						this.HandPosIndex = HandPosIndex;
+	//					console.log(this.HandPosIndex);
+						
+						//Find same as last button
+						if (!Found) {
+							for (let i = 0; i < aHandPosButtons.length; ++i) {
+								if (this.LastButton == aHandPosButtons[i]) {
+									Button = aHandPosButtons[i];
+									Found  = true;
+									break;
+								}
+							}
+						}
+						
+						//Find same row as last button
+						if (!Found) {
+							let LastRow = 1;
+							if (this.LastButton[this.LastButton.length - 1] == "'")
+								LastRow = 2;
+							else if (this.LastButton[this.LastButton.length - 1] == "\"")
+								LastRow = 3;
+							
+	//						console.log(aHandPosButtons);
+							for (let i = 0; i < aHandPosButtons.length; ++i) {
+								let Row = 1;
+								if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "'")
+									Row = 2;
+								else if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "\"")
+									Row = 3;
+
+								if (LastRow == Row) {
+									Button = aHandPosButtons[i];
+									Found  = true;
+									break;
+								}
+							}
+						}
+						
+						//Find same number as last button
+						if (!Found) {
+							for (let i = 0; i < aHandPosButtons.length; ++i) {
+								//TODO: 10 / 1 risk
+								if (this.LastButton.substring(0, 1) == aHandPosButtons[i].substring(0, 1)) {
+									Button = aHandPosButtons[i];
+									Found  = true;
+									break;
+								}
+							}
+						}
+						
+						//Pick easiest
+						if (!Found) {
+							Button = aHandPosButtons[0];
+							Found  = true;
+						}
+						
+						this.LastButton = Button;
+					}
+				}
+			}
+		}
 		
+//		console.log(Button);
+		
+		//Add the tab note
+		var stringNumber = Push ? -1 : 1;
+		var note = new TabNote.TabNote(notes[0].name);
+		var number = {
+		num: Button,
+		str: stringNumber,
+		note: note
+		};
+		retNotes.push(number);
 	}
-	  
-	  
-	  
-	  
-	  
+	
   }
-  
-  
+    
   return {
     notes: retNotes,
     graces: retGraces,
     error: error
   };
 };
+
+
+
 
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
   if (stringNumber < 1)

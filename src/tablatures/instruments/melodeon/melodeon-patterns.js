@@ -1060,9 +1060,14 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	  if (this.aBars.length == 0)
 		  this.MarkBar();
   }
-	
-  //For all notes
+
+  //For all notes at this count
   for (var i = 0; i < notes.length; ++i) {
+    //Ignore end of tie, don't show numbers that are already pressed
+    //TODO: Only if tie from same button
+    if (notes[i].endTie)
+      continue;
+	  
 	//Get the note name
 	var TNote = new TabNote.TabNote(notes[i].name);
 	TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);

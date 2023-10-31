@@ -1,4 +1,5 @@
-- Do not repeat same note connected with - over |
+- Do show button numbers on tie were at least one not changed
+- Handle multiple notes at the same count properly
 - Annotation to prefer melodion row row1=* row2=' row3='', in chord or using !
 - 3 row melodeons
 - Minimize the number of changes in non-melodeon source files

@@ -10,9 +10,18 @@ var addChord = function (getTextSize, abselem, elem, roomTaken, roomTakenRight, 
 		for (var j = chords.length - 1; j >= 0; j--) { // parse these in opposite order because we place them from bottom to top.
 			var chord = chords[j];
 			
-			//Strip melodeon push/pull indicator
-			if (chord.endsWith("<") || chord.endsWith(">")) {
-				chord = chord.substring(0, chord.length - 1);
+			//Remove melodeon tablature push/pull and row annotation
+			var exclude = new Array;
+			exclude.push("<");
+			exclude.push(">");
+			exclude.push(".");
+			exclude.push(":");
+			exclude.push(";");
+			for (let e = 0; e < exclude.length; ++e) {
+				let Index = chord.indexOf(exclude[e]);
+				if (Index >= 0) {
+					chord = chord.substring(0, Index) + chord.substring(Index+1);
+				}
 			}
 			
 			var x = 0;

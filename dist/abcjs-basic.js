@@ -16617,6 +16617,36 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       _pull2 = "";
       _pull3 = "";
     }
+    if (this.RowPrefer1 >= 0 && (_pull1 != "" || _push1 != "")) {
+      if (this.RowPrefer2 < 0) {
+        _push2 = "";
+        _pull2 = "";
+      }
+      if (this.RowPrefer3 < 0) {
+        _push3 = "";
+        _pull3 = "";
+      }
+    }
+    if (this.RowPrefer2 >= 0 && (_pull2 != "" || _push2 != "")) {
+      if (this.RowPrefer1 < 0) {
+        _push1 = "";
+        _pull1 = "";
+      }
+      if (this.RowPrefer3 < 0) {
+        _push3 = "";
+        _pull3 = "";
+      }
+    }
+    if (this.RowPrefer3 >= 0 && (_pull3 != "" || _push3 != "")) {
+      if (this.RowPrefer1 < 0) {
+        _push1 = "";
+        _pull1 = "";
+      }
+      if (this.RowPrefer2 < 0) {
+        _push2 = "";
+        _pull2 = "";
+      }
+    }
     if (this.Scan) {
       //Add the possibilities to the bar
       this.aBars[this.BarIndex].notes.push({

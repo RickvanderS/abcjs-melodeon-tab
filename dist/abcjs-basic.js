@@ -16536,7 +16536,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     //Can the current chord be played in push?
     this.ChordPush = false;
     if (!Chord.endsWith("<")) {
-      if (Chord.length == 0 || Chord == ">") this.ChordPush = true;
+      if (Chord.length == 0 || Chord.endsWith(">")) this.ChordPush = true;
       for (var i = 0; i < this.push_chords.length; i++) {
         if (this.push_chords[i].startsWith(Chord[0]))
           //TODO: Does not work be Bb, F# etc.
@@ -16547,7 +16547,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     //Can the current chord be played in pull?
     this.ChordPull = false;
     if (!Chord.endsWith(">")) {
-      if (Chord.length == 0 || Chord == "<") this.ChordPull = true;
+      if (Chord.length == 0 || Chord.endsWith("<")) this.ChordPull = true;
       for (var i = 0; i < this.pull_chords.length; i++) {
         if (this.pull_chords[i].startsWith(Chord[0]))
           //TODO: Does not work be Bb, F# etc.

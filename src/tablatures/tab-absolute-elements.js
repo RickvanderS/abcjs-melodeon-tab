@@ -232,6 +232,7 @@ TabAbsoluteElements.prototype.build = function (plugin,
     }  
   }
   
+  this.accidentals = null;
   plugin.semantics.StartBuild();
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];

@@ -835,6 +835,8 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 }
 
 MelodeonPatterns.prototype.StartBuild = function () {
+	this.strings.accidentals = null;
+	
 	if (this.Scan) {
 		//console.log("bars:" + this.aBars.length);
 		//console.log(this.aBars);

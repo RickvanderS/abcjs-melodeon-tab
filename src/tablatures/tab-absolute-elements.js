@@ -189,6 +189,12 @@ TabAbsoluteElements.prototype.scan = function (plugin,
 	    plugin.semantics.strings.measureAccidentals = {}
 		plugin.semantics.MarkBar();
         break;
+      case 'rest':
+        var restGraces = graceInRest(absChild);
+        var chord = absChild.abcelem.chord;
+        tabPos = convertToNumber(plugin, null, restGraces, chord);
+        if (tabPos.error) return;
+        break;
       case 'note':
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
@@ -200,11 +206,6 @@ TabAbsoluteElements.prototype.scan = function (plugin,
         abs.type = 'tabNumber';
         tabPos = convertToNumber(plugin, pitches, graceNotes, chord);   
         if (tabPos.error) return;
-        if (tabPos.graces) {
-          // add graces to last note in notes
-          var posNote = tabPos.notes.length - 1;
-          tabPos.notes[posNote].graces = tabPos.graces;
-        }
         break;
     }
   }
@@ -287,14 +288,15 @@ TabAbsoluteElements.prototype.build = function (plugin,
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);
+        var chord = absChild.abcelem.chord;
+        tabPos = convertToNumber(plugin, null, restGraces, chord);
+        if (tabPos.error) return;
         if (restGraces) {
           // to number conversion 
-          tabPos = convertToNumber(plugin, null, restGraces, null);
-          if (tabPos.error) return;
           // build relative for grace
           defGrace = { el_type: "note", startChar: absChild.abcelem.startChar, endChar: absChild.abcelem.endChar, notes: [], grace: true };
           buildGraceRelativesForRest(plugin, abs, absChild, tabPos.graces, tabVoice);
-       }
+        }
         break;
       case 'note':
         var abs = cloneAbsolute(absChild);

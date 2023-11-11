@@ -10,9 +10,26 @@ function germanNote(note) {
 }
 
 function translateChord(chordString, jazzchords, germanAlphabet) {
+	//Define characters used for melodeon tablature annotation
+	var aMelodeonAnnotation = new Array;
+	aMelodeonAnnotation.push("<");
+	aMelodeonAnnotation.push(">");
+	aMelodeonAnnotation.push(".");
+	aMelodeonAnnotation.push(":");
+	aMelodeonAnnotation.push(";");
+
 	var lines = chordString.split("\n");
 	for (let i = 0; i < lines.length; i++) {
 		let chord = lines[i];
+		
+		//Remove melodeon tablature push/pull and row annotation
+		for (let e = 0; e < aMelodeonAnnotation.length; ++e) {
+			let Index = chord.indexOf(aMelodeonAnnotation[e]);
+			if (Index >= 0) {
+				chord = chord.substring(0, Index) + chord.substring(Index+1);
+			}
+		}
+		
 		// If the chord isn't in a recognizable format then just skip it.
 		let reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/);
 		if (!reg) {

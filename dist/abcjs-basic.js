@@ -6861,9 +6861,33 @@ var setIsInTie = function setIsInTie(multilineVars, overlayLevel, value) {
   multilineVars.inTie[overlayLevel][voiceIndex] = value;
 };
 var letter_to_chord = function letter_to_chord(line, i) {
+  //Define characters used for melodeon tablature annotation
+  var aMelodeonAnnotation = new Array();
+  aMelodeonAnnotation.push("<");
+  aMelodeonAnnotation.push(">");
+  aMelodeonAnnotation.push(".");
+  aMelodeonAnnotation.push(":");
+  aMelodeonAnnotation.push(";");
   if (line[i] === '"') {
     var chord = tokenizer.getBrackettedSubstring(line, i, 5);
     if (!chord[2]) warn("Missing the closing quote while parsing the chord symbol", line, i);
+
+    //Detect chord only being used for melodeon annotation
+    var MelodeonAnnotationOnly = true;
+    for (var _i = 0; _i < chord[1].length; ++_i) {
+      var MelodeonAnnotation = false;
+      for (var j = 0; j < aMelodeonAnnotation.length; ++j) {
+        if (chord[1][_i] == aMelodeonAnnotation[j]) {
+          MelodeonAnnotation = true;
+          break;
+        }
+      }
+      if (!MelodeonAnnotation) {
+        MelodeonAnnotationOnly = false;
+        break;
+      }
+    }
+
     // If it starts with ^, then the chord appears above.
     // If it starts with _ then the chord appears below.
     // (note that the 2.0 draft standard defines them as not chords, but annotations and also defines @.)
@@ -6873,10 +6897,10 @@ var letter_to_chord = function letter_to_chord(line, i) {
     } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '_') {
       chord[1] = chord[1].substring(1);
       chord[2] = 'below';
-    } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '<') {
+    } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '<' && !MelodeonAnnotationOnly) {
       chord[1] = chord[1].substring(1);
       chord[2] = 'left';
-    } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '>') {
+    } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '>' && !MelodeonAnnotationOnly) {
       chord[1] = chord[1].substring(1);
       chord[2] = 'right';
     } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '@') {
@@ -16573,6 +16597,13 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   if (this.Scan) {
     if (this.aBars.length == 0) this.MarkBar();
   }
+  if (!notes) {
+    return {
+      notes: retNotes,
+      graces: retGraces,
+      error: error
+    };
+  }
 
   //For all notes at this count
   for (var i = 0; i < notes.length; ++i) {
@@ -17860,6 +17891,12 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
         plugin.semantics.strings.measureAccidentals = {};
         plugin.semantics.MarkBar();
         break;
+      case 'rest':
+        var restGraces = graceInRest(absChild);
+        var chord = absChild.abcelem.chord;
+        tabPos = convertToNumber(plugin, null, restGraces, chord);
+        if (tabPos.error) return;
+        break;
       case 'note':
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
@@ -17871,11 +17908,6 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
         abs.type = 'tabNumber';
         tabPos = convertToNumber(plugin, pitches, graceNotes, chord);
         if (tabPos.error) return;
-        if (tabPos.graces) {
-          // add graces to last note in notes
-          var posNote = tabPos.notes.length - 1;
-          tabPos.notes[posNote].graces = tabPos.graces;
-        }
         break;
     }
   }
@@ -17948,10 +17980,11 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);
+        var chord = absChild.abcelem.chord;
+        tabPos = convertToNumber(plugin, null, restGraces, chord);
+        if (tabPos.error) return;
         if (restGraces) {
           // to number conversion 
-          tabPos = convertToNumber(plugin, null, restGraces, null);
-          if (tabPos.error) return;
           // build relative for grace
           defGrace = {
             el_type: "note",
@@ -19522,20 +19555,6 @@ var addChord = function addChord(getTextSize, abselem, elem, roomTaken, roomTake
     for (var j = chords.length - 1; j >= 0; j--) {
       // parse these in opposite order because we place them from bottom to top.
       var chord = chords[j];
-
-      //Remove melodeon tablature push/pull and row annotation
-      var exclude = new Array();
-      exclude.push("<");
-      exclude.push(">");
-      exclude.push(".");
-      exclude.push(":");
-      exclude.push(";");
-      for (var e = 0; e < exclude.length; ++e) {
-        var Index = chord.indexOf(exclude[e]);
-        if (Index >= 0) {
-          chord = chord.substring(0, Index) + chord.substring(Index + 1);
-        }
-      }
       var x = 0;
       var y;
       var font;
@@ -22570,9 +22589,25 @@ function germanNote(note) {
   return note;
 }
 function translateChord(chordString, jazzchords, germanAlphabet) {
+  //Define characters used for melodeon tablature annotation
+  var aMelodeonAnnotation = new Array();
+  aMelodeonAnnotation.push("<");
+  aMelodeonAnnotation.push(">");
+  aMelodeonAnnotation.push(".");
+  aMelodeonAnnotation.push(":");
+  aMelodeonAnnotation.push(";");
   var lines = chordString.split("\n");
   for (var i = 0; i < lines.length; i++) {
     var chord = lines[i];
+
+    //Remove melodeon tablature push/pull and row annotation
+    for (var e = 0; e < aMelodeonAnnotation.length; ++e) {
+      var Index = chord.indexOf(aMelodeonAnnotation[e]);
+      if (Index >= 0) {
+        chord = chord.substring(0, Index) + chord.substring(Index + 1);
+      }
+    }
+
     // If the chord isn't in a recognizable format then just skip it.
     var reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/);
     if (!reg) {

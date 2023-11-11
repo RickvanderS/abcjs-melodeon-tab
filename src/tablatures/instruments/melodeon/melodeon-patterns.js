@@ -1070,6 +1070,14 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	  if (this.aBars.length == 0)
 		  this.MarkBar();
   }
+  
+  if (!notes) {
+    return {
+      notes: retNotes,
+      graces: retGraces,
+      error: error
+    };
+  }
 
   //For all notes at this count
   for (var i = 0; i < notes.length; ++i) {

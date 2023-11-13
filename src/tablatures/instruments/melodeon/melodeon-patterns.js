@@ -1256,14 +1256,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
 				let RequireRow = aRowOrder[RowOrder];
 				
-				if (RequireRow != 0)
-					console.log('Hand start=' + this.HandPosIndex);
 				for (let HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
-					if (RequireRow != 0)
-						console.log('Hand move=' + HandPosMove);
 					for (let MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
-						if (RequireRow != 0)
-							console.log('Hand +-=' + MinPlus);
 						let HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
 						if (HandPosIndex < 0 || HandPosIndex >= this.HandPos.length)
 							continue;
@@ -1288,12 +1282,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 							}
 						}
 						
-						if (RequireRow != 0)
-							console.log('Hand try=' + HandPosIndex);
-						
 						if (aHandPosButtons.length) {
 							this.HandPosIndex = HandPosIndex;
-		//					console.log(this.HandPosIndex);
 
 							//Find same as last button
 							if (!Found) {
@@ -1314,7 +1304,6 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 								else if (this.LastButton[this.LastButton.length - 1] == "\"")
 									LastRow = 3;
 								
-		//						console.log(aHandPosButtons);
 								for (let i = 0; i < aHandPosButtons.length; ++i) {
 									let Row = 1;
 									if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "'")
@@ -1354,8 +1343,6 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 				}
 			}
 		}
-		
-//		console.log(Button);
 		
 		//Add the tab note
 		var stringNumber = Push ? -1 : 1;

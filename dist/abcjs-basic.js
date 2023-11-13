@@ -16752,11 +16752,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       } else {
         for (var _RowOrder = 0; _RowOrder < aRowOrder.length; ++_RowOrder) {
           var _RequireRow = aRowOrder[_RowOrder];
-          if (_RequireRow != 0) console.log('Hand start=' + this.HandPosIndex);
           for (var HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
-            if (_RequireRow != 0) console.log('Hand move=' + HandPosMove);
             for (var MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
-              if (_RequireRow != 0) console.log('Hand +-=' + MinPlus);
               var _HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
               if (_HandPosIndex < 0 || _HandPosIndex >= this.HandPos.length) continue;
               var aHandPosButtons = new Array();
@@ -16773,10 +16770,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
                   }
                 }
               }
-              if (_RequireRow != 0) console.log('Hand try=' + _HandPosIndex);
               if (aHandPosButtons.length) {
                 this.HandPosIndex = _HandPosIndex;
-                //					console.log(this.HandPosIndex);
 
                 //Find same as last button
                 if (!Found) {
@@ -16793,8 +16788,6 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
                 if (!Found) {
                   var LastRow = 1;
                   if (this.LastButton[this.LastButton.length - 1] == "'") LastRow = 2;else if (this.LastButton[this.LastButton.length - 1] == "\"") LastRow = 3;
-
-                  //						console.log(aHandPosButtons);
                   for (var _i14 = 0; _i14 < aHandPosButtons.length; ++_i14) {
                     var _Row3 = 1;
                     if (aHandPosButtons[_i14][aHandPosButtons[_i14].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i14][aHandPosButtons[_i14].length - 1] == "\"") _Row3 = 3;
@@ -16829,8 +16822,6 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           }
         }
       }
-
-      //		console.log(Button);
 
       //Add the tab note
       var stringNumber = Push ? -1 : 1;

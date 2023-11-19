@@ -16537,10 +16537,6 @@ MelodeonPatterns.prototype.MarkBar = function () {
   this.BarIndex++;
 };
 MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
-  var error = null;
-  var retNotes = new Array();
-  var retGraces = null;
-
   //Update chord push/pull on change
   if (chord && chord.length > 0) {
     var Chord = chord[0].name.trim();
@@ -16581,16 +16577,11 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   if (this.Scan) {
     if (this.aBars.length == 0) this.MarkBar();
   }
-  if (!notes) {
-    return {
-      notes: retNotes,
-      graces: retGraces,
-      error: error
-    };
-  }
 
   //For all notes at this count
-  for (var i = 0; i < notes.length; ++i) {
+  var strPush = "";
+  var strPull = "";
+  for (var i = 0; notes && i < notes.length; ++i) {
     //Ignore end of tie, don't show numbers that are already pressed
     //TODO: Only if tie from same button
     if (notes[i].endTie) continue;
@@ -16807,16 +16798,49 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
         }
       }
 
-      //Add the tab note
-      var stringNumber = Push ? -1 : 1;
-      var note = new TabNote.TabNote(notes[0].name);
-      var number = {
-        num: Button,
-        str: stringNumber,
-        note: note
-      };
-      retNotes.push(number);
+      //If a button was found
+      if (Button.length) {
+        //Add it to push or pull
+        if (Push) {
+          //Append hair space if required
+          if (strPush.length > 0 && strPush[strPush.length - 1] != "'" && strPush[strPush.length - 1] != "\"") strPush += "\u200A";
+
+          //Append the button
+          strPush += Button;
+        } else {
+          //Append hair space if required
+          if (strPull.length > 0 && strPull[strPull.length - 1] != "'" && strPull[strPull.length - 1] != "\"") strPull += "\u200A";
+
+          //Append the button
+          strPull += Button;
+        }
+      }
     }
+  }
+
+  //Create return value with push and pull element (normally only one of the two)
+  var error = null;
+  var retNotes = new Array();
+  var retGraces = null;
+  if (strPush.length) {
+    var note = new TabNote.TabNote("");
+    var number = {
+      num: strPush,
+      str: -1,
+      //Top row
+      note: note
+    };
+    retNotes.push(number);
+  }
+  if (strPull.length) {
+    var note = new TabNote.TabNote("");
+    var number = {
+      num: strPull,
+      str: 1,
+      //Bottom row
+      note: note
+    };
+    retNotes.push(number);
   }
   return {
     notes: retNotes,

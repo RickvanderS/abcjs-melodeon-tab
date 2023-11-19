@@ -71,6 +71,8 @@ declare module 'abcjs' {
 		"mark" | "marcato" | "umarcato" |
 		"D.C.alcoda" | "D.C.alfine" | "D.S.alcoda" | "D.S.alfine" | "editorial" | "courtesy"
 
+	export type TablatureInstrument = 'guitar' | 'mandolin' | 'fiddle' | 'violin' | '';
+
 	//
 	// Basic types
 	//
@@ -251,6 +253,14 @@ declare module 'abcjs' {
 		minSpacingLimit?: number;
 	}
 
+	export interface Tablature {
+		instrument?: TablatureInstrument,
+		capo?: number
+		label?: string,
+		tuning?: Array<string>,
+		highestNote?: string,
+	}
+
 	export interface AbcVisualParams {
 		add_classes?: boolean;
 		afterParsing?: AfterParsing;
@@ -258,6 +268,7 @@ declare module 'abcjs' {
 		clickListener?: ClickListener;
 		dragColor?: string;
 		dragging?: boolean;
+		expandToWidest?: boolean;
 		foregroundColor?: string;
 		format?: { [attr in FormatAttributes]?: any };
 		header_only?: boolean;
@@ -282,6 +293,7 @@ declare module 'abcjs' {
 		staffwidth?: number;
 		startingTune?: number;
 		stop_on_warning?: boolean;
+		tablature?: Array<Tablature>;
 		textboxpadding?: number;
 		viewportHorizontal?: boolean;
 		viewportVertical?: boolean;
@@ -399,7 +411,7 @@ declare module 'abcjs' {
 	//
 
 	// renderAbc
-	interface NoteTimingEvent {
+	export interface NoteTimingEvent {
 		milliseconds: number;
 		millisecondsPerMeasure: number;
 		type: NoteTimingEventType;
@@ -419,6 +431,11 @@ declare module 'abcjs' {
 		top?: number;
 		width?: number;
 		measureStart?: boolean;
+	}
+
+	// make an alias for backwards compatibility
+	export interface TimingEvent extends NoteTimingEvent {
+
 	}
 
 	export interface PercMapElement {
@@ -571,6 +588,7 @@ declare module 'abcjs' {
 		wordsfont: Font;
 	}
 
+	// Caution: The contents of this object may change at any time. If you reference this, be sure you retest for each abcjs release.
 	export interface EngraverController {
 		classes: any;
 		dragColor: string;
@@ -679,6 +697,7 @@ declare module 'abcjs' {
 
 	export interface VoiceItemBar {
 		el_type: "bar";
+		type: 'bar_dbl_repeat' | 'bar_right_repeat' | 'bar_left_repeat' |'bar_invisible' | 'bar_thick_thin' | 'bar_thin_thin' | 'bar_thin' | 'bar_thin_thick';
 		barNumber?: number;
 		chord?: Array<ChordProperties>;
 		decoration: Array<Decorations>;
@@ -829,6 +848,7 @@ declare module 'abcjs' {
 		setTiming: (bpm?: number, measuresOfDelay? : number) => void;
 		setUpAudio: (options: SynthOptions) => AudioTracks;
 		makeVoicesArray: () => Array<Selectable[]>
+		deline: () => Array<TuneLine>;
 		lineBreaks?: Array<number>;
 		visualTranspose?: number;
 	}
@@ -911,22 +931,6 @@ declare module 'abcjs' {
 	export interface LineEndDetails {
 		line: number;
 		endTimings: Array<LineEndInfo>;
-	}
-
-	export interface TimingEvent {
-		type: "event";
-		milliseconds: number;
-		millisecondsPerMeasure: number;
-		line: number;
-		measureNumber: number;
-		top: number;
-		height: number;
-		left: number;
-		width: number;
-		elements: Array< HTMLElement>;
-		startCharArray: Array<number>;
-		endCharArray: Array<number>;
-		midiPitches: MidiPitches
 	}
 
 	export interface TimingCallbacksPosition {
@@ -1068,9 +1072,11 @@ declare module 'abcjs' {
 	// TimingCallbacks
 	export type BeatCallback = (beatNumber: number, totalBeats: number, totalTime: number, position: TimingCallbacksPosition, debugInfo: TimingCallbacksDebug) => void;
 
-	export type EventCallback = (event: TimingEvent) => void;
+	type EventCallbackReturn = "continue" | Promise<"continue"> | undefined
 
-	export type LineEndCallback = (info : LineEndInfo, event: TimingEvent, details: LineEndDetails) => void;
+	export type EventCallback = (event: NoteTimingEvent | null) => EventCallbackReturn;
+
+	export type LineEndCallback = (info : LineEndInfo, event: NoteTimingEvent, details: LineEndDetails) => void;
 
 	// Editor
 	export type OnChange = (editor: Editor) => void;
@@ -1125,6 +1131,7 @@ declare module 'abcjs' {
 		pause(shouldPause: boolean): void;
 		millisecondsPerMeasure(): number;
 		pauseMidi(shouldPause: boolean): void;
+		fireChanged():void;
 	}
 
 	//
@@ -1149,6 +1156,7 @@ declare module 'abcjs' {
 		seek(position: number, units?: ProgressUnit): void
 		stop(): number
 		download(): string // returns audio buffer in wav format as a reference to a blob
+		getIsRunning(): boolean
 	}
 
 	export interface SynthInitResponse {
@@ -1192,7 +1200,7 @@ declare module 'abcjs' {
 		export function activeAudioContext(): AudioContext
 		export function CreateSynthControl(element: Selector, options: AbcVisualParams): AudioControl
 		export function getMidiFile(source: string | TuneObject, options?: MidiFileOptions): MidiFile;
-		export function playEvent(pitches: MidiPitches, graceNotes: MidiGracePitches | undefined, milliSecondsPerMeasure: number): Promise<void>;
+		export function playEvent(pitches: MidiPitches, graceNotes: MidiGracePitches | undefined, milliSecondsPerMeasure: number, soundFontUrl? : string, debugCallback?: (message: string) => void): Promise<void>;
 		export function sequence(visualObj: TuneObject, options: AbcVisualParams): AudioSequence
 	}
 

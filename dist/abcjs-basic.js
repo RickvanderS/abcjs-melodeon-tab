@@ -280,6 +280,9 @@ var abcTablatures = {
           // plugin.init(tune, tuneNumber, args, ii);
           returned.push(pluginInstance);
           nbPlugins++;
+        } else if (instrument === '') {
+          // create a placeholder - there is no tab for this staff
+          returned.push(null);
         } else {
           // unknown tab plugin 
           //this.emit_error('Undefined tablature plugin: ' + tabName)
@@ -1011,11 +1014,11 @@ var renderAbc = function renderAbc(output, abc, parserParams, engraverParams, re
       div.setAttribute("style", "visibility: hidden;");
       document.body.appendChild(div);
     }
-    if (params.afterParsing) params.afterParsing(tune, tuneNumber, abcString);
     if (!removeDiv && params.wrap && params.staffwidth) {
       tune = doLineWrapping(div, tune, tuneNumber, abcString, params);
       return tune;
     }
+    if (params.afterParsing) params.afterParsing(tune, tuneNumber, abcString);
     renderOne(div, tune, params, tuneNumber, 0);
     if (removeDiv) div.parentNode.removeChild(div);
     return null;
@@ -1033,6 +1036,7 @@ function doLineWrapping(div, tune, tuneNumber, abcString, params) {
     var warnings = abcParser.getWarnings();
     if (warnings) tune.warnings = warnings;
   }
+  if (params.afterParsing) params.afterParsing(tune, tuneNumber, abcString);
   renderOne(div, tune, ret.revisedParams, tuneNumber, 0);
   tune.explanation = ret.explanation;
   return tune;
@@ -6355,6 +6359,18 @@ var multilineVars;
 var tune;
 var tuneBuilder;
 var header;
+var _require = __webpack_require__(/*! ./abc_parse_settings */ "./src/parse/abc_parse_settings.js"),
+  legalAccents = _require.legalAccents,
+  volumeDecorations = _require.volumeDecorations,
+  dynamicDecorations = _require.dynamicDecorations,
+  accentPseudonyms = _require.accentPseudonyms,
+  accentDynamicPseudonyms = _require.accentDynamicPseudonyms,
+  nonDecorations = _require.nonDecorations,
+  durations = _require.durations,
+  pitches = _require.pitches,
+  rests = _require.rests,
+  accMap = _require.accMap,
+  tripletQ = _require.tripletQ;
 var MusicParser = function MusicParser(_tokenizer, _warn, _multilineVars, _tune, _tuneBuilder, _header) {
   tokenizer = _tokenizer;
   warn = _warn;
@@ -6422,7 +6438,6 @@ var MusicParser = function MusicParser(_tokenizer, _warn, _multilineVars, _tune,
 // double-quote: chord symbol
 // less-than, greater-than, slash: duration
 // back-tick, space, tab: space
-var nonDecorations = "ABCDEFGabcdefgxyzZ[]|^_{"; // use this to prescreen so we don't have to look for a decoration at every note.
 
 var isInTie = function isInTie(multilineVars, overlayLevel, el) {
   if (multilineVars.inTie[overlayLevel] === undefined) return false;
@@ -6831,7 +6846,7 @@ MusicParser.prototype.parseMusic = function (line) {
             // Create a warning if this is not a displayable duration.
             // The first item on a line is a regular note value, each item after that represents a dot placed after the previous note.
             // Only durations less than a whole note are tested because whole note durations have some tricky rules.
-            var durations = [0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375, 0.25, 0.375, 0.4375, 0.46875, 0.484375, 0.4921875, 0.125, 0.1875, 0.21875, 0.234375, 0.2421875, 0.24609375, 0.0625, 0.09375, 0.109375, 0.1171875, 0.12109375, 0.123046875, 0.03125, 0.046875, 0.0546875, 0.05859375, 0.060546875, 0.0615234375, 0.015625, 0.0234375, 0.02734375, 0.029296875, 0.0302734375, 0.03076171875];
+
             if (el.duration < 1 && durations.indexOf(el.duration) === -1 && el.duration !== 0) {
               if (!el.rest || el.rest.type !== 'spacer') warn("Duration not representable: " + line.substring(startI, i), line, i);
             }
@@ -7003,11 +7018,6 @@ function durationOfMeasure(multilineVars) {
   if (!meter.value || meter.value.length === 0) return 1;
   return parseInt(meter.value[0].num, 10) / parseInt(meter.value[0].den, 10);
 }
-var legalAccents = ["trill", "lowermordent", "uppermordent", "mordent", "pralltriller", "accent", "fermata", "invertedfermata", "tenuto", "0", "1", "2", "3", "4", "5", "+", "wedge", "open", "thumb", "snap", "turn", "roll", "breath", "shortphrase", "mediumphrase", "longphrase", "segno", "coda", "D.S.", "D.C.", "fine", "beambr1", "beambr2", "slide", "marcato", "upbow", "downbow", "/", "//", "///", "////", "trem1", "trem2", "trem3", "trem4", "turnx", "invertedturn", "invertedturnx", "trill(", "trill)", "arpeggio", "xstem", "mark", "umarcato", "style=normal", "style=harmonic", "style=rhythm", "style=x", "style=triangle", "D.C.alcoda", "D.C.alfine", "D.S.alcoda", "D.S.alfine", "editorial", "courtesy"];
-var volumeDecorations = ["p", "pp", "f", "ff", "mf", "mp", "ppp", "pppp", "fff", "ffff", "sfz"];
-var dynamicDecorations = ["crescendo(", "crescendo)", "diminuendo(", "diminuendo)", "glissando(", "glissando)"];
-var accentPseudonyms = [["<", "accent"], [">", "accent"], ["tr", "trill"], ["plus", "+"], ["emphasis", "accent"], ["^", "umarcato"], ["marcato", "umarcato"]];
-var accentDynamicPseudonyms = [["<(", "crescendo("], ["<)", "crescendo)"], [">(", "diminuendo("], [">)", "diminuendo)"]];
 var letter_to_accent = function letter_to_accent(line, i) {
   var macro = multilineVars.macros[line[i]];
   if (macro !== undefined) {
@@ -7134,19 +7144,6 @@ var letter_to_bar = function letter_to_bar(line, curr_pos) {
   if (retRep.len === 0 || retRep.token[0] === '-') return [orig_bar_len, ret.token];
   return [ret.len + retRep.len, ret.token, retRep.token];
 };
-var tripletQ = {
-  2: 3,
-  3: 2,
-  4: 3,
-  5: 2,
-  // TODO-PER: not handling 6/8 rhythm yet
-  6: 2,
-  7: 2,
-  // TODO-PER: not handling 6/8 rhythm yet
-  8: 3,
-  9: 2 // TODO-PER: not handling 6/8 rhythm yet
-};
-
 var letter_to_open_slurs_and_triplets = function letter_to_open_slurs_and_triplets(line, i) {
   // consume spaces, and look for all the open parens. If there is a number after the open paren,
   // that is a triplet. Otherwise that is a slur. Collect all the slurs and the first triplet.
@@ -7279,38 +7276,6 @@ MusicParser.prototype.startNewLine = function () {
 var addEndBeam = function addEndBeam(el) {
   if (el.duration !== undefined && el.duration < 0.25) el.end_beam = true;
   return el;
-};
-var pitches = {
-  A: 5,
-  B: 6,
-  C: 0,
-  D: 1,
-  E: 2,
-  F: 3,
-  G: 4,
-  a: 12,
-  b: 13,
-  c: 7,
-  d: 8,
-  e: 9,
-  f: 10,
-  g: 11
-};
-var rests = {
-  x: 'invisible',
-  X: 'invisible-multimeasure',
-  y: 'spacer',
-  z: 'rest',
-  Z: 'multimeasure'
-};
-var accMap = {
-  'dblflat': '__',
-  'flat': '_',
-  'natural': '=',
-  'sharp': '^',
-  'dblsharp': '^^',
-  'quarterflat': '_/',
-  'quartersharp': '^/'
 };
 var getCoreNote = function getCoreNote(line, index, el, canHaveBrokenRhythm) {
   //var el = { startChar: index };
@@ -7596,6 +7561,67 @@ var getBrokenRhythm = function getBrokenRhythm(line, index) {
   return null;
 };
 module.exports = MusicParser;
+
+/***/ }),
+
+/***/ "./src/parse/abc_parse_settings.js":
+/*!*****************************************!*\
+  !*** ./src/parse/abc_parse_settings.js ***!
+  \*****************************************/
+/***/ (function(module) {
+
+module.exports.legalAccents = ['trill', 'lowermordent', 'uppermordent', 'mordent', 'pralltriller', 'accent', 'fermata', 'invertedfermata', 'tenuto', '0', '1', '2', '3', '4', '5', '+', 'wedge', 'open', 'thumb', 'snap', 'turn', 'roll', 'breath', 'shortphrase', 'mediumphrase', 'longphrase', 'segno', 'coda', 'D.S.', 'D.C.', 'fine', 'beambr1', 'beambr2', 'slide', 'marcato', 'upbow', 'downbow', '/', '//', '///', '////', 'trem1', 'trem2', 'trem3', 'trem4', 'turnx', 'invertedturn', 'invertedturnx', 'trill(', 'trill)', 'arpeggio', 'xstem', 'mark', 'umarcato', 'style=normal', 'style=harmonic', 'style=rhythm', 'style=x', 'style=triangle', 'D.C.alcoda', 'D.C.alfine', 'D.S.alcoda', 'D.S.alfine', 'editorial', 'courtesy'];
+module.exports.volumeDecorations = ['p', 'pp', 'f', 'ff', 'mf', 'mp', 'ppp', 'pppp', 'fff', 'ffff', 'sfz'];
+module.exports.dynamicDecorations = ['crescendo(', 'crescendo)', 'diminuendo(', 'diminuendo)', 'glissando(', 'glissando)', '~(', '~)'];
+module.exports.accentPseudonyms = [['<', 'accent'], ['>', 'accent'], ['tr', 'trill'], ['plus', '+'], ['emphasis', 'accent'], ['^', 'umarcato'], ['marcato', 'umarcato']];
+module.exports.accentDynamicPseudonyms = [['<(', 'crescendo('], ['<)', 'crescendo)'], ['>(', 'diminuendo('], ['>)', 'diminuendo)']];
+module.exports.nonDecorations = 'ABCDEFGabcdefgxyzZ[]|^_{'; // use this to prescreen so we don't have to look for a decoration at every note.
+
+module.exports.durations = [0.5, 0.75, 0.875, 0.9375, 0.96875, 0.984375, 0.25, 0.375, 0.4375, 0.46875, 0.484375, 0.4921875, 0.125, 0.1875, 0.21875, 0.234375, 0.2421875, 0.24609375, 0.0625, 0.09375, 0.109375, 0.1171875, 0.12109375, 0.123046875, 0.03125, 0.046875, 0.0546875, 0.05859375, 0.060546875, 0.0615234375, 0.015625, 0.0234375, 0.02734375, 0.029296875, 0.0302734375, 0.03076171875];
+module.exports.pitches = {
+  A: 5,
+  B: 6,
+  C: 0,
+  D: 1,
+  E: 2,
+  F: 3,
+  G: 4,
+  a: 12,
+  b: 13,
+  c: 7,
+  d: 8,
+  e: 9,
+  f: 10,
+  g: 11
+};
+module.exports.rests = {
+  x: 'invisible',
+  X: 'invisible-multimeasure',
+  y: 'spacer',
+  z: 'rest',
+  Z: 'multimeasure'
+};
+module.exports.accMap = {
+  dblflat: '__',
+  flat: '_',
+  natural: '=',
+  sharp: '^',
+  dblsharp: '^^',
+  quarterflat: '_/',
+  quartersharp: '^/'
+};
+module.exports.tripletQ = {
+  2: 3,
+  3: 2,
+  4: 3,
+  5: 2,
+  // TODO-PER: not handling 6/8 rhythm yet
+  6: 2,
+  7: 2,
+  // TODO-PER: not handling 6/8 rhythm yet
+  8: 3,
+  9: 2 // TODO-PER: not handling 6/8 rhythm yet
+};
 
 /***/ }),
 
@@ -14226,6 +14252,9 @@ function CreateSynth() {
   self.getAudioBuffer = function () {
     return self.audioBuffers[0];
   };
+  self.getIsRunning = function () {
+    return self.isRunning;
+  };
 
   /////////////// Private functions //////////////
 
@@ -14822,6 +14851,11 @@ function placeNote(outputAudioBuffer, sampleRate, sound, startArray, volumeMulti
   if (len < 0) len = 0.005; // Have some small audible length no matter how short the note is.
   var offlineCtx = new OfflineAC(2, Math.floor((len + fadeTimeSec) * sampleRate), sampleRate);
   var noteName = pitchToNoteName[sound.pitch];
+  if (!soundsCache[sound.instrument]) {
+    // It shouldn't happen that the entire instrument cache wasn't created, but this has been seen in practice, so guard against it.
+    if (debugCallback) debugCallback('placeNote skipped (instrument empty): ' + sound.instrument + ':' + noteName);
+    return Promise.resolve();
+  }
   var noteBufferPromise = soundsCache[sound.instrument][noteName];
   if (!noteBufferPromise) {
     // if the note isn't present then just skip it - it will leave a blank spot in the audio.
@@ -14917,7 +14951,7 @@ module.exports = placeNote;
 var SynthSequence = __webpack_require__(/*! ./synth-sequence */ "./src/synth/synth-sequence.js");
 var CreateSynth = __webpack_require__(/*! ./create-synth */ "./src/synth/create-synth.js");
 var activeAudioContext = __webpack_require__(/*! ./active-audio-context */ "./src/synth/active-audio-context.js");
-function playEvent(midiPitches, midiGracePitches, millisecondsPerMeasure) {
+function playEvent(midiPitches, midiGracePitches, millisecondsPerMeasure, soundFontUrl, debugCallback) {
   var sequence = new SynthSequence();
   for (var i = 0; i < midiPitches.length; i++) {
     var note = midiPitches[i];
@@ -14934,17 +14968,21 @@ function playEvent(midiPitches, midiGracePitches, millisecondsPerMeasure) {
   var ac = activeAudioContext();
   if (ac.state === "suspended") {
     return ac.resume().then(function () {
-      return doPlay(sequence, millisecondsPerMeasure);
+      return doPlay(sequence, millisecondsPerMeasure, soundFontUrl, debugCallback);
     });
   } else {
-    return doPlay(sequence, millisecondsPerMeasure);
+    return doPlay(sequence, millisecondsPerMeasure, soundFontUrl, debugCallback);
   }
 }
-function doPlay(sequence, millisecondsPerMeasure) {
+function doPlay(sequence, millisecondsPerMeasure, soundFontUrl, debugCallback) {
   var buffer = new CreateSynth();
   return buffer.init({
     sequence: sequence,
-    millisecondsPerMeasure: millisecondsPerMeasure
+    millisecondsPerMeasure: millisecondsPerMeasure,
+    options: {
+      soundFontUrl: soundFontUrl
+    },
+    debugCallback: debugCallback
   }).then(function () {
     return buffer.prime();
   }).then(function () {
@@ -17917,10 +17955,10 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
  * Build tab absolutes by scanning current staff line absolute array
  * @param {*} staffAbsolute
  */
-TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice, voiceIndex, staffIndex, keySig) {
+TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice, voiceIndex, staffIndex, keySig, tabVoiceIndex) {
   var staffSize = getInitialStaffSize(staffAbsolute);
   var source = staffAbsolute[staffIndex + voiceIndex];
-  var dest = staffAbsolute[staffSize + staffIndex + voiceIndex];
+  var dest = staffAbsolute[tabVoiceIndex];
   var tabPos = null;
   var defNote = null;
   if (source.children[0].abcelem.el_type != 'clef') {
@@ -18374,10 +18412,11 @@ TabRenderer.prototype.doLayout = function () {
     staffGroup.staffs[this.staffIndex].top += nameHeight;
     staffGroup.height += nameHeight * spacing.STEP;
     tabVoice.staff = staffGroupInfos;
+    var tabVoiceIndex = voices.length;
     voices.splice(voices.length, 0, tabVoice);
     var keySig = checkVoiceKeySig(voices, ii + this.staffIndex);
     this.tabStaff.voices[ii] = [];
-    this.absolutes.build(this.plugin, voices, this.tabStaff.voices[ii], ii, this.staffIndex, keySig);
+    this.absolutes.build(this.plugin, voices, this.tabStaff.voices[ii], ii, this.staffIndex, keySig, tabVoiceIndex);
   }
   linkStaffAndTabs(staffGroup.staffs); // crossreference tabs and staff
 };
@@ -19220,6 +19259,9 @@ AbstractEngraver.prototype.addNoteToAbcElement = function (abselem, elem, dot, s
     // TODO-PER-HACK: One type of note head has a different placement of the stem. This should be more generically calculated:
     if (noteHead && noteHead.c === 'noteheads.slash.quarter') {
       if (dir === 'down') p2 -= 1;else p1 += 1;
+    }
+    if (noteHead && noteHead.c === 'noteheads.triangle.quarter') {
+      if (dir === 'down') p2 -= 0.7;else p1 -= 1.2;
     }
     abselem.addRight(new RelativeElement(null, dx, 0, p1, {
       "type": "stem",
@@ -20433,10 +20475,12 @@ Decoration.prototype.dynamicDecoration = function (voice, decoration, abselem, p
         };
         this.startCrescendoX = undefined;
         break;
+      case '~(':
       case "glissando(":
         this.startGlissandoX = abselem;
         glissando = undefined;
         break;
+      case '~)':
       case "glissando)":
         glissando = {
           start: this.startGlissandoX,
@@ -22439,7 +22483,7 @@ glyphs['noteheads.harmonic.quarter'] = {
   h: 8.165
 };
 glyphs['noteheads.triangle.quarter'] = {
-  d: [['M', 0, 0], ['l', 9, 0], ['l', -4.5, -9], ['z']],
+  d: [['M', 0, 4], ['l', 9, 0], ['l', -4.5, -9], ['z']],
   w: 9,
   h: 9
 };
@@ -23799,7 +23843,7 @@ module.exports = drawSeparator;
 /***/ (function(module) {
 
 function setPaperSize(renderer, maxwidth, scale, responsive) {
-  var w = (maxwidth + renderer.padding.right) * scale;
+  var w = (maxwidth + renderer.padding.left + renderer.padding.right) * scale;
   var h = (renderer.y + renderer.padding.bottom) * scale;
   if (renderer.isPrint) h = Math.max(h, 1056); // 11in x 72pt/in x 1.33px/pt
   // TODO-PER: We are letting the page get as long as it needs now, but eventually that should go to a second page.
@@ -24412,10 +24456,15 @@ function drawTie(renderer, params, linestartx, lineendx, selectables) {
   if (params.hint) klass = "abcjs-hint";
   var fudgeY = params.fixedY ? 1.5 : 0; // TODO-PER: This just compensates for drawArc, which contains too much knowledge of ties and slurs.
   var el = drawArc(renderer, params.startX, params.endX, params.startY + fudgeY, params.endY + fudgeY, params.above, klass, params.isTie, params.dotted);
+  var startChar = -1;
+  // This gets the start and end points of the contents of the slur. We assume that the parenthesis are just to the outside of that.
+  if (params.anchor1 && !params.isTie) startChar = params.anchor1.parent.abcelem.startChar - 1;
+  var endChar = -1;
+  if (params.anchor2 && !params.isTie) endChar = params.anchor2.parent.abcelem.endChar + 1;
   selectables.wrapSvgEl({
     el_type: "slur",
-    startChar: -1,
-    endChar: -1
+    startChar: startChar,
+    endChar: endChar
   }, el);
   return [el];
 }
@@ -24725,6 +24774,7 @@ var EngraverController = function EngraverController(paper, params) {
   this.responsive = params.responsive;
   this.space = 3 * spacing.SPACE;
   this.initialClef = params.initialClef;
+  this.expandToWidest = !!params.expandToWidest;
   this.scale = params.scale ? parseFloat(params.scale) : 0;
   this.classes = new Classes({
     shouldAddClasses: params.add_classes
@@ -24908,7 +24958,12 @@ EngraverController.prototype.engraveTune = function (abcTune, tuneNumber, lineOf
   this.constructTuneElements(abcTune);
 
   // Do all the positioning, both horizontally and vertically
-  var maxWidth = layout(this.renderer, abcTune, this.width, this.space);
+  var maxWidth = layout(this.renderer, abcTune, this.width, this.space, this.expandToWidest);
+
+  //Set the top text now that we know the width
+  if (this.expandToWidest && maxWidth > this.width + 1) {
+    abcTune.topText = new TopText(abcTune.metaText, abcTune.metaTextInfo, abcTune.formatting, abcTune.lines, maxWidth, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.getTextSize);
+  }
 
   // Deal with tablature for staff
   if (abcTune.tablatures) {
@@ -25411,6 +25466,7 @@ function keyboardSelection(ev) {
   if (handled) ev.preventDefault();
 }
 function findElementInHistory(selectables, el) {
+  if (!el) return -1;
   for (var i = 0; i < selectables.length; i++) {
     if (el.dataset.index === selectables[i].svgEl.dataset.index) return i;
   }
@@ -25469,7 +25525,9 @@ function getBestMatchCoordinates(dim, ev, scale) {
 }
 function getTarget(target) {
   // This searches up the dom for the first item containing the attribute "selectable", or stopping at the SVG.
+  if (!target) return null;
   if (target.tagName === "svg") return target;
+  if (!target.getAttribute) return null;
   var found = target.getAttribute("selectable");
   while (!found) {
     if (!target.parentElement) found = true;else {
@@ -26008,7 +26066,7 @@ var layoutVoice = __webpack_require__(/*! ./voice */ "./src/write/layout/voice.j
 var setUpperAndLowerElements = __webpack_require__(/*! ./set-upper-and-lower-elements */ "./src/write/layout/set-upper-and-lower-elements.js");
 var layoutStaffGroup = __webpack_require__(/*! ./staff-group */ "./src/write/layout/staff-group.js");
 var getLeftEdgeOfStaff = __webpack_require__(/*! ./get-left-edge-of-staff */ "./src/write/layout/get-left-edge-of-staff.js");
-var layout = function layout(renderer, abctune, width, space) {
+var layout = function layout(renderer, abctune, width, space, expandToWidest) {
   var i;
   var abcLine;
   // Adjust the x-coordinates to their absolute positions
@@ -26016,8 +26074,14 @@ var layout = function layout(renderer, abctune, width, space) {
   for (i = 0; i < abctune.lines.length; i++) {
     abcLine = abctune.lines[i];
     if (abcLine.staff) {
-      setXSpacing(renderer, width, space, abcLine.staffGroup, abctune.formatting, i === abctune.lines.length - 1, false);
-      if (abcLine.staffGroup.w > maxWidth) maxWidth = abcLine.staffGroup.w;
+      // console.log("=== line", i)
+      var thisWidth = setXSpacing(renderer, maxWidth, space, abcLine.staffGroup, abctune.formatting, i === abctune.lines.length - 1, false);
+      // console.log(thisWidth, maxWidth)
+      if (Math.round(thisWidth) > Math.round(maxWidth)) {
+        // to take care of floating point weirdness
+        maxWidth = thisWidth;
+        if (expandToWidest) i = -1; // do the calculations over with the new width
+      }
     }
   }
 
@@ -26048,13 +26112,38 @@ var setXSpacing = function setXSpacing(renderer, width, space, staffGroup, forma
   var newspace = space;
   for (var it = 0; it < 8; it++) {
     // TODO-PER: shouldn't need multiple passes, but each pass gets it closer to the right spacing. (Only affects long lines: normal lines break out of this loop quickly.)
+    // console.log("iteration", it)
+    // dumpGroup("before", staffGroup)
     var ret = layoutStaffGroup(newspace, renderer, debug, staffGroup, leftEdge);
+    // dumpGroup("after",staffGroup)
     newspace = calcHorizontalSpacing(isLastLine, formatting.stretchlast, width + renderer.padding.left, staffGroup.w, newspace, ret.spacingUnits, ret.minSpace, renderer.padding.left + renderer.padding.right);
     if (debug) console.log("setXSpace", it, staffGroup.w, newspace, staffGroup.minspace);
     if (newspace === null) break;
   }
   centerWholeRests(staffGroup.voices);
+  return staffGroup.w - leftEdge;
 };
+
+// function dumpGroup(label, staffGroup) {
+// 	var output = {
+// 		line: staffGroup.line,
+// 		w: staffGroup.w,
+// 		voice: {
+// 			i: staffGroup.voices[0].i,
+// 			minx: staffGroup.voices[0].minx,
+// 			nextx: staffGroup.voices[0].nextx,
+// 			spacingduration: staffGroup.voices[0].spacingduration,
+// 			w: staffGroup.voices[0].w,
+// 			children: [],
+// 		}
+// 	}
+// 	for (var i = 0; i < staffGroup.voices[0].children.length; i++) {
+// 		var child = staffGroup.voices[0].children[i]
+// 		output.voice.children.push({ fixedW: child.fixed.w, w: child.w, x: child.x, type: child.type })
+// 	}
+// 	console.log(label,output)
+// }
+
 function calcHorizontalSpacing(isLastLine, stretchLast, targetWidth, lineWidth, spacing, spacingUnits, minSpace, padding) {
   if (isLastLine) {
     if (stretchLast === undefined) {
@@ -27309,7 +27398,7 @@ module.exports = Svg;
   \********************/
 /***/ (function(module) {
 
-var version = '6.2.2';
+var version = '6.2.3';
 module.exports = version;
 
 /***/ })

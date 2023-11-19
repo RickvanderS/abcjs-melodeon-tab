@@ -1,4 +1,5 @@
-- Do show button numbers on tie were at least one note changed
+- Begin of tune "" different behaviour than no chord
+- Do show button numbers on tie where at least one note changed
 - Handle multiple notes at the same count properly
 - 3 row melodeons
 - Minimize the number of changes in non-melodeon source files

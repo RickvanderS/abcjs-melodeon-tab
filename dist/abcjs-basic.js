@@ -15848,23 +15848,7 @@ function MelodeonPatterns(plugin) {
     Row3Tuning = "";
     if (this.tuning.length == 3) {
       Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
-      if (false) {} else if (Row3Tuning == "castagnari") {
-        this.push_chords.push("Ab"); //TODO: Check if this works
-        this.pull_chords.push("B");
-        this.push_chords.push("Eb"); //TODO: Check if this works
-        this.pull_chords.push("Bb"); //TODO: Check if this works
-
-        push_row3.push("^G"); // 1"
-        pull_row3.push("_B");
-        push_row3.push("_E"); // 2"
-        pull_row3.push("^C");
-        push_row3.push("^A"); // 3" TODO: which octave?
-        pull_row3.push("G");
-        push_row3.push("^g"); // 4"
-        pull_row3.push("_b");
-        push_row3.push("_e"); // 5"
-        pull_row3.push("^c");
-      } else {
+      if (false) {} else if (false) {} else if (false) {} else {
         console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');
         return;
       }
@@ -17889,6 +17873,7 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
         if (tabPos.error) return;
         break;
       case 'note':
+        if (absChild.heads.length == 0) return;
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
         abs.lyricDim = lyricsDim(absChild);
@@ -17988,6 +17973,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
         }
         break;
       case 'note':
+        if (absChild.heads.length == 0) return;
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
         abs.lyricDim = lyricsDim(absChild);

@@ -198,7 +198,10 @@ function MelodeonPatterns(plugin) {
     Row3Tuning = "";
     if (this.tuning.length == 3) {
       Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
-      if (false && Row3Tuning == "saltarelle") {
+      if (false && Row3Tuning == "vanderaa") {
+ 
+      }
+      else if (false && Row3Tuning == "saltarelle") {
         this.push_chords.push("D");
         this.pull_chords.push("C");
         this.push_chords.push("B");
@@ -219,7 +222,7 @@ function MelodeonPatterns(plugin) {
         push_row3.push("f''" ); // 5"
         pull_row3.push("_e''");*/
       }
-      else if (Row3Tuning == "castagnari") {
+      else if (false && Row3Tuning == "castagnari") {
         this.push_chords.push("Ab"); //TODO: Check if this works
         this.pull_chords.push("B");
         this.push_chords.push("Eb"); //TODO: Check if this works

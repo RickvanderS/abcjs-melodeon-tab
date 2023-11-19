@@ -196,6 +196,8 @@ TabAbsoluteElements.prototype.scan = function (plugin,
         if (tabPos.error) return;
         break;
       case 'note':
+        if (absChild.heads.length == 0)
+          return;
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
         abs.lyricDim = lyricsDim(absChild);
@@ -299,6 +301,8 @@ TabAbsoluteElements.prototype.build = function (plugin,
         }
         break;
       case 'note':
+        if (absChild.heads.length == 0)
+          return;
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
         abs.lyricDim = lyricsDim(absChild);

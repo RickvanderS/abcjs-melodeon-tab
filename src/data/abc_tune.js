@@ -463,7 +463,7 @@ var Tune = function() {
 				if (element.type === 'bar') {
 					var barType = element.abcelem.type;
 					var endRepeat = (barType === "bar_right_repeat" || barType === "bar_dbl_repeat");
-					var startEnding = (element.abcelem.startEnding === '1');
+					var startEnding = (element.abcelem.startEnding && element.abcelem.startEnding.substring(0, 1) === '1');
 					var startRepeat = (barType === "bar_left_repeat" || barType === "bar_dbl_repeat" || barType === "bar_right_repeat");
 					if (endRepeat) {
 						// Force the end of the previous note to the position of the measure - the cursor won't go past the end repeat

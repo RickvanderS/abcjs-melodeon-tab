@@ -1,6 +1,9 @@
+- Accidentals hold for the entire bar or measure?
 - Begin of tune "" different behaviour than no chord
 - Multiple notes between [] does not properly determine push/pull dir (special handling required for but bar and count)
 - Do show button numbers on tie when at least one note changed
 - 2.5 and 3 row melodeons
 - Minimize the number of changes in non-melodeon source files
 - Test other instruments still work
+abcjs:
+- Key change end of bar

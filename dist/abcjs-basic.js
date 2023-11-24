@@ -1714,7 +1714,7 @@ var Tune = function Tune() {
         if (element.type === 'bar') {
           var barType = element.abcelem.type;
           var endRepeat = barType === "bar_right_repeat" || barType === "bar_dbl_repeat";
-          var startEnding = element.abcelem.startEnding === '1';
+          var startEnding = element.abcelem.startEnding && element.abcelem.startEnding.substring(0, 1) === '1';
           var startRepeat = barType === "bar_left_repeat" || barType === "bar_dbl_repeat" || barType === "bar_right_repeat";
           if (endRepeat) {
             // Force the end of the previous note to the position of the measure - the cursor won't go past the end repeat
@@ -13164,7 +13164,7 @@ var parseCommon = __webpack_require__(/*! ../parse/abc_common */ "./src/parse/ab
                   // figure out repeats and endings --
                   // The important part is where there is a start repeat, and end repeat, or a first ending.
                   var endRepeat = elem.type === "bar_right_repeat" || elem.type === "bar_dbl_repeat";
-                  var startEnding = elem.startEnding === '1';
+                  var startEnding = elem.startEnding && elem.startEnding.substring(0, 1) === '1';
                   var startRepeat = elem.type === "bar_left_repeat" || elem.type === "bar_dbl_repeat" || elem.type === "bar_right_repeat";
                   if (endRepeat) {
                     var s = startRepeatPlaceholder[voiceNumber];

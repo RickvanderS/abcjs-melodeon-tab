@@ -172,7 +172,10 @@ TabAbsoluteElements.prototype.scan = function (plugin,
   staffAbsolute,
   voiceIndex,
   staffIndex) {
-
+  	
+  if (!plugin.semantics.StartScan)
+   return;
+  	
   var source = staffAbsolute[staffIndex+voiceIndex];
   
   plugin.semantics.StartScan();
@@ -187,7 +190,8 @@ TabAbsoluteElements.prototype.scan = function (plugin,
         break;
       case 'bar':
 	    plugin.semantics.strings.measureAccidentals = {}
-		plugin.semantics.MarkBar();
+		if (plugin.semantics.MarkBar)
+			plugin.semantics.MarkBar();
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);
@@ -211,6 +215,9 @@ TabAbsoluteElements.prototype.scan = function (plugin,
         break;
     }
   }
+  
+  plugin.semantics.strings.accidentals = {};
+  plugin.semantics.strings.measureAccidentals = {};
 }
 
 /**
@@ -235,9 +242,8 @@ TabAbsoluteElements.prototype.build = function (plugin,
       source.children.splice(0, 0, keySig);
     }  
   }
-  
-  this.accidentals = null;
-  plugin.semantics.StartBuild();
+  if (plugin.semantics.StartBuild)
+  	plugin.semantics.StartBuild();
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];
     var absX = absChild.x;
@@ -287,7 +293,8 @@ TabAbsoluteElements.prototype.build = function (plugin,
           abselem: cloned
         });
 		
-		plugin.semantics.MarkBar();
+		if (plugin.semantics.MarkBar)
+			plugin.semantics.MarkBar();
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);

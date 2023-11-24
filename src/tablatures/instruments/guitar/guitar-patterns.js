@@ -20,18 +20,4 @@ GuitarPatterns.prototype.stringToPitch = function (stringNumber) {
 };
 
 
-GuitarPatterns.prototype.MarkBar = function () {
-	
-}
-
-GuitarPatterns.prototype.StartBuild = function () {
-	
-}
-
-GuitarPatterns.prototype.StartScan = function () {
-	
-}
-
-
-
 module.exports = GuitarPatterns;

@@ -5,7 +5,6 @@ Bugs:
 Improvements:
 - Minimize the number of changes in non-melodeon source files
 - Harmonica: Syncronize with changes in Melodeon
-- Test other instruments still work
 New features:
 - 2.5 and 3 row melodeons
 - Hide tableture, but do show rows by changing note heads (take inspiration from %percmap)

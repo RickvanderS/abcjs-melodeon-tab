@@ -15398,9 +15398,6 @@ GuitarPatterns.prototype.stringToPitch = function (stringNumber) {
   var converter = this.strings;
   return converter.stringToPitch(stringNumber);
 };
-GuitarPatterns.prototype.MarkBar = function () {};
-GuitarPatterns.prototype.StartBuild = function () {};
-GuitarPatterns.prototype.StartScan = function () {};
 module.exports = GuitarPatterns;
 
 /***/ }),
@@ -15438,7 +15435,6 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   var semantics = new GuitarPatterns(this);
   this.semantics = semantics;
 };
-Plugin.prototype.scan = function (renderer, line, staffIndex) {};
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;
@@ -17945,6 +17941,7 @@ function buildGraceRelativesForRest(plugin, abs, absChild, graceNotes, tabVoice)
   }
 }
 TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex, staffIndex) {
+  if (!plugin.semantics.StartScan) return;
   var source = staffAbsolute[staffIndex + voiceIndex];
   plugin.semantics.StartScan();
   for (var ii = 0; ii < source.children.length; ii++) {
@@ -17957,7 +17954,7 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
         break;
       case 'bar':
         plugin.semantics.strings.measureAccidentals = {};
-        plugin.semantics.MarkBar();
+        if (plugin.semantics.MarkBar) plugin.semantics.MarkBar();
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);
@@ -17980,6 +17977,8 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
         break;
     }
   }
+  plugin.semantics.strings.accidentals = {};
+  plugin.semantics.strings.measureAccidentals = {};
 };
 
 /**
@@ -17998,8 +17997,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
       source.children.splice(0, 0, keySig);
     }
   }
-  this.accidentals = null;
-  plugin.semantics.StartBuild();
+  if (plugin.semantics.StartBuild) plugin.semantics.StartBuild();
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];
     var absX = absChild.x;
@@ -18045,7 +18043,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
           startChar: absChild.abcelem.startChar,
           abselem: cloned
         });
-        plugin.semantics.MarkBar();
+        if (plugin.semantics.MarkBar) plugin.semantics.MarkBar();
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);

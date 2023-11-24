@@ -28,10 +28,6 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   this.semantics = semantics;
 };
 
-Plugin.prototype.scan = function (renderer, line, staffIndex) {
-	
-};
-
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;

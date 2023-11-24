@@ -4,8 +4,6 @@ var transposeChordName = require("../../../parse/transpose-chord")
 var allNotes = require('../../../parse/all-notes');
 
 function MelodeonPatterns(plugin) {
-  this.measureAccidentals = {}
-  
   //Set default tuning if not specified
   this.tuning = plugin._super.params.tuning;
   if (!this.tuning) {
@@ -397,7 +395,8 @@ function MelodeonPatterns(plugin) {
   this.RowPrefer3 = -1;
   
   this.strings = {
-    accidentals: new Array,
+    accidentals       : {},
+    measureAccidentals: {}
   };
 }
 
@@ -841,7 +840,10 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 }
 
 MelodeonPatterns.prototype.StartBuild = function () {
-	this.strings.accidentals = null;
+	this.strings = {
+		accidentals       : {},
+		measureAccidentals: {}
+	};
 	
 	if (this.Scan) {
 		//console.log("bars:" + this.aBars.length);
@@ -1074,14 +1076,31 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   let strPush = "";
   let strPull = "";
   for (var i = 0; notes && i < notes.length; ++i) {
+	var TNote = new TabNote.TabNote(notes[i].name);
+	TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
+	if (TNote.isAltered || TNote.natural) {
+		var acc;
+		if (TNote.isFlat) {
+			if (TNote.isDouble)
+				acc = "__";
+			else
+				acc = "_";
+		} else if (TNote.isSharp) {
+			if (TNote.isDouble)
+				acc = "^^";
+			else
+				acc = "^";
+		} else if (TNote.natural)
+			acc = "=";
+		this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+	}
+
     //Ignore end of tie, don't show numbers that are already pressed
     //TODO: Only if tie from same button
     if (notes[i].endTie)
       continue;
-	  
-	//Get the note name
-	var TNote = new TabNote.TabNote(notes[i].name);
-	TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
+  
+    //Get the note name
 	var noteName = TNote.emitNoAccidentals();
 	if (TNote.acc > 0)
 	  noteName = "^" + noteName;

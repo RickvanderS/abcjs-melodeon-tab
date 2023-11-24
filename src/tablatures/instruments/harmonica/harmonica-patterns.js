@@ -3,14 +3,17 @@ var TabNote = require('../tab-note');
 
 function HarmonicaPatterns(plugin) {
   this.tuning = plugin._super.params.tuning;
-  this.measureAccidentals = {}
   
   if (!this.tuning) {
     this.tuning = ['C'];
   }
 
   plugin.tuning = this.tuning;
-  this.strings = new StringPatterns(plugin);
+  
+  this.strings = {
+    accidentals       : {},
+    measureAccidentals: {}
+  };
 }
 
 //Lookup individual notes
@@ -124,9 +127,35 @@ HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
   
   var tuning = this.tuning;
   
+  //For all notes at this count
   for (var i = 0; i < notes.length; ++i) {
-    var TNote = new TabNote.TabNote(notes[i].name);
-    TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+
+
+	var TNote = new TabNote.TabNote(notes[i].name);
+	TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
+	if (TNote.isAltered || TNote.natural) {
+		var acc;
+		if (TNote.isFlat) {
+			if (TNote.isDouble)
+				acc = "__";
+			else
+				acc = "_";
+		} else if (TNote.isSharp) {
+			if (TNote.isDouble)
+				acc = "^^";
+			else
+				acc = "^";
+		} else if (TNote.natural)
+			acc = "=";
+		this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+	}
+	
+    //Ignore end of tie
+    //TODO: Only if tie from same hole
+    if (notes[i].endTie)
+      continue;
+	
+	//Get the note name
     var noteName = TNote.emitNoAccidentals();
     if (TNote.acc > 0)
       noteName = "^" + noteName;

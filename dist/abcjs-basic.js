@@ -15470,12 +15470,14 @@ var StringPatterns = __webpack_require__(/*! ../string-patterns */ "./src/tablat
 var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instruments/tab-note.js");
 function HarmonicaPatterns(plugin) {
   this.tuning = plugin._super.params.tuning;
-  this.measureAccidentals = {};
   if (!this.tuning) {
     this.tuning = ['C'];
   }
   plugin.tuning = this.tuning;
-  this.strings = new StringPatterns(plugin);
+  this.strings = {
+    accidentals: {},
+    measureAccidentals: {}
+  };
 }
 
 //Lookup individual notes
@@ -15538,9 +15540,26 @@ HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
   var retNotes = new Array();
   var retGraces = null;
   var tuning = this.tuning;
+
+  //For all notes at this count
   for (var i = 0; i < notes.length; ++i) {
     var TNote = new TabNote.TabNote(notes[i].name);
-    TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+    TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
+    if (TNote.isAltered || TNote.natural) {
+      var acc;
+      if (TNote.isFlat) {
+        if (TNote.isDouble) acc = "__";else acc = "_";
+      } else if (TNote.isSharp) {
+        if (TNote.isDouble) acc = "^^";else acc = "^";
+      } else if (TNote.natural) acc = "=";
+      this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+    }
+
+    //Ignore end of tie
+    //TODO: Only if tie from same hole
+    if (notes[i].endTie) continue;
+
+    //Get the note name
     var noteName = TNote.emitNoAccidentals();
     if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
     var hole = noteToHole(noteName, tuning);
@@ -15724,8 +15743,6 @@ var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instrumen
 var transposeChordName = __webpack_require__(/*! ../../../parse/transpose-chord */ "./src/parse/transpose-chord.js");
 var allNotes = __webpack_require__(/*! ../../../parse/all-notes */ "./src/parse/all-notes.js");
 function MelodeonPatterns(plugin) {
-  this.measureAccidentals = {};
-
   //Set default tuning if not specified
   this.tuning = plugin._super.params.tuning;
   if (!this.tuning) {
@@ -16032,7 +16049,8 @@ function MelodeonPatterns(plugin) {
   this.RowPrefer2 = -1;
   this.RowPrefer3 = -1;
   this.strings = {
-    accidentals: new Array()
+    accidentals: {},
+    measureAccidentals: {}
   };
 }
 function CreateTransposeLookup() {
@@ -16415,7 +16433,10 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 }
 
 MelodeonPatterns.prototype.StartBuild = function () {
-  this.strings.accidentals = null;
+  this.strings = {
+    accidentals: {},
+    measureAccidentals: {}
+  };
   if (this.Scan) {
     //console.log("bars:" + this.aBars.length);
     //console.log(this.aBars);
@@ -16620,13 +16641,23 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var strPush = "";
   var strPull = "";
   for (var i = 0; notes && i < notes.length; ++i) {
+    var TNote = new TabNote.TabNote(notes[i].name);
+    TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
+    if (TNote.isAltered || TNote.natural) {
+      var acc;
+      if (TNote.isFlat) {
+        if (TNote.isDouble) acc = "__";else acc = "_";
+      } else if (TNote.isSharp) {
+        if (TNote.isDouble) acc = "^^";else acc = "^";
+      } else if (TNote.natural) acc = "=";
+      this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+    }
+
     //Ignore end of tie, don't show numbers that are already pressed
     //TODO: Only if tie from same button
     if (notes[i].endTie) continue;
 
     //Get the note name
-    var TNote = new TabNote.TabNote(notes[i].name);
-    TNote.checkKeyAccidentals(this.strings.accidentals, this.measureAccidentals);
     var noteName = TNote.emitNoAccidentals();
     if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
 

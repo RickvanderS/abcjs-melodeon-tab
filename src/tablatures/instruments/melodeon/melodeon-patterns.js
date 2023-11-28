@@ -1019,15 +1019,27 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			AllowRow3 = true;
 		}
 		
+		//Check push/pull allowed and possible
+		let AllowPush = this.ChordPush || this.showall_ignorechords;
+		if ((!AllowRow1 || _push1.length == 0) && (!AllowRow2 || _push2.length == 0) && (!AllowRow3 || _push3.length == 0))
+			AllowPush = false;
+		let AllowPull = this.ChordPull || this.showall_ignorechords;
+		if ((!AllowRow1 || _pull1.length == 0) && (!AllowRow2 || _pull2.length == 0) && (!AllowRow3 || _pull3.length == 0))
+			AllowPull = false;
+		if (!AllowPush && !AllowPull) {
+			AllowPush = true;
+			AllowPull = true;
+		}
+		
 		//Set push buttons
-		if (this.ChordPush || this.showall_ignorechords) {
+		if (AllowPush) {
 			if (AllowRow1 && _push1.length) strPush = AppendButton(strPush, _push1);
 			if (AllowRow2 && _push2.length) strPush = AppendButton(strPush, _push2);
 			if (AllowRow3 && _push3.length) strPush = AppendButton(strPush, _push3);
 		}
 		
 		//Set pull buttons
-		if (this.ChordPull || this.showall_ignorechords) {
+		if (AllowPull) {
 			if (AllowRow1 && _pull1.length) strPull = AppendButton(strPull, _pull1);
 			if (AllowRow2 && _pull2.length) strPull = AppendButton(strPull, _pull2);
 			if (AllowRow3 && _pull3.length) strPull = AppendButton(strPull, _pull3);

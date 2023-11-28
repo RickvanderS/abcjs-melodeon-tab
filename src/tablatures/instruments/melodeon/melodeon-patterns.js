@@ -4,6 +4,15 @@ var transposeChordName = require("../../../parse/transpose-chord")
 var allNotes = require('../../../parse/all-notes');
 
 function MelodeonPatterns(plugin) {
+  //Get tablature options
+  this.showall = plugin._super.params.showall;
+  if (this.showall === null)
+    this.showall = false;
+  this.showall_ignorechords = plugin._super.params.showall_ignorechords;
+  if (this.showall_ignorechords === null) {
+    this.showall_ignorechords = false;
+  }
+
   //Set default tuning if not specified
   this.tuning = plugin._super.params.tuning;
   if (!this.tuning) {
@@ -15,7 +24,7 @@ function MelodeonPatterns(plugin) {
   
   //Set default chin accidentals of not specified
   this.chinacc = plugin._super.params.chinacc;
-  if (!this.chinacc === null) {
+  if (this.chinacc === null) {
     this.chinacc = true;
     plugin.chinacc = this.chinacc;
   }
@@ -882,6 +891,17 @@ MelodeonPatterns.prototype.MarkBar = function () {
 	this.BarIndex++;
 }
 
+function AppendButton(strButtons, Button) {
+	//Append hair space if required
+	if (strButtons.length > 0 && strButtons[strButtons.length-1] != "'" && strButtons[strButtons.length-1] != "\"")
+		strButtons += "\u200A";
+	
+	//Append the button
+	strButtons += Button;
+	
+	return strButtons;
+}
+
 MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   //Update chord push/pull on change
   if (chord && chord.length > 0) {
@@ -969,265 +989,299 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	let _pull2 = this.noteToPullButtonRow2(noteName);
 	let _pull3 = this.noteToPullButtonRow3(noteName);
 	
-	//If the cord cannot push and there is at least one possibility of pulling the note, do not allow pushing the note
-	let ClearPush = false;
-	if (!this.ChordPush && (_pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0)) {
-		ClearPush = true;
-	}
-	
-	//If the cord cannot pull and there is at least one possibility of pushing the note, do not allow pulling the note
-	var ClearPull = false;
-	if (!this.ChordPull && (_push1.length != 0 || _push2.length != 0 || _push3.length != 0)) {
-		ClearPull = true;
-	}
-	
-	//Clear what is not allowed based on the chord
-	if (ClearPush) {
-		_push1 = "";
-		_push2 = "";
-		_push3 = "";
-	}
-	if (ClearPull) {
-		_pull1 = "";
-		_pull2 = "";
-		_pull3 = "";
-	}
-	if (this.RowPrefer1 >= 0 && (_pull1 != "" || _push1 != "")) {
-		if (this.RowPrefer2 < 0) {
-			_push2 = "";
-			_pull2 = "";
+	if (this.showall) {
+		//Get user specified row preference
+		let AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
+		let AllowRow2 = this.RowPrefer2 >= 0 || this.showall_ignorechords;
+		let AllowRow3 = this.RowPrefer3 >= 0 || this.showall_ignorechords;
+		
+		//Check for rows with no possibilities
+		if ((this.ChordPush && this.ChordPull) || this.showall_ignorechords) {
+			if (_push1.length == 0 && _pull1.length == 0) AllowRow1 = false;
+			if (_push2.length == 0 && _pull2.length == 0) AllowRow2 = false;
+			if (_push3.length == 0 && _pull3.length == 0) AllowRow3 = false;
 		}
-		if (this.RowPrefer3 < 0) {
+		else if (this.ChordPush) {
+			if (_push1.length == 0) AllowRow1 = false;
+			if (_push2.length == 0) AllowRow2 = false;
+			if (_push3.length == 0) AllowRow3 = false;
+		}
+		else if (this.ChordPull) {
+			if (_pull1.length == 0) AllowRow1 = false;
+			if (_pull2.length == 0) AllowRow2 = false;
+			if (_pull3.length == 0) AllowRow3 = false;
+		}
+		
+		//Allow all rows if no possibilities remain
+		if (!AllowRow1 && !AllowRow2 && !AllowRow3) {
+			AllowRow1 = true;
+			AllowRow2 = true;
+			AllowRow3 = true;
+		}
+		
+		//Set push buttons
+		if (this.ChordPush || this.showall_ignorechords) {
+			if (AllowRow1 && _push1.length) strPush = AppendButton(strPush, _push1);
+			if (AllowRow2 && _push2.length) strPush = AppendButton(strPush, _push2);
+			if (AllowRow3 && _push3.length) strPush = AppendButton(strPush, _push3);
+		}
+		
+		//Set pull buttons
+		if (this.ChordPull || this.showall_ignorechords) {
+			if (AllowRow1 && _pull1.length) strPull = AppendButton(strPull, _pull1);
+			if (AllowRow2 && _pull2.length) strPull = AppendButton(strPull, _pull2);
+			if (AllowRow3 && _pull3.length) strPull = AppendButton(strPull, _pull3);
+		}
+	}
+	else {
+		//If the cord cannot push and there is at least one possibility of pulling the note, do not allow pushing the note
+		let ClearPush = false;
+		if (!this.ChordPush && (_pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0)) {
+			ClearPush = true;
+		}
+		
+		//If the cord cannot pull and there is at least one possibility of pushing the note, do not allow pulling the note
+		var ClearPull = false;
+		if (!this.ChordPull && (_push1.length != 0 || _push2.length != 0 || _push3.length != 0)) {
+			ClearPull = true;
+		}
+		
+		//Clear what is not allowed based on the chord
+		if (ClearPush) {
+			_push1 = "";
+			_push2 = "";
 			_push3 = "";
+		}
+		if (ClearPull) {
+			_pull1 = "";
+			_pull2 = "";
 			_pull3 = "";
 		}
-	}
-	if (this.RowPrefer2 >= 0 && (_pull2 != "" || _push2 != "")) {
-		if (this.RowPrefer1 < 0) {
-			_push1 = "";
-			_pull1 = "";
-		}
-		if (this.RowPrefer3 < 0) {
-			_push3 = "";
-			_pull3 = "";
-		}
-	}
-	if (this.RowPrefer3 >= 0 && (_pull3 != "" || _push3 != "")) {
-		if (this.RowPrefer1 < 0) {
-			_push1 = "";
-			_pull1 = "";
-		}
-		if (this.RowPrefer2 < 0) {
-			_push2 = "";
-			_pull2 = "";
-		}
-	}
-	
-	if (this.Scan) {
-		//Add the possibilities to the bar
-		this.aBars[this.BarIndex].notes.push(
-		  {
-			note : notes[i],
-			push1: _push1,
-			push2: _push2,
-			push3: _push3,
-			pull1: _pull1,
-			pull2: _pull2,
-			pull3: _pull3
-		  }
-		);
-		
-
-		
-	}
-	else if (this.aBars[this.BarIndex].chosen) {
-		//Choose push or pull, prefer chosen option in the bar, except when this is not possible
-		let Push = this.aBars[this.BarIndex].push;
-		if ( Push && _push1 == '' && _push2 == '' && _push3 == '')
-			Push = false;
-		if (!Push && _pull1 == '' && _pull2 == '' && _pull3 == '')
-			Push = true;
-		
-		//Create array of buttons
-		let aButtons = new Array;
-		if (Push) {
-			if (_push1 != '') aButtons.push(_push1);
-			if (_push2 != '') aButtons.push(_push2);
-			if (_push3 != '') aButtons.push(_push2);
-		}
-		else {
-			if (_pull1 != '') aButtons.push(_pull1);
-			if (_pull2 != '') aButtons.push(_pull2);
-			if (_pull3 != '') aButtons.push(_pull2);
-		}
-		
-		let aRowOrder = new Array;
-		if (this.RowPrefer1 >= 0) aRowOrder.push(this.RowPrefer1);
-		if (this.RowPrefer2 >= 0) aRowOrder.push(this.RowPrefer2);
-		if (this.RowPrefer3 >= 0) aRowOrder.push(this.RowPrefer3);
-		aRowOrder.sort(function(a, b){return a - b});
-		for (let i = 0; i < aRowOrder.length; ++i) {
-			if (aRowOrder[i] == this.RowPrefer1)
-				aRowOrder[i] = 1;
-			if (aRowOrder[i] == this.RowPrefer2)
-				aRowOrder[i] = 2;
-			if (aRowOrder[i] == this.RowPrefer3)
-				aRowOrder[i] = 3;
-		}
-		
-		//Any
-		aRowOrder.push(0);
-		
-		let Button = '';
-		let Found = false;
-		
-		//If no hand position defined yet and a button was found
-		if (this.HandPosIndex < 0 && aButtons.length) {
-			Button = aButtons[0];
-
-			
-			for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
-				let RequireRow = aRowOrder[RowOrder];
-				
-				//Search all hand positions
-				for (let HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
-					for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
-						//Search all buttons
-						for (let i = 0; i < aButtons.length; ++i) {
-							let Row = 1;
-							if (aButtons[i][aButtons[i].length - 1] == "'")
-								Row = 2;
-							else if (aButtons[i][aButtons[i].length - 1] == "\"")
-								Row = 3;
-							
-							//If button match on the required row
-							if ((RequireRow == 0 || Row == RequireRow) && aButtons[i] == this.HandPos[HandPosIndex].easy[f]) {
-								this.HandPosIndex = HandPosIndex;
-								Button = aButtons[i];
-								Found  = true;
-								break;
-							}
-						}
-					}
-				}
+		if (this.RowPrefer1 >= 0 && (_pull1 != "" || _push1 != "")) {
+			if (this.RowPrefer2 < 0) {
+				_push2 = "";
+				_pull2 = "";
 			}
-			
-			
-			
-			
-			
-			
+			if (this.RowPrefer3 < 0) {
+				_push3 = "";
+				_pull3 = "";
+			}
 		}
-		else {	
-			for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
-				let RequireRow = aRowOrder[RowOrder];
-				
-				for (let HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
-					for (let MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
-						let HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
-						if (HandPosIndex < 0 || HandPosIndex >= this.HandPos.length)
-							continue;
-						
-						let aHandPosButtons = new Array;
-						
-						//Search from easy to hard in this hand position
-						for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
-							for (let b = 0; b < aButtons.length; ++b) {
-								let Row = 1;
-								if (aButtons[b][aButtons[b].length - 1] == "'")
-									Row = 2;
-								else if (aButtons[b][aButtons[b].length - 1] == "\"")
-									Row = 3;
-								
-								if ((RequireRow == 0 || RequireRow == Row) && this.HandPos[HandPosIndex].easy[f] == aButtons[b]) {
-									//Set the new hand position
-									
-									aHandPosButtons.push(aButtons[b]);
-									
-								}
-							}
-						}
-						
-						if (aHandPosButtons.length) {
-							this.HandPosIndex = HandPosIndex;
-
-							//Find same as last button
-							if (!Found) {
-								for (let i = 0; i < aHandPosButtons.length; ++i) {
-									if (this.LastButton == aHandPosButtons[i]) {
-										Button = aHandPosButtons[i];
-										Found  = true;
-										break;
-									}
-								}
-							}
-							
-							//Find same row as last button
-							if (!Found) {
-								let LastRow = 1;
-								if (this.LastButton[this.LastButton.length - 1] == "'")
-									LastRow = 2;
-								else if (this.LastButton[this.LastButton.length - 1] == "\"")
-									LastRow = 3;
-								
-								for (let i = 0; i < aHandPosButtons.length; ++i) {
-									let Row = 1;
-									if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "'")
-										Row = 2;
-									else if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "\"")
-										Row = 3;
-
-									if (LastRow == Row) {
-										Button = aHandPosButtons[i];
-										Found  = true;
-										break;
-									}
-								}
-							}
-							
-							//Find same number as last button
-							if (!Found) {
-								for (let i = 0; i < aHandPosButtons.length; ++i) {
-									//TODO: 10 / 1 risk
-									if (this.LastButton.substring(0, 1) == aHandPosButtons[i].substring(0, 1)) {
-										Button = aHandPosButtons[i];
-										Found  = true;
-										break;
-									}
-								}
-							}
-							
-							//Pick easiest
-							if (!Found) {
-								Button = aHandPosButtons[0];
-								Found  = true;
-							}
-							
-							this.LastButton = Button;
-						}
-					}
-				}
+		if (this.RowPrefer2 >= 0 && (_pull2 != "" || _push2 != "")) {
+			if (this.RowPrefer1 < 0) {
+				_push1 = "";
+				_pull1 = "";
+			}
+			if (this.RowPrefer3 < 0) {
+				_push3 = "";
+				_pull3 = "";
+			}
+		}
+		if (this.RowPrefer3 >= 0 && (_pull3 != "" || _push3 != "")) {
+			if (this.RowPrefer1 < 0) {
+				_push1 = "";
+				_pull1 = "";
+			}
+			if (this.RowPrefer2 < 0) {
+				_push2 = "";
+				_pull2 = "";
 			}
 		}
 		
-		//If a button was found
-		if (Button.length) {
-			//Add it to push or pull
+		if (this.Scan) {
+			//Add the possibilities to the bar
+			this.aBars[this.BarIndex].notes.push(
+			  {
+				note : notes[i],
+				push1: _push1,
+				push2: _push2,
+				push3: _push3,
+				pull1: _pull1,
+				pull2: _pull2,
+				pull3: _pull3
+			  }
+			);
+			
+
+			
+		}
+		else if (this.aBars[this.BarIndex].chosen) {
+			//Choose push or pull, prefer chosen option in the bar, except when this is not possible
+			let Push = this.aBars[this.BarIndex].push;
+			if ( Push && _push1 == '' && _push2 == '' && _push3 == '')
+				Push = false;
+			if (!Push && _pull1 == '' && _pull2 == '' && _pull3 == '')
+				Push = true;
+			
+			//Create array of buttons
+			let aButtons = new Array;
 			if (Push) {
-				//Append hair space if required
-				if (strPush.length > 0 && strPush[strPush.length-1] != "'" && strPush[strPush.length-1] != "\"")
-					strPush += "\u200A";
-				
-				//Append the button
-				strPush += Button;
+				if (_push1 != '') aButtons.push(_push1);
+				if (_push2 != '') aButtons.push(_push2);
+				if (_push3 != '') aButtons.push(_push2);
 			}
 			else {
-				//Append hair space if required
-				if (strPull.length > 0 && strPull[strPull.length-1] != "'" && strPull[strPull.length-1] != "\"")
-					strPull += "\u200A";
+				if (_pull1 != '') aButtons.push(_pull1);
+				if (_pull2 != '') aButtons.push(_pull2);
+				if (_pull3 != '') aButtons.push(_pull2);
+			}
+			
+			let aRowOrder = new Array;
+			if (this.RowPrefer1 >= 0) aRowOrder.push(this.RowPrefer1);
+			if (this.RowPrefer2 >= 0) aRowOrder.push(this.RowPrefer2);
+			if (this.RowPrefer3 >= 0) aRowOrder.push(this.RowPrefer3);
+			aRowOrder.sort(function(a, b){return a - b});
+			for (let i = 0; i < aRowOrder.length; ++i) {
+				if (aRowOrder[i] == this.RowPrefer1)
+					aRowOrder[i] = 1;
+				if (aRowOrder[i] == this.RowPrefer2)
+					aRowOrder[i] = 2;
+				if (aRowOrder[i] == this.RowPrefer3)
+					aRowOrder[i] = 3;
+			}
+			
+			//Any
+			aRowOrder.push(0);
+			
+			let Button = '';
+			let Found = false;
+			
+			//If no hand position defined yet and a button was found
+			if (this.HandPosIndex < 0 && aButtons.length) {
+				Button = aButtons[0];
+
 				
-				//Append the button
-				strPull += Button;
+				for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
+					let RequireRow = aRowOrder[RowOrder];
+					
+					//Search all hand positions
+					for (let HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
+						for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
+							//Search all buttons
+							for (let i = 0; i < aButtons.length; ++i) {
+								let Row = 1;
+								if (aButtons[i][aButtons[i].length - 1] == "'")
+									Row = 2;
+								else if (aButtons[i][aButtons[i].length - 1] == "\"")
+									Row = 3;
+								
+								//If button match on the required row
+								if ((RequireRow == 0 || Row == RequireRow) && aButtons[i] == this.HandPos[HandPosIndex].easy[f]) {
+									this.HandPosIndex = HandPosIndex;
+									Button = aButtons[i];
+									Found  = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+				
+				
+				
+				
+				
+				
+			}
+			else {	
+				for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
+					let RequireRow = aRowOrder[RowOrder];
+					
+					for (let HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
+						for (let MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
+							let HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
+							if (HandPosIndex < 0 || HandPosIndex >= this.HandPos.length)
+								continue;
+							
+							let aHandPosButtons = new Array;
+							
+							//Search from easy to hard in this hand position
+							for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
+								for (let b = 0; b < aButtons.length; ++b) {
+									let Row = 1;
+									if (aButtons[b][aButtons[b].length - 1] == "'")
+										Row = 2;
+									else if (aButtons[b][aButtons[b].length - 1] == "\"")
+										Row = 3;
+									
+									if ((RequireRow == 0 || RequireRow == Row) && this.HandPos[HandPosIndex].easy[f] == aButtons[b]) {
+										//Set the new hand position
+										
+										aHandPosButtons.push(aButtons[b]);
+										
+									}
+								}
+							}
+							
+							if (aHandPosButtons.length) {
+								this.HandPosIndex = HandPosIndex;
+
+								//Find same as last button
+								if (!Found) {
+									for (let i = 0; i < aHandPosButtons.length; ++i) {
+										if (this.LastButton == aHandPosButtons[i]) {
+											Button = aHandPosButtons[i];
+											Found  = true;
+											break;
+										}
+									}
+								}
+								
+								//Find same row as last button
+								if (!Found) {
+									let LastRow = 1;
+									if (this.LastButton[this.LastButton.length - 1] == "'")
+										LastRow = 2;
+									else if (this.LastButton[this.LastButton.length - 1] == "\"")
+										LastRow = 3;
+									
+									for (let i = 0; i < aHandPosButtons.length; ++i) {
+										let Row = 1;
+										if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "'")
+											Row = 2;
+										else if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "\"")
+											Row = 3;
+
+										if (LastRow == Row) {
+											Button = aHandPosButtons[i];
+											Found  = true;
+											break;
+										}
+									}
+								}
+								
+								//Find same number as last button
+								if (!Found) {
+									for (let i = 0; i < aHandPosButtons.length; ++i) {
+										//TODO: 10 / 1 risk
+										if (this.LastButton.substring(0, 1) == aHandPosButtons[i].substring(0, 1)) {
+											Button = aHandPosButtons[i];
+											Found  = true;
+											break;
+										}
+									}
+								}
+								
+								//Pick easiest
+								if (!Found) {
+									Button = aHandPosButtons[0];
+									Found  = true;
+								}
+								
+								this.LastButton = Button;
+							}
+						}
+					}
+				}
+			}
+			
+			//If a button was found
+			if (Button.length) {
+				//Add it to push or pull
+				if (Push)
+					strPush = AppendButton(strPush, Button);
+				else
+					strPull = AppendButton(strPull, Button);
 			}
 		}
 	}

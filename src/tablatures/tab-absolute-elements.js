@@ -340,7 +340,10 @@ TabAbsoluteElements.prototype.build = function (plugin,
               tabVoice.push(defGrace);
             }
           }
-          var tabNoteRelative = buildRelativeTabNote(plugin, abs.x+absChild.heads[ll].dx, defNote, curNote, false);
+		  let lll = ll;
+		  if (lll >= absChild.heads.length)
+			  lll = absChild.heads.length - 1;
+          var tabNoteRelative = buildRelativeTabNote(plugin, abs.x+absChild.heads[lll].dx, defNote, curNote, false);
           abs.children.push(tabNoteRelative);
         }
         if (defNote.notes.length > 0) {

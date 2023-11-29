@@ -15741,15 +15741,19 @@ var allNotes = __webpack_require__(/*! ../../../parse/all-notes */ "./src/parse/
 function MelodeonPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
-  if (this.showall === null) this.showall = false;
+  if (this.showall == null) this.showall = false;
   this.showall_ignorechords = plugin._super.params.showall_ignorechords;
   if (this.showall_ignorechords === null) {
     this.showall_ignorechords = false;
   }
+  this.Row2Marker = plugin._super.params.Row2Marker;
+  if (this.Row2Marker == null) this.Row2Marker = "'";
+  this.Row3Marker = plugin._super.params.Row3Marker;
+  if (this.Row3Marker == null) this.Row3Marker = "\"";
 
   //Set default tuning if not specified
   this.tuning = plugin._super.params.tuning;
-  if (!this.tuning) {
+  if (this.tuning == null) {
     this.tuning = new Array();
     this.tuning.push("G");
     this.tuning.push("C5");
@@ -15758,7 +15762,7 @@ function MelodeonPatterns(plugin) {
 
   //Set default chin accidentals of not specified
   this.chinacc = plugin._super.params.chinacc;
-  if (this.chinacc === null) {
+  if (this.chinacc == null) {
     this.chinacc = true;
     plugin.chinacc = this.chinacc;
   }
@@ -16797,6 +16801,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var retNotes = new Array();
   var retGraces = null;
   if (strPush.length) {
+    strPush = strPush.replace("'", this.Row2Marker);
+    strPush = strPush.replace("\"", this.Row3Marker);
     var note = new TabNote.TabNote("");
     var number = {
       num: strPush,
@@ -16807,6 +16813,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     retNotes.push(number);
   }
   if (strPull.length) {
+    strPull = strPull.replace("'", this.Row2Marker);
+    strPull = strPull.replace("\"", this.Row3Marker);
     var note = new TabNote.TabNote("");
     var number = {
       num: strPull,

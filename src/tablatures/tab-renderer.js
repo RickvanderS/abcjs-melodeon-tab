@@ -36,10 +36,7 @@ function buildTabName(self, dest) {
   var stringSemantics = self.plugin.semantics.strings;
   var controller = self.renderer.controller;
   var textSize = controller.getTextSize;
-  var tabName = "";
-  if (typeof stringSemantics.tabInfos !== 'undefined') {
-    tabName = stringSemantics.tabInfos(self.plugin);
-  }
+  var tabName = stringSemantics.tabInfos(self.plugin);
   var size = textSize.calc(tabName, 'tablabelfont', 'text instrumentname');
   dest.tabNameInfos = {
     textSize: size,

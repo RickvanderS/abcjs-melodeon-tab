@@ -410,6 +410,7 @@ function MelodeonPatterns(plugin) {
   this.RowPrefer3 = -1;
   
   this.strings = {
+    tabInfos          : function (plugin) {return ""},
     accidentals       : {},
     measureAccidentals: {}
   };
@@ -709,10 +710,8 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 }
 
 MelodeonPatterns.prototype.StartBuild = function () {
-	this.strings = {
-		accidentals       : {},
-		measureAccidentals: {}
-	};
+	this.strings.accidentals        = {};
+	this.strings.measureAccidentals = {};
 	
 	if (this.Scan) {
 		//console.log("bars:" + this.aBars.length);

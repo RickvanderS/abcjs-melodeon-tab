@@ -5,21 +5,21 @@
  * where plugin represents a plugin instance 
  * 
  */
-var ViolinTablature    = require('../tablatures/instruments/violin/tab-violin');
-var GuitarTablature    = require('../tablatures/instruments/guitar/tab-guitar');
+var ViolinTablature = require('../tablatures/instruments/violin/tab-violin');
+var GuitarTablature = require('../tablatures/instruments/guitar/tab-guitar');
 var HarmonicaTablature = require('../tablatures/instruments/harmonica/tab-harmonica');
-var MelodeonTablature  = require('../tablatures/instruments/melodeon/tab-melodeon');
+var MelodeonTablature = require('../tablatures/instruments/melodeon/tab-melodeon');
 
 /* extend the table below when adding a new instrument plugin */
 
 // Existing tab classes 
 var pluginTab = {
-  'violin'   : 'ViolinTab'   ,
-  'fiddle'   : 'ViolinTab'   ,
-  'mandolin' : 'ViolinTab'   ,
-  'guitar'   : 'GuitarTab'   ,
+  'violin': 'ViolinTab',
+  'fiddle': 'ViolinTab',
+  'mandolin': 'ViolinTab',
+  'guitar': 'GuitarTab',
   'harmonica': 'HarmonicaTab',
-  'melodeon' : 'MelodeonTab'
+  'melodeon': 'MelodeonTab'
 };
 
 var abcTablatures = {
@@ -109,10 +109,6 @@ var abcTablatures = {
    */
   layoutTablatures: function (renderer, abcTune) {
     var tabs = abcTune.tablatures;
-	
-    for (var k = 0; k < 2; ++k) { //Iterate twice for melodeon logic
-	
-	
     // chack tabs request for each staffs
     for (var ii = 0; ii < abcTune.lines.length; ii++) {
       var line = abcTune.lines[ii];
@@ -132,20 +128,12 @@ var abcTablatures = {
                 jj
               );
             }
-			
-			if (k == 0) {
-				tabPlugin.instance.scan(renderer, line, jj);
-			}
-			else {
             // render next
             tabPlugin.instance.render(renderer, line, jj);
           }
         }
       }  
     }
-    }
-	
-	}
   },
 
   /**
@@ -157,7 +145,7 @@ var abcTablatures = {
       this.register(new ViolinTablature());
       this.register(new GuitarTablature());
       this.register(new HarmonicaTablature());
-	  this.register(new MelodeonTablature());
+      this.register(new MelodeonTablature());
       this.inited = true;
     }
   }

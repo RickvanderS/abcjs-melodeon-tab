@@ -300,31 +300,23 @@ var abcTablatures = {
    */
   layoutTablatures: function layoutTablatures(renderer, abcTune) {
     var tabs = abcTune.tablatures;
-    for (var k = 0; k < 2; ++k) {
-      //Iterate twice for melodeon logic
-
-      // chack tabs request for each staffs
-      for (var ii = 0; ii < abcTune.lines.length; ii++) {
-        var line = abcTune.lines[ii];
-        var curStaff = line.staff;
-        if (curStaff) {
-          for (var jj = 0; jj < curStaff.length; jj++) {
-            if (tabs[jj]) {
-              // tablature requested for staff
-              var tabPlugin = tabs[jj];
-              if (tabPlugin.instance == null) {
-                tabPlugin.instance = new tabPlugin.classz();
-                // plugin.init(tune, tuneNumber, args, ii);
-                // call initer first
-                tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, jj);
-              }
-              if (k == 0) {
-                tabPlugin.instance.scan(renderer, line, jj);
-              } else {
-                // render next
-                tabPlugin.instance.render(renderer, line, jj);
-              }
+    // chack tabs request for each staffs
+    for (var ii = 0; ii < abcTune.lines.length; ii++) {
+      var line = abcTune.lines[ii];
+      var curStaff = line.staff;
+      if (curStaff) {
+        for (var jj = 0; jj < curStaff.length; jj++) {
+          if (tabs[jj]) {
+            // tablature requested for staff
+            var tabPlugin = tabs[jj];
+            if (tabPlugin.instance == null) {
+              tabPlugin.instance = new tabPlugin.classz();
+              // plugin.init(tune, tuneNumber, args, ii);
+              // call initer first
+              tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, jj);
             }
+            // render next
+            tabPlugin.instance.render(renderer, line, jj);
           }
         }
       }
@@ -15471,6 +15463,9 @@ function HarmonicaPatterns(plugin) {
   }
   plugin.tuning = this.tuning;
   this.strings = {
+    tabInfos: function tabInfos(plugin) {
+      return "";
+    },
     accidentals: {},
     measureAccidentals: {}
   };
@@ -16057,6 +16052,9 @@ function MelodeonPatterns(plugin) {
   this.RowPrefer2 = -1;
   this.RowPrefer3 = -1;
   this.strings = {
+    tabInfos: function tabInfos(plugin) {
+      return "";
+    },
     accidentals: {},
     measureAccidentals: {}
   };
@@ -16294,10 +16292,8 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 }
 
 MelodeonPatterns.prototype.StartBuild = function () {
-  this.strings = {
-    accidentals: {},
-    measureAccidentals: {}
-  };
+  this.strings.accidentals = {};
+  this.strings.measureAccidentals = {};
   if (this.Scan) {
     //console.log("bars:" + this.aBars.length);
     //console.log(this.aBars);
@@ -16963,16 +16959,11 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   }
   return tabAbsolute;
 };
-Plugin.prototype.scan = function (renderer, line, staffIndex) {
-  if (this._super.inError) return;
-  if (this.tablature.bypass(line)) return;
-  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
-  rndrer.doScan();
-};
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;
   var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doScan();
   rndrer.doLayout();
 };
 function Plugin() {}
@@ -18116,10 +18107,7 @@ function buildTabName(self, dest) {
   var stringSemantics = self.plugin.semantics.strings;
   var controller = self.renderer.controller;
   var textSize = controller.getTextSize;
-  var tabName = "";
-  if (typeof stringSemantics.tabInfos !== 'undefined') {
-    tabName = stringSemantics.tabInfos(self.plugin);
-  }
+  var tabName = stringSemantics.tabInfos(self.plugin);
   var size = textSize.calc(tabName, 'tablabelfont', 'text instrumentname');
   dest.tabNameInfos = {
     textSize: size,

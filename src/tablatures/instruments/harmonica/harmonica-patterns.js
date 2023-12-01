@@ -11,6 +11,7 @@ function HarmonicaPatterns(plugin) {
   plugin.tuning = this.tuning;
   
   this.strings = {
+    tabInfos          : function (plugin) {return ""},
     accidentals       : {},
     measureAccidentals: {}
   };

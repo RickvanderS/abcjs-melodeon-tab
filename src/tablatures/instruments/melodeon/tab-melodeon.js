@@ -65,17 +65,11 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   return tabAbsolute;
 }
 
-Plugin.prototype.scan = function (renderer, line, staffIndex) {
-  if (this._super.inError) return;
-  if (this.tablature.bypass(line)) return;
-  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
-  rndrer.doScan();
-}
-
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;
   var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doScan();
   rndrer.doLayout();
 };
 

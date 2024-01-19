@@ -19544,8 +19544,8 @@ var addChord = function addChord(getTextSize, abselem, elem, roomTaken, roomTake
       } else {
         font = 'gchordfont';
         klass = "chord";
-        chord = translateChord(chord, jazzchords, germanAlphabet);
       }
+      chord = translateChord(chord, jazzchords, germanAlphabet);
       var attr = getTextSize.attr(font, klass);
       var dim = getTextSize.calc(chord, font, klass);
       var chordWidth = dim.width;
@@ -22581,13 +22581,21 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
   for (var i = 0; i < lines.length; i++) {
     var chord = lines[i];
 
-    //Remove melodeon tablature push/pull and row annotation
-    for (var e = 0; e < aMelodeonAnnotation.length; ++e) {
-      var Index = chord.indexOf(aMelodeonAnnotation[e]);
-      if (Index >= 0) {
-        chord = chord.substring(0, Index) + chord.substring(Index + 1);
+    //Detect the last character index that is not melodeon annotation
+    var LastNonMelodeonAnnotationIndex = -1;
+    for (var _i = 0; _i < chord.length; ++_i) {
+      var MelodeonAnnotation = false;
+      for (var j = 0; j < aMelodeonAnnotation.length; ++j) {
+        if (chord[_i] == aMelodeonAnnotation[j]) {
+          MelodeonAnnotation = true;
+          break;
+        }
       }
+      if (!MelodeonAnnotation) LastNonMelodeonAnnotationIndex = _i;
     }
+
+    //Only keep the part that is not melodeon annotation
+    chord = chord.substring(0, LastNonMelodeonAnnotationIndex + 1);
 
     // If the chord isn't in a recognizable format then just skip it.
     var reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/);

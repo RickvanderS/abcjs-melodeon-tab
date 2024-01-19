@@ -22,13 +22,22 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
 	for (let i = 0; i < lines.length; i++) {
 		let chord = lines[i];
 		
-		//Remove melodeon tablature push/pull and row annotation
-		for (let e = 0; e < aMelodeonAnnotation.length; ++e) {
-			let Index = chord.indexOf(aMelodeonAnnotation[e]);
-			if (Index >= 0) {
-				chord = chord.substring(0, Index) + chord.substring(Index+1);
+		//Detect the last character index that is not melodeon annotation
+		var LastNonMelodeonAnnotationIndex = -1;
+		for (let i = 0; i < chord.length; ++i) {
+			var MelodeonAnnotation = false;
+			for (let j = 0; j < aMelodeonAnnotation.length; ++j) {
+				if (chord[i] == aMelodeonAnnotation[j]) {
+					MelodeonAnnotation = true;
+					break;
+				}
 			}
+			if (!MelodeonAnnotation)
+				LastNonMelodeonAnnotationIndex = i;
 		}
+		
+		//Only keep the part that is not melodeon annotation
+		chord = chord.substring(0, LastNonMelodeonAnnotationIndex+1);
 		
 		// If the chord isn't in a recognizable format then just skip it.
 		let reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/);

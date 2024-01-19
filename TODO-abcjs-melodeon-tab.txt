@@ -1,13 +1,12 @@
 Bugs:
-- Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for but bar and count)
+- Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 - Melodeon: Do show button numbers on tie when at least one note changed
 Improvements:
-- Minimize the number of changes in non-melodeon source files
+- Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Harmonica: Syncronize with changes in Melodeon
 New features:
 - 2.5 and 3 row melodeons
 - Hide tableture, but do show rows by changing note heads (take inspiration from %percmap)
 abcjs:
 - Key change end of bar
-- Print page breaks

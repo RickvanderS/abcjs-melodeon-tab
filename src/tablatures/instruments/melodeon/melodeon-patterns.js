@@ -37,6 +37,9 @@ function MelodeonPatterns(plugin) {
 
   //Lookup melodeon notes
   let TransposeHalfSteps = 0;
+  let Row1Invert = "";
+  let Row2Invert = "";
+  let Row3Invert = "";
   this.push_chords = new Array;
   this.pull_chords = new Array;
   this.OffsetRow2 = 0;
@@ -49,7 +52,7 @@ function MelodeonPatterns(plugin) {
   let pull_row3 = new Array;
   if (this.tuning.length == 1) {
     //For non-G figure out how to transpose
-    Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
+    let Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
     if      (Row1Tuning == "Bb" || Row1Tuning == "A#")
       TransposeHalfSteps = -9;
     else if (Row1Tuning == "B"                       )
@@ -75,42 +78,69 @@ function MelodeonPatterns(plugin) {
     else if (Row1Tuning == "A"                       )
       TransposeHalfSteps =  2;
     else {
-      console.error('1 row melodeon with tuning \'' + this.tuning[0] + '\' is not supported');
+      console.error('1 row melodeon with tuning \'' + Row1Tuning + '\' is not supported');
       return;
+    }
+    
+    //Figure out the number of buttons
+    let Row1Count = this.tuning[0].substring(Row1Tuning.length);
+    let Mini = false;
+    if (Row1Count != "") {
+      var ButtonCount = Number(Row1Count);
+      if (Row1Count == 10) {
+      }
+      else if (Row1Count == 7) {
+        Mini = true;
+      }
+      else {
+        console.error('1 row melodeon with tuning \'' + Row1Count + '\' buttons is not supported');
+      }
     }
     
     //Define left hand chords for G melodeon with 4 base buttons
     this.push_chords.push("G"); // G push
     this.pull_chords.push("D"); // D
-    this.push_chords.push("C"); // C push
-    this.pull_chords.push("C"); // C pull
+    if (!Mini) {
+      this.push_chords.push("C"); // C push
+      this.pull_chords.push("C"); // C pull
+    }
     
     //Define right hand buttons for G melodeon
-    push_row1.push("B,,"); // 1
-    pull_row1.push("D," );
-    push_row1.push("D," ); // 2
-    pull_row1.push("^F,");
-    push_row1.push("G," ); // 3
+    if (!Mini) {
+      push_row1.push("B,,"); // 1
+      pull_row1.push("D," );
+      push_row1.push("D," ); // 2
+      pull_row1.push("^F,");
+    }
+    push_row1.push("G," ); // 3 (mini 1)
     pull_row1.push("A," );
-    push_row1.push("B," ); // 4
+    push_row1.push("B," ); // 4 (mini 2)
     pull_row1.push("C"  );
-    push_row1.push("D"  ); // 5
+    push_row1.push("D"  ); // 5 (mini 3)
     pull_row1.push("E"  );
-    push_row1.push("G"  ); // 6
+    push_row1.push("G"  ); // 6 (mini 4)
     pull_row1.push("^F" );
-    push_row1.push("B"  ); // 7
+    push_row1.push("B"  ); // 7 (mini 5)
     pull_row1.push("A"  );
-    push_row1.push("d"  ); // 8
+    push_row1.push("d"  ); // 8 (mini 6)
     pull_row1.push("c"  );
-    push_row1.push("g"  ); // 9
-    pull_row1.push("e"  );
-    push_row1.push("b"  ); // 10
-    pull_row1.push("^f" );
+    if (!Mini) {
+      push_row1.push("g"  ); // 9
+      pull_row1.push("e"  );
+      push_row1.push("b"  ); // 10
+      pull_row1.push("^f" );
+    }
+    else {
+      push_row1.push("^f"  ); // (mini 7)
+      pull_row1.push("e"  );
+    }
   }
   else if (this.tuning.length == 2 || this.tuning.length == 3) {
     //For non-G/C figure out how to transpose
-    Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
-    Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
+    let Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
+    let Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
+    Row1Invert = this.tuning[0].substring(Row1Tuning.length);
+    Row2Invert = this.tuning[1].substring(Row1Tuning.length);
     if      ((Row1Tuning == "Eb" || Row1Tuning == "D#") && (Row2Tuning == "Ab" || Row2Tuning == "G#")) //Very rare
       TransposeHalfSteps = -3;
     else if ((Row1Tuning == "E"                       ) && (Row2Tuning == "A"                       )) //Very rare
@@ -136,7 +166,7 @@ function MelodeonPatterns(plugin) {
     else if ((Row1Tuning == "D"                       ) && (Row2Tuning == "G"                       )) //England
       TransposeHalfSteps =  7;
     else {
-      console.error(tuning.length.toString() + ' row melodeon with row1 tuning \'' + this.tuning[0] + '\' and row2 tuning \'' + this.tuning[1] + '\' is not supported');
+      console.error(tuning.length.toString() + ' row melodeon with row1 tuning \'' + Row1Tuning + '\' and row2 tuning \'' + Row2Tuning + '\' is not supported');
       return;
     }
     
@@ -208,9 +238,8 @@ function MelodeonPatterns(plugin) {
     pull_row2.push("b" );
     
     //Lookup extra row3
-    Row3Tuning = "";
     if (this.tuning.length == 3) {
-      Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
+      let Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
       if (false && Row3Tuning == "vanderaa") {
  
       }
@@ -307,24 +336,22 @@ function MelodeonPatterns(plugin) {
   }
   
   //Handle button push/pull inversions for each row
-  let TuneRow1 = this.tuning[0];
   for (let i = this.push_row1.length; i >= 1; --i) {
-    let Pos = TuneRow1.search(i.toString());
+    let Pos = Row1Invert.search(i.toString());
     if (Pos >= 0) {
       let Tmp = this.push_row1[i-1];
       this.push_row1[i-1] = this.pull_row1[i-1];
       this.pull_row1[i-1] = Tmp;
-      TuneRow1 = TuneRow1.substr(0, Pos) + TuneRow1.substr(Pos + i.toString().length);
+      Row1Invert = Row1Invert.substr(0, Pos) + Row1Invert.substr(Pos + i.toString().length);
     }
   }
-  let TuneRow2 = this.tuning[1];
   for (let i = this.push_row2.length; i >= 1; --i) {
-    let Pos = TuneRow2.search(i.toString());
+    let Pos = Row2Invert.search(i.toString());
     if (Pos >= 0) {
       let Tmp = this.push_row2[i-1];
       this.push_row2[i-1] = this.pull_row2[i-1];
       this.pull_row2[i-1] = Tmp;
-      TuneRow2 = TuneRow2.substr(0, Pos) + TuneRow2.substr(Pos + i.toString().length);
+      Row2Invert = Row2Invert.substr(0, Pos) + Row2Invert.substr(Pos + i.toString().length);
     }
   }
   

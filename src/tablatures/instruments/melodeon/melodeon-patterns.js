@@ -9,15 +9,17 @@ function MelodeonPatterns(plugin) {
   if (this.showall == null)
     this.showall = false;
   this.showall_ignorechords = plugin._super.params.showall_ignorechords;
-  if (this.showall_ignorechords === null) {
+  if (this.showall_ignorechords === null)
     this.showall_ignorechords = false;
-  }
   this.Row2Marker = plugin._super.params.Row2Marker;
   if (this.Row2Marker == null)
     this.Row2Marker = "'";
   this.Row3Marker = plugin._super.params.Row3Marker;
   if (this.Row3Marker == null)
     this.Row3Marker = "\"";
+  this.changenoteheads = plugin._super.params.changenoteheads;
+  if (this.changenoteheads == null)
+    this.changenoteheads = false;
 
   //Set default tuning if not specified
   this.tuning = plugin._super.params.tuning;
@@ -935,93 +937,370 @@ function AppendButton(strButtons, Button) {
 }
 
 MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
-  //Update chord push/pull on change
-  if (chord && chord.length > 0) {
-    let Chord = chord[0].name.trim();
-  
-    //Can the current chord be played in push?
-    this.ChordPush = false;
-    if (!Chord.includes("<")) {
-      if (Chord.length == 0 || Chord.includes(">"))
-        this.ChordPush = true;
-      for (var i = 0; i < this.push_chords.length; i++) {
-        if (this.push_chords[i].startsWith(Chord[0])) //TODO: Does not work be Bb, F# etc.
-          this.ChordPush = true;
-      }
-    }
-    
-    //Can the current chord be played in pull?
-    this.ChordPull = false;
-    if (!Chord.includes(">")) {
-      if (Chord.length == 0 || Chord.includes("<"))
-        this.ChordPull = true;
-      for (var i = 0; i < this.pull_chords.length; i++) {
-        if (this.pull_chords[i].startsWith(Chord[0])) //TODO: Does not work be Bb, F# etc.
-          this.ChordPull = true;
-      }
-    }
-    
-    //If chord is not recognized, assume both directions are possible
-    if (!this.ChordPush && !this.ChordPull) {
-      this.ChordPush = true;
-      this.ChordPull = true;
-    }
-    
-    //Check if row annotation is added to the chord
-    this.RowPrefer1 = Chord.indexOf(".");
-	this.RowPrefer2 = Chord.indexOf(":");
-	this.RowPrefer3 = Chord.indexOf(";");
-  }
-   
-  if (this.Scan) {
-	  if (this.aBars.length == 0)
-		  this.MarkBar();
-  }
-  
-  //For all notes at this count
-  let strPush = "";
-  let strPull = "";
-  for (var i = 0; notes && i < notes.length; ++i) {
-	var TNote = new TabNote.TabNote(notes[i].name);
-	TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
-	if (TNote.isAltered || TNote.natural) {
-		var acc;
-		if (TNote.isFlat) {
-			if (TNote.isDouble)
-				acc = "__";
-			else
-				acc = "_";
-		} else if (TNote.isSharp) {
-			if (TNote.isDouble)
-				acc = "^^";
-			else
-				acc = "^";
-		} else if (TNote.natural)
-			acc = "=";
-		this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+	//Update chord push/pull on change
+	if (chord && chord.length > 0) {
+		let Chord = chord[0].name.trim();
+
+		//Can the current chord be played in push?
+		this.ChordPush = false;
+		if (!Chord.includes("<")) {
+			if (Chord.length == 0 || Chord.includes(">"))
+				this.ChordPush = true;
+			for (var i = 0; i < this.push_chords.length; i++) {
+				if (this.push_chords[i].startsWith(Chord[0])) //TODO: Does not work be Bb, F# etc.
+					this.ChordPush = true;
+			}
+		}
+
+		//Can the current chord be played in pull?
+		this.ChordPull = false;
+		if (!Chord.includes(">")) {
+			if (Chord.length == 0 || Chord.includes("<"))
+				this.ChordPull = true;
+			for (var i = 0; i < this.pull_chords.length; i++) {
+				if (this.pull_chords[i].startsWith(Chord[0])) //TODO: Does not work be Bb, F# etc.
+					this.ChordPull = true;
+			}
+		}
+
+		//If chord is not recognized, assume both directions are possible
+		if (!this.ChordPush && !this.ChordPull) {
+			this.ChordPush = true;
+			this.ChordPull = true;
+		}
+
+		//Check if row annotation is added to the chord
+		this.RowPrefer1 = Chord.indexOf(".");
+		this.RowPrefer2 = Chord.indexOf(":");
+		this.RowPrefer3 = Chord.indexOf(";");
 	}
 
-    //Ignore end of tie, don't show numbers that are already pressed
-    //TODO: Only if tie from same button
-    if (notes[i].endTie)
-      continue;
-  
-    //Get the note name
-	var noteName = TNote.emitNoAccidentals();
-	if (TNote.acc > 0)
-	  noteName = "^" + noteName;
-	else if (TNote.acc < 0)
-	  noteName = "_" + noteName;
-	
-	//Get possibilities for the note on all rows in both directions
-	let _push1 = this.noteToPushButtonRow1(noteName);
-	let _push2 = this.noteToPushButtonRow2(noteName);
-	let _push3 = this.noteToPushButtonRow3(noteName);
-	let _pull1 = this.noteToPullButtonRow1(noteName);
-	let _pull2 = this.noteToPullButtonRow2(noteName);
-	let _pull3 = this.noteToPullButtonRow3(noteName);
-	
+	if (this.Scan) {
+		if (this.aBars.length == 0)
+			this.MarkBar();
+	}
+
+	//For all notes at this count
+	let strPush        = "";
+	let strPull        = "";
+	let aDiamandNotes  = new Array();
+	let aTriangleNotes = new Array();
+	for (var i = 0; notes && i < notes.length; ++i) {
+		var TNote = new TabNote.TabNote(notes[i].name);
+		TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
+		if (TNote.isAltered || TNote.natural) {
+			var acc;
+			if (TNote.isFlat) {
+				if (TNote.isDouble)
+					acc = "__";
+				else
+					acc = "_";
+			} else if (TNote.isSharp) {
+				if (TNote.isDouble)
+					acc = "^^";
+				else
+					acc = "^";
+			} else if (TNote.natural)
+				acc = "=";
+			this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+		}
+
+		//Ignore end of tie, don't show numbers that are already pressed
+		//TODO: Only if tie from same button
+		//TODO: Continue for note head change
+		if (notes[i].endTie)
+			continue;
+
+		//Get the note name
+		var noteName = TNote.emitNoAccidentals();
+		if (TNote.acc > 0)
+			noteName = "^" + noteName;
+		else if (TNote.acc < 0)
+			noteName = "_" + noteName;
+		
+		//Run the tablature algorithm if not in 'show all' mode or node heads need to be changed
+		if (!this.showall || this.changenoteheads) {
+			//Get possibilities for the note on all rows in both directions
+			let _push1 = this.noteToPushButtonRow1(noteName);
+			let _push2 = this.noteToPushButtonRow2(noteName);
+			let _push3 = this.noteToPushButtonRow3(noteName);
+			let _pull1 = this.noteToPullButtonRow1(noteName);
+			let _pull2 = this.noteToPullButtonRow2(noteName);
+			let _pull3 = this.noteToPullButtonRow3(noteName);
+		
+			//If the cord cannot push and there is at least one possibility of pulling the note, do not allow pushing the note
+			let ClearPush = false;
+			if (!this.ChordPush && (_pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0)) {
+				ClearPush = true;
+			}
+			
+			//If the cord cannot pull and there is at least one possibility of pushing the note, do not allow pulling the note
+			var ClearPull = false;
+			if (!this.ChordPull && (_push1.length != 0 || _push2.length != 0 || _push3.length != 0)) {
+				ClearPull = true;
+			}
+			
+			//Clear what is not allowed based on the chord
+			if (ClearPush) {
+				_push1 = "";
+				_push2 = "";
+				_push3 = "";
+			}
+			if (ClearPull) {
+				_pull1 = "";
+				_pull2 = "";
+				_pull3 = "";
+			}
+			if (this.RowPrefer1 >= 0 && (_pull1 != "" || _push1 != "")) {
+				if (this.RowPrefer2 < 0) {
+					_push2 = "";
+					_pull2 = "";
+				}
+				if (this.RowPrefer3 < 0) {
+					_push3 = "";
+					_pull3 = "";
+				}
+			}
+			if (this.RowPrefer2 >= 0 && (_pull2 != "" || _push2 != "")) {
+				if (this.RowPrefer1 < 0) {
+					_push1 = "";
+					_pull1 = "";
+				}
+				if (this.RowPrefer3 < 0) {
+					_push3 = "";
+					_pull3 = "";
+				}
+			}
+			if (this.RowPrefer3 >= 0 && (_pull3 != "" || _push3 != "")) {
+				if (this.RowPrefer1 < 0) {
+					_push1 = "";
+					_pull1 = "";
+				}
+				if (this.RowPrefer2 < 0) {
+					_push2 = "";
+					_pull2 = "";
+				}
+			}
+			
+			if (this.Scan) {
+				//Add the possibilities to the bar
+				this.aBars[this.BarIndex].notes.push(
+				  {
+					note : notes[i],
+					push1: _push1,
+					push2: _push2,
+					push3: _push3,
+					pull1: _pull1,
+					pull2: _pull2,
+					pull3: _pull3
+				  }
+				);
+			}
+			else if (this.aBars[this.BarIndex].chosen) {
+				//Choose push or pull, prefer chosen option in the bar, except when this is not possible
+				let Push = this.aBars[this.BarIndex].push;
+				if ( Push && _push1 == '' && _push2 == '' && _push3 == '')
+					Push = false;
+				if (!Push && _pull1 == '' && _pull2 == '' && _pull3 == '')
+					Push = true;
+				
+				//Create array of buttons
+				let aButtons = new Array;
+				if (Push) {
+					if (_push1 != '') aButtons.push(_push1);
+					if (_push2 != '') aButtons.push(_push2);
+					if (_push3 != '') aButtons.push(_push2);
+				}
+				else {
+					if (_pull1 != '') aButtons.push(_pull1);
+					if (_pull2 != '') aButtons.push(_pull2);
+					if (_pull3 != '') aButtons.push(_pull2);
+				}
+				
+				let aRowOrder = new Array;
+				if (this.RowPrefer1 >= 0) aRowOrder.push(this.RowPrefer1);
+				if (this.RowPrefer2 >= 0) aRowOrder.push(this.RowPrefer2);
+				if (this.RowPrefer3 >= 0) aRowOrder.push(this.RowPrefer3);
+				aRowOrder.sort(function(a, b){return a - b});
+				for (let i = 0; i < aRowOrder.length; ++i) {
+					if (aRowOrder[i] == this.RowPrefer1)
+						aRowOrder[i] = 1;
+					if (aRowOrder[i] == this.RowPrefer2)
+						aRowOrder[i] = 2;
+					if (aRowOrder[i] == this.RowPrefer3)
+						aRowOrder[i] = 3;
+				}
+				
+				//Any
+				aRowOrder.push(0);
+				
+				let Button = '';
+				let Found = false;
+				
+				//If no hand position defined yet and a button was found
+				if (this.HandPosIndex < 0 && aButtons.length) {
+					Button = aButtons[0];
+
+					
+					for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
+						let RequireRow = aRowOrder[RowOrder];
+						
+						//Search all hand positions
+						for (let HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
+							for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
+								//Search all buttons
+								for (let i = 0; i < aButtons.length; ++i) {
+									let Row = 1;
+									if (aButtons[i][aButtons[i].length - 1] == "'")
+										Row = 2;
+									else if (aButtons[i][aButtons[i].length - 1] == "\"")
+										Row = 3;
+									
+									//If button match on the required row
+									if ((RequireRow == 0 || Row == RequireRow) && aButtons[i] == this.HandPos[HandPosIndex].easy[f]) {
+										this.HandPosIndex = HandPosIndex;
+										Button = aButtons[i];
+										Found  = true;
+										break;
+									}
+								}
+							}
+						}
+					}
+					
+					
+					
+					
+					
+					
+				}
+				else {	
+					for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
+						let RequireRow = aRowOrder[RowOrder];
+						
+						for (let HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
+							for (let MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
+								let HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
+								if (HandPosIndex < 0 || HandPosIndex >= this.HandPos.length)
+									continue;
+								
+								let aHandPosButtons = new Array;
+								
+								//Search from easy to hard in this hand position
+								for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
+									for (let b = 0; b < aButtons.length; ++b) {
+										let Row = 1;
+										if (aButtons[b][aButtons[b].length - 1] == "'")
+											Row = 2;
+										else if (aButtons[b][aButtons[b].length - 1] == "\"")
+											Row = 3;
+										
+										if ((RequireRow == 0 || RequireRow == Row) && this.HandPos[HandPosIndex].easy[f] == aButtons[b]) {
+											//Set the new hand position
+											
+											aHandPosButtons.push(aButtons[b]);
+											
+										}
+									}
+								}
+								
+								if (aHandPosButtons.length) {
+									this.HandPosIndex = HandPosIndex;
+
+									//Find same as last button
+									if (!Found) {
+										for (let i = 0; i < aHandPosButtons.length; ++i) {
+											if (this.LastButton == aHandPosButtons[i]) {
+												Button = aHandPosButtons[i];
+												Found  = true;
+												break;
+											}
+										}
+									}
+									
+									//Find same row as last button
+									if (!Found) {
+										let LastRow = 1;
+										if (this.LastButton[this.LastButton.length - 1] == "'")
+											LastRow = 2;
+										else if (this.LastButton[this.LastButton.length - 1] == "\"")
+											LastRow = 3;
+										
+										for (let i = 0; i < aHandPosButtons.length; ++i) {
+											let Row = 1;
+											if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "'")
+												Row = 2;
+											else if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "\"")
+												Row = 3;
+
+											if (LastRow == Row) {
+												Button = aHandPosButtons[i];
+												Found  = true;
+												break;
+											}
+										}
+									}
+									
+									//Find same number as last button
+									if (!Found) {
+										for (let i = 0; i < aHandPosButtons.length; ++i) {
+											//TODO: 10 / 1 risk
+											if (this.LastButton.substring(0, 1) == aHandPosButtons[i].substring(0, 1)) {
+												Button = aHandPosButtons[i];
+												Found  = true;
+												break;
+											}
+										}
+									}
+									
+									//Pick easiest
+									if (!Found) {
+										Button = aHandPosButtons[0];
+										Found  = true;
+									}
+									
+									this.LastButton = Button;
+								}
+							}
+						}
+					}
+				}
+				
+				//If a button was found
+				if (Button.length) {
+					//Add it to push or pull
+					if (Push)
+						strPush = AppendButton(strPush, Button);
+					else
+						strPull = AppendButton(strPull, Button);
+					
+					//Only when the note head change option is enabled
+					if (this.changenoteheads) {
+						//Row2 gets diamands, row3 gets triangles
+						if (Button.search("'") >= 0)
+							aDiamandNotes.push(notes[i]);
+						else if (Button.search("\"") >= 0)
+							aTriangleNotes(notes[i]);
+					}
+				}
+			}
+		}
+	}
+
+	//If in show all mode
 	if (this.showall) {
+		//Clear results of the tablature algorithm (the algorithm runs anyway if changing of note heads is required)
+		strPush = "";
+		strPull = "";
+		
+		//Get possibilities for the note on all rows in both directions
+		let _push1 = this.noteToPushButtonRow1(noteName);
+		let _push2 = this.noteToPushButtonRow2(noteName);
+		let _push3 = this.noteToPushButtonRow3(noteName);
+		let _pull1 = this.noteToPullButtonRow1(noteName);
+		let _pull2 = this.noteToPullButtonRow2(noteName);
+		let _pull3 = this.noteToPullButtonRow3(noteName);
+	
 		//Get user specified row preference
 		let AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
 		let AllowRow2 = this.RowPrefer2 >= 0 || this.showall_ignorechords;
@@ -1077,293 +1356,63 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			if (AllowRow3 && _pull3.length) strPull = AppendButton(strPull, _pull3);
 		}
 	}
-	else {
-		//If the cord cannot push and there is at least one possibility of pulling the note, do not allow pushing the note
-		let ClearPush = false;
-		if (!this.ChordPush && (_pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0)) {
-			ClearPush = true;
-		}
-		
-		//If the cord cannot pull and there is at least one possibility of pushing the note, do not allow pulling the note
-		var ClearPull = false;
-		if (!this.ChordPull && (_push1.length != 0 || _push2.length != 0 || _push3.length != 0)) {
-			ClearPull = true;
-		}
-		
-		//Clear what is not allowed based on the chord
-		if (ClearPush) {
-			_push1 = "";
-			_push2 = "";
-			_push3 = "";
-		}
-		if (ClearPull) {
-			_pull1 = "";
-			_pull2 = "";
-			_pull3 = "";
-		}
-		if (this.RowPrefer1 >= 0 && (_pull1 != "" || _push1 != "")) {
-			if (this.RowPrefer2 < 0) {
-				_push2 = "";
-				_pull2 = "";
-			}
-			if (this.RowPrefer3 < 0) {
-				_push3 = "";
-				_pull3 = "";
-			}
-		}
-		if (this.RowPrefer2 >= 0 && (_pull2 != "" || _push2 != "")) {
-			if (this.RowPrefer1 < 0) {
-				_push1 = "";
-				_pull1 = "";
-			}
-			if (this.RowPrefer3 < 0) {
-				_push3 = "";
-				_pull3 = "";
-			}
-		}
-		if (this.RowPrefer3 >= 0 && (_pull3 != "" || _push3 != "")) {
-			if (this.RowPrefer1 < 0) {
-				_push1 = "";
-				_pull1 = "";
-			}
-			if (this.RowPrefer2 < 0) {
-				_push2 = "";
-				_pull2 = "";
-			}
-		}
-		
-		if (this.Scan) {
-			//Add the possibilities to the bar
-			this.aBars[this.BarIndex].notes.push(
-			  {
-				note : notes[i],
-				push1: _push1,
-				push2: _push2,
-				push3: _push3,
-				pull1: _pull1,
-				pull2: _pull2,
-				pull3: _pull3
-			  }
-			);
-			
 
-			
-		}
-		else if (this.aBars[this.BarIndex].chosen) {
-			//Choose push or pull, prefer chosen option in the bar, except when this is not possible
-			let Push = this.aBars[this.BarIndex].push;
-			if ( Push && _push1 == '' && _push2 == '' && _push3 == '')
-				Push = false;
-			if (!Push && _pull1 == '' && _pull2 == '' && _pull3 == '')
-				Push = true;
-			
-			//Create array of buttons
-			let aButtons = new Array;
-			if (Push) {
-				if (_push1 != '') aButtons.push(_push1);
-				if (_push2 != '') aButtons.push(_push2);
-				if (_push3 != '') aButtons.push(_push2);
-			}
-			else {
-				if (_pull1 != '') aButtons.push(_pull1);
-				if (_pull2 != '') aButtons.push(_pull2);
-				if (_pull3 != '') aButtons.push(_pull2);
-			}
-			
-			let aRowOrder = new Array;
-			if (this.RowPrefer1 >= 0) aRowOrder.push(this.RowPrefer1);
-			if (this.RowPrefer2 >= 0) aRowOrder.push(this.RowPrefer2);
-			if (this.RowPrefer3 >= 0) aRowOrder.push(this.RowPrefer3);
-			aRowOrder.sort(function(a, b){return a - b});
-			for (let i = 0; i < aRowOrder.length; ++i) {
-				if (aRowOrder[i] == this.RowPrefer1)
-					aRowOrder[i] = 1;
-				if (aRowOrder[i] == this.RowPrefer2)
-					aRowOrder[i] = 2;
-				if (aRowOrder[i] == this.RowPrefer3)
-					aRowOrder[i] = 3;
-			}
-			
-			//Any
-			aRowOrder.push(0);
-			
-			let Button = '';
-			let Found = false;
-			
-			//If no hand position defined yet and a button was found
-			if (this.HandPosIndex < 0 && aButtons.length) {
-				Button = aButtons[0];
+	//Create return value with push and pull element
+	var error     = null; 
+	var retNotes  = new Array;
+	var retGraces = null;
+	if (strPush.length) {
+		strPush = strPush.replace("'" , this.Row2Marker);
+		strPush = strPush.replace("\"", this.Row3Marker);
 
-				
-				for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
-					let RequireRow = aRowOrder[RowOrder];
-					
-					//Search all hand positions
-					for (let HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
-						for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
-							//Search all buttons
-							for (let i = 0; i < aButtons.length; ++i) {
-								let Row = 1;
-								if (aButtons[i][aButtons[i].length - 1] == "'")
-									Row = 2;
-								else if (aButtons[i][aButtons[i].length - 1] == "\"")
-									Row = 3;
-								
-								//If button match on the required row
-								if ((RequireRow == 0 || Row == RequireRow) && aButtons[i] == this.HandPos[HandPosIndex].easy[f]) {
-									this.HandPosIndex = HandPosIndex;
-									Button = aButtons[i];
-									Found  = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-				
-				
-				
-				
-				
-				
-			}
-			else {	
-				for (let RowOrder = 0; RowOrder < aRowOrder.length; ++RowOrder) {
-					let RequireRow = aRowOrder[RowOrder];
-					
-					for (let HandPosMove = 0; HandPosMove < this.HandPos.length && !Found; ++HandPosMove) {
-						for (let MinPlus = -1; MinPlus <= 1 && !Found; MinPlus += 2) {
-							let HandPosIndex = this.HandPosIndex + HandPosMove * MinPlus;
-							if (HandPosIndex < 0 || HandPosIndex >= this.HandPos.length)
-								continue;
-							
-							let aHandPosButtons = new Array;
-							
-							//Search from easy to hard in this hand position
-							for (let f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
-								for (let b = 0; b < aButtons.length; ++b) {
-									let Row = 1;
-									if (aButtons[b][aButtons[b].length - 1] == "'")
-										Row = 2;
-									else if (aButtons[b][aButtons[b].length - 1] == "\"")
-										Row = 3;
-									
-									if ((RequireRow == 0 || RequireRow == Row) && this.HandPos[HandPosIndex].easy[f] == aButtons[b]) {
-										//Set the new hand position
-										
-										aHandPosButtons.push(aButtons[b]);
-										
-									}
-								}
-							}
-							
-							if (aHandPosButtons.length) {
-								this.HandPosIndex = HandPosIndex;
-
-								//Find same as last button
-								if (!Found) {
-									for (let i = 0; i < aHandPosButtons.length; ++i) {
-										if (this.LastButton == aHandPosButtons[i]) {
-											Button = aHandPosButtons[i];
-											Found  = true;
-											break;
-										}
-									}
-								}
-								
-								//Find same row as last button
-								if (!Found) {
-									let LastRow = 1;
-									if (this.LastButton[this.LastButton.length - 1] == "'")
-										LastRow = 2;
-									else if (this.LastButton[this.LastButton.length - 1] == "\"")
-										LastRow = 3;
-									
-									for (let i = 0; i < aHandPosButtons.length; ++i) {
-										let Row = 1;
-										if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "'")
-											Row = 2;
-										else if (aHandPosButtons[i][aHandPosButtons[i].length - 1] == "\"")
-											Row = 3;
-
-										if (LastRow == Row) {
-											Button = aHandPosButtons[i];
-											Found  = true;
-											break;
-										}
-									}
-								}
-								
-								//Find same number as last button
-								if (!Found) {
-									for (let i = 0; i < aHandPosButtons.length; ++i) {
-										//TODO: 10 / 1 risk
-										if (this.LastButton.substring(0, 1) == aHandPosButtons[i].substring(0, 1)) {
-											Button = aHandPosButtons[i];
-											Found  = true;
-											break;
-										}
-									}
-								}
-								
-								//Pick easiest
-								if (!Found) {
-									Button = aHandPosButtons[0];
-									Found  = true;
-								}
-								
-								this.LastButton = Button;
-							}
-						}
-					}
-				}
-			}
-			
-			//If a button was found
-			if (Button.length) {
-				//Add it to push or pull
-				if (Push)
-					strPush = AppendButton(strPush, Button);
-				else
-					strPull = AppendButton(strPull, Button);
-			}
-		}
+		var note = new TabNote.TabNote("");
+		var number = {
+			num : strPush,
+			str : -1, //Push row (top)
+			note: note
+		};
+		retNotes.push(number);
 	}
-  }
-  
-  //Create return value with push and pull element (normally only one of the two)
-  var error     = null; 
-  var retNotes  = new Array;
-  var retGraces = null;
-  if (strPush.length) {
-	strPush = strPush.replace("'" , this.Row2Marker);
-	strPush = strPush.replace("\"", this.Row3Marker);
+	if (strPull.length) {
+		strPull = strPull.replace("'" , this.Row2Marker);
+		strPull = strPull.replace("\"", this.Row3Marker);
 
-    var note = new TabNote.TabNote("");
-    var number = {
-      num : strPush,
-      str : -1, //Top row
-      note: note
-    };
-    retNotes.push(number);
-  }
-  if (strPull.length) {
-	strPull = strPull.replace("'" , this.Row2Marker);
-	strPull = strPull.replace("\"", this.Row3Marker);
+		var note = new TabNote.TabNote("");
+		var number = {
+			num : strPull,
+			str : 1, //Pull row (bottom
+			note: note
+		};
+		retNotes.push(number);
+	}
 
-    var note = new TabNote.TabNote("");
-    var number = {
-      num : strPull,
-      str : 1, //Bottom row
-      note: note
-    };
-    retNotes.push(number);
-  }
-  return {
-    notes : retNotes,
-    graces: retGraces,
-    error : error
-  };
+	//Create returns values for note head changes
+	for (let i = 0; i < aDiamandNotes.length; ++i) {
+		var note = new TabNote.TabNote("");
+		note.pitch = aDiamandNotes[i].pitch;
+		var number = {
+			num : "",
+			str : -10, //Diamand indicator
+			note: note
+		};
+		retNotes.push(number);
+	}
+	for (let i = 0; i < aTriangleNotes.length; ++i) {
+		var note = new TabNote.TabNote("");
+		note.pitch = aTriangleNotes[i].pitch;
+		var number = {
+			num : "",
+			str : -20, //Triangle indicator
+			note: note
+		};
+		retNotes.push(number);
+	}
+	
+	return {
+		notes : retNotes,
+		graces: retGraces,
+		error : error
+	};
 };
 
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {

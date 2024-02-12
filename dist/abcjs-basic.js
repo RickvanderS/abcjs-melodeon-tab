@@ -15738,13 +15738,13 @@ function MelodeonPatterns(plugin) {
   this.showall = plugin._super.params.showall;
   if (this.showall == null) this.showall = false;
   this.showall_ignorechords = plugin._super.params.showall_ignorechords;
-  if (this.showall_ignorechords === null) {
-    this.showall_ignorechords = false;
-  }
+  if (this.showall_ignorechords === null) this.showall_ignorechords = false;
   this.Row2Marker = plugin._super.params.Row2Marker;
   if (this.Row2Marker == null) this.Row2Marker = "'";
   this.Row3Marker = plugin._super.params.Row3Marker;
   if (this.Row3Marker == null) this.Row3Marker = "\"";
+  this.changenoteheads = plugin._super.params.changenoteheads;
+  if (this.changenoteheads == null) this.changenoteheads = false;
 
   //Set default tuning if not specified
   this.tuning = plugin._super.params.tuning;
@@ -16528,6 +16528,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   //For all notes at this count
   var strPush = "";
   var strPull = "";
+  var aDiamandNotes = new Array();
+  var aTriangleNotes = new Array();
   for (var i = 0; notes && i < notes.length; ++i) {
     var TNote = new TabNote.TabNote(notes[i].name);
     TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
@@ -16543,71 +16545,23 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
     //Ignore end of tie, don't show numbers that are already pressed
     //TODO: Only if tie from same button
+    //TODO: Continue for note head change
     if (notes[i].endTie) continue;
 
     //Get the note name
     var noteName = TNote.emitNoAccidentals();
     if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
 
-    //Get possibilities for the note on all rows in both directions
-    var _push1 = this.noteToPushButtonRow1(noteName);
-    var _push2 = this.noteToPushButtonRow2(noteName);
-    var _push3 = this.noteToPushButtonRow3(noteName);
-    var _pull1 = this.noteToPullButtonRow1(noteName);
-    var _pull2 = this.noteToPullButtonRow2(noteName);
-    var _pull3 = this.noteToPullButtonRow3(noteName);
-    if (this.showall) {
-      //Get user specified row preference
-      var AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
-      var AllowRow2 = this.RowPrefer2 >= 0 || this.showall_ignorechords;
-      var AllowRow3 = this.RowPrefer3 >= 0 || this.showall_ignorechords;
+    //Run the tablature algorithm if not in 'show all' mode or node heads need to be changed
+    if (!this.showall || this.changenoteheads) {
+      //Get possibilities for the note on all rows in both directions
+      var _push1 = this.noteToPushButtonRow1(noteName);
+      var _push2 = this.noteToPushButtonRow2(noteName);
+      var _push3 = this.noteToPushButtonRow3(noteName);
+      var _pull1 = this.noteToPullButtonRow1(noteName);
+      var _pull2 = this.noteToPullButtonRow2(noteName);
+      var _pull3 = this.noteToPullButtonRow3(noteName);
 
-      //Check for rows with no possibilities
-      if (this.ChordPush && this.ChordPull || this.showall_ignorechords) {
-        if (_push1.length == 0 && _pull1.length == 0) AllowRow1 = false;
-        if (_push2.length == 0 && _pull2.length == 0) AllowRow2 = false;
-        if (_push3.length == 0 && _pull3.length == 0) AllowRow3 = false;
-      } else if (this.ChordPush) {
-        if (_push1.length == 0) AllowRow1 = false;
-        if (_push2.length == 0) AllowRow2 = false;
-        if (_push3.length == 0) AllowRow3 = false;
-      } else if (this.ChordPull) {
-        if (_pull1.length == 0) AllowRow1 = false;
-        if (_pull2.length == 0) AllowRow2 = false;
-        if (_pull3.length == 0) AllowRow3 = false;
-      }
-
-      //Allow all rows if no possibilities remain
-      if (!AllowRow1 && !AllowRow2 && !AllowRow3) {
-        AllowRow1 = true;
-        AllowRow2 = true;
-        AllowRow3 = true;
-      }
-
-      //Check push/pull allowed and possible
-      var AllowPush = this.ChordPush || this.showall_ignorechords;
-      if ((!AllowRow1 || _push1.length == 0) && (!AllowRow2 || _push2.length == 0) && (!AllowRow3 || _push3.length == 0)) AllowPush = false;
-      var AllowPull = this.ChordPull || this.showall_ignorechords;
-      if ((!AllowRow1 || _pull1.length == 0) && (!AllowRow2 || _pull2.length == 0) && (!AllowRow3 || _pull3.length == 0)) AllowPull = false;
-      if (!AllowPush && !AllowPull) {
-        AllowPush = true;
-        AllowPull = true;
-      }
-
-      //Set push buttons
-      if (AllowPush) {
-        if (AllowRow1 && _push1.length) strPush = AppendButton(strPush, _push1);
-        if (AllowRow2 && _push2.length) strPush = AppendButton(strPush, _push2);
-        if (AllowRow3 && _push3.length) strPush = AppendButton(strPush, _push3);
-      }
-
-      //Set pull buttons
-      if (AllowPull) {
-        if (AllowRow1 && _pull1.length) strPull = AppendButton(strPull, _pull1);
-        if (AllowRow2 && _pull2.length) strPull = AppendButton(strPull, _pull2);
-        if (AllowRow3 && _pull3.length) strPull = AppendButton(strPull, _pull3);
-      }
-    } else {
       //If the cord cannot push and there is at least one possibility of pulling the note, do not allow pushing the note
       var ClearPush = false;
       if (!this.ChordPush && (_pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0)) {
@@ -16810,12 +16764,84 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
         if (Button.length) {
           //Add it to push or pull
           if (Push) strPush = AppendButton(strPush, Button);else strPull = AppendButton(strPull, Button);
+
+          //Only when the note head change option is enabled
+          if (this.changenoteheads) {
+            //Row2 gets diamands, row3 gets triangles
+            if (Button.search("'") >= 0) aDiamandNotes.push(notes[i]);else if (Button.search("\"") >= 0) aTriangleNotes(notes[i]);
+          }
         }
       }
     }
   }
 
-  //Create return value with push and pull element (normally only one of the two)
+  //If in show all mode
+  if (this.showall) {
+    //Clear results of the tablature algorithm (the algorithm runs anyway if changing of note heads is required)
+    strPush = "";
+    strPull = "";
+
+    //Get possibilities for the note on all rows in both directions
+    var _push = this.noteToPushButtonRow1(noteName);
+    var _push4 = this.noteToPushButtonRow2(noteName);
+    var _push5 = this.noteToPushButtonRow3(noteName);
+    var _pull = this.noteToPullButtonRow1(noteName);
+    var _pull4 = this.noteToPullButtonRow2(noteName);
+    var _pull5 = this.noteToPullButtonRow3(noteName);
+
+    //Get user specified row preference
+    var AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
+    var AllowRow2 = this.RowPrefer2 >= 0 || this.showall_ignorechords;
+    var AllowRow3 = this.RowPrefer3 >= 0 || this.showall_ignorechords;
+
+    //Check for rows with no possibilities
+    if (this.ChordPush && this.ChordPull || this.showall_ignorechords) {
+      if (_push.length == 0 && _pull.length == 0) AllowRow1 = false;
+      if (_push4.length == 0 && _pull4.length == 0) AllowRow2 = false;
+      if (_push5.length == 0 && _pull5.length == 0) AllowRow3 = false;
+    } else if (this.ChordPush) {
+      if (_push.length == 0) AllowRow1 = false;
+      if (_push4.length == 0) AllowRow2 = false;
+      if (_push5.length == 0) AllowRow3 = false;
+    } else if (this.ChordPull) {
+      if (_pull.length == 0) AllowRow1 = false;
+      if (_pull4.length == 0) AllowRow2 = false;
+      if (_pull5.length == 0) AllowRow3 = false;
+    }
+
+    //Allow all rows if no possibilities remain
+    if (!AllowRow1 && !AllowRow2 && !AllowRow3) {
+      AllowRow1 = true;
+      AllowRow2 = true;
+      AllowRow3 = true;
+    }
+
+    //Check push/pull allowed and possible
+    var AllowPush = this.ChordPush || this.showall_ignorechords;
+    if ((!AllowRow1 || _push.length == 0) && (!AllowRow2 || _push4.length == 0) && (!AllowRow3 || _push5.length == 0)) AllowPush = false;
+    var AllowPull = this.ChordPull || this.showall_ignorechords;
+    if ((!AllowRow1 || _pull.length == 0) && (!AllowRow2 || _pull4.length == 0) && (!AllowRow3 || _pull5.length == 0)) AllowPull = false;
+    if (!AllowPush && !AllowPull) {
+      AllowPush = true;
+      AllowPull = true;
+    }
+
+    //Set push buttons
+    if (AllowPush) {
+      if (AllowRow1 && _push.length) strPush = AppendButton(strPush, _push);
+      if (AllowRow2 && _push4.length) strPush = AppendButton(strPush, _push4);
+      if (AllowRow3 && _push5.length) strPush = AppendButton(strPush, _push5);
+    }
+
+    //Set pull buttons
+    if (AllowPull) {
+      if (AllowRow1 && _pull.length) strPull = AppendButton(strPull, _pull);
+      if (AllowRow2 && _pull4.length) strPull = AppendButton(strPull, _pull4);
+      if (AllowRow3 && _pull5.length) strPull = AppendButton(strPull, _pull5);
+    }
+  }
+
+  //Create return value with push and pull element
   var error = null;
   var retNotes = new Array();
   var retGraces = null;
@@ -16826,7 +16852,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     var number = {
       num: strPush,
       str: -1,
-      //Top row
+      //Push row (top)
       note: note
     };
     retNotes.push(number);
@@ -16838,7 +16864,31 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     var number = {
       num: strPull,
       str: 1,
-      //Bottom row
+      //Pull row (bottom
+      note: note
+    };
+    retNotes.push(number);
+  }
+
+  //Create returns values for note head changes
+  for (var _i16 = 0; _i16 < aDiamandNotes.length; ++_i16) {
+    var note = new TabNote.TabNote("");
+    note.pitch = aDiamandNotes[_i16].pitch;
+    var number = {
+      num: "",
+      str: -10,
+      //Diamand indicator
+      note: note
+    };
+    retNotes.push(number);
+  }
+  for (var _i17 = 0; _i17 < aTriangleNotes.length; ++_i17) {
+    var note = new TabNote.TabNote("");
+    note.pitch = aTriangleNotes[_i17].pitch;
+    var number = {
+      num: "",
+      str: -20,
+      //Triangle indicator
       note: note
     };
     retNotes.push(number);
@@ -18040,6 +18090,64 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
           if (lll >= absChild.heads.length) lll = absChild.heads.length - 1;
           var tabNoteRelative = buildRelativeTabNote(plugin, abs.x + absChild.heads[lll].dx, defNote, curNote, false);
           abs.children.push(tabNoteRelative);
+        }
+
+        //For each symbol check if it is a note head that needs to be replaced
+        for (var s = 0; s < absChild.children.length; s++) {
+          //Skip if not a note head
+          if (!absChild.children[s].c || absChild.children[s].c.substr(0, 10) != "noteheads.") continue;
+
+          //Search for not pitch listed as diamand or triangle
+          var NoteHeadDiamand = false;
+          var NoteHeadTriangle = false;
+          for (var n = 0; n < tabPos.notes.length; n++) {
+            if (tabPos.notes[n].note.pitch == absChild.children[s].pitch) {
+              if (tabPos.notes[n].str == -10) {
+                NoteHeadDiamand = true;
+                break;
+              } else if (tabPos.notes[n].str == -20) {
+                NoteHeadTriangle = true;
+                break;
+              }
+            }
+          }
+
+          //Skip if this note head does not have to be changed
+          if (!NoteHeadDiamand && !NoteHeadTriangle) continue;
+
+          //Lookup the replacement note head
+          var StemPitch = NaN;
+          switch (absChild.children[s].c) {
+            case "noteheads.dbl":
+              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.whole";else absChild.children[s].c = "noteheads.triangle2.whole";
+              break;
+            case "noteheads.whole":
+              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.whole";else absChild.children[s].c = "noteheads.triangle2.whole";
+              break;
+            case "noteheads.half":
+              StemPitch = absChild.children[s].pitch;
+              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.half";else {
+                absChild.children[s].c = "noteheads.triangle2.half";
+                StemPitch -= 0.5;
+              }
+              break;
+            case "noteheads.quarter":
+              StemPitch = absChild.children[s].pitch;
+              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.quarter";else {
+                absChild.children[s].c = "noteheads.triangle2.quarter";
+                StemPitch -= 0.5;
+              }
+              break;
+          }
+
+          //For 1/8 notes and smaller, adjust vertical lines to connect to the note head
+          if (!isNaN(StemPitch)) {
+            for (var _s = 0; _s < absChild.children.length; _s++) {
+              if (absChild.children[_s].name == "stem") {
+                if (Math.abs(absChild.children[_s].pitch - StemPitch) < 1) absChild.children[_s].pitch = StemPitch;else if (Math.abs(absChild.children[_s].pitch2 - StemPitch) < 1) absChild.children[_s].pitch2 = StemPitch;
+              }
+            }
+          }
         }
         if (defNote.notes.length > 0) {
           defNote.abselem = abs;
@@ -22132,6 +22240,36 @@ var glyphs = {
     d: [['M', 0.78, -4.05], ['c', 0.12, -0.03, 0.24, -0.03, 0.36, 0.03], ['c', 0.03, 0.03, 0.93, 0.72, 1.95, 1.56], ['l', 1.86, 1.50], ['l', 1.86, -1.50], ['c', 1.02, -0.84, 1.92, -1.53, 1.95, -1.56], ['c', 0.21, -0.12, 0.33, -0.09, 0.75, 0.24], ['c', 0.30, 0.27, 0.36, 0.36, 0.36, 0.54], ['c', 0.00, 0.03, -0.03, 0.12, -0.06, 0.18], ['c', -0.03, 0.06, -0.90, 0.75, -1.89, 1.56], ['l', -1.80, 1.47], ['c', 0.00, 0.03, 0.81, 0.69, 1.80, 1.50], ['c', 0.99, 0.81, 1.86, 1.50, 1.89, 1.56], ['c', 0.03, 0.06, 0.06, 0.15, 0.06, 0.18], ['c', 0.00, 0.18, -0.06, 0.27, -0.36, 0.54], ['c', -0.42, 0.33, -0.54, 0.36, -0.75, 0.24], ['c', -0.03, -0.03, -0.93, -0.72, -1.95, -1.56], ['l', -1.86, -1.50], ['l', -1.86, 1.50], ['c', -1.02, 0.84, -1.92, 1.53, -1.95, 1.56], ['c', -0.21, 0.12, -0.33, 0.09, -0.75, -0.24], ['c', -0.30, -0.27, -0.36, -0.36, -0.36, -0.54], ['c', 0.00, -0.03, 0.03, -0.12, 0.06, -0.18], ['c', 0.03, -0.06, 0.90, -0.75, 1.89, -1.56], ['l', 1.80, -1.47], ['c', 0.00, -0.03, -0.81, -0.69, -1.80, -1.50], ['c', -0.99, -0.81, -1.86, -1.50, -1.89, -1.56], ['c', -0.06, -0.12, -0.09, -0.21, -0.03, -0.36], ['c', 0.03, -0.09, 0.57, -0.57, 0.72, -0.63], ['z']],
     w: 9.843,
     h: 8.139
+  },
+  'noteheads.triangle2.whole': {
+    d: [['M', 7.29, -3.39], ['c', 0.12, -0.03, 0.30, -0.03, 0.42, 0.00], ['c', 0.06, 0.03, 1.71, 1.35, 3.66, 2.94], ['c', 3.03, 2.49, 3.54, 2.94, 3.60, 3.03], ['c', 0.15, 0.30, 0.00, 0.66, -0.27, 0.78], ['c', -0.12, 0.06, -0.39, 0.06, -7.17, 0.06], ['c', -7.68, 0.00, -7.17, 0.00, -7.35, -0.15], ['c', -0.09, -0.09, -0.18, -0.30, -0.18, -0.45], ['c', 0.00, -0.27, -0.18, -0.12, 3.66, -3.27], ['c', 1.95, -1.59, 3.60, -2.91, 3.63, -2.94], ['z'], ['m', 2.88, 3.48], ['c', -1.44, -1.20, -2.64, -2.16, -2.67, -2.16], ['l', -2.64, 2.16], ['l', -2.61, 2.13], ['l', 2.64, 0.03], ['l', 5.28, 0.00], ['l', 2.61, -0.03], ['z']],
+    w: 15.031,
+    h: 6.833
+  },
+  'noteheads.triangle2.half': {
+    d: [['M', 4.95, -3.36], ['c', 0.06, -0.03, 0.18, -0.06, 0.24, -0.06], ['c', 0.27, 0.00, 0.21, -0.09, 2.76, 3.06], ['c', 1.29, 1.59, 2.37, 2.97, 2.40, 3.00], ['c', 0.06, 0.21, 0.00, 0.48, -0.15, 0.63], ['c', -0.18, 0.15, 0.12, 0.15, -5.01, 0.15], ['c', -5.13, 0.00, -4.83, 0.00, -5.01, -0.15], ['c', -0.15, -0.15, -0.21, -0.42, -0.15, -0.63], ['c', 0.03, -0.03, 1.11, -1.41, 2.40, -3.00], ['c', 2.04, -2.49, 2.40, -2.94, 2.52, -3.00], ['z'], ['m', 1.95, 3.54], ['c', -0.93, -1.14, -1.68, -2.07, -1.71, -2.07], ['l', -1.68, 2.07], ['l', -1.68, 2.04], ['l', 1.68, 0.03], ['l', 3.36, 0.00], ['l', 1.68, -0.03], ['z']],
+    w: 10.366,
+    h: 6.84
+  },
+  'noteheads.triangle2.quarter': {
+    d: [['M', 4.68, -3.36], ['c', 0.06, -0.03, 0.18, -0.06, 0.27, -0.06], ['c', 0.27, 0.00, 0.18, -0.12, 2.61, 3.06], ['c', 1.23, 1.59, 2.25, 2.97, 2.28, 3.00], ['c', 0.06, 0.21, 0.00, 0.48, -0.15, 0.63], ['c', -0.18, 0.15, 0.09, 0.15, -4.77, 0.15], ['c', -4.83, 0.00, -4.56, 0.00, -4.74, -0.15], ['c', -0.15, -0.15, -0.21, -0.42, -0.15, -0.63], ['c', 0.03, -0.03, 1.05, -1.41, 2.28, -3.00], ['c', 1.98, -2.58, 2.25, -2.94, 2.37, -3.00], ['z']],
+    w: 9.856,
+    h: 6.841
+  },
+  'noteheads.diamand.whole': {
+    d: [['M', 4.14, -2.07], ['c', 2.25, -0.93, 3.30, -1.35, 3.36, -1.35], ['c', 0.09, 0.00, 1.08, 0.39, 3.66, 1.47], ['c', 1.95, 0.78, 3.60, 1.47, 3.63, 1.50], ['c', 0.30, 0.21, 0.30, 0.69, 0.00, 0.90], ['c', -0.15, 0.12, -7.17, 2.97, -7.29, 2.97], ['c', -0.06, 0.00, -1.23, -0.45, -3.60, -1.44], ['c', -1.95, -0.81, -3.57, -1.47, -3.60, -1.50], ['c', -0.27, -0.12, -0.36, -0.45, -0.24, -0.75], ['c', 0.09, -0.21, -0.33, -0.03, 4.08, -1.80], ['z'], ['m', 5.67, 1.11], ['c', -1.47, -0.60, -2.67, -1.08, -2.70, -1.08], ['c', -0.06, 0.00, -4.59, 1.89, -4.56, 1.89], ['l', 2.67, 1.11], ['l', 2.67, 1.08], ['l', 0.15, -0.06], ['c', 0.75, -0.30, 4.47, -1.83, 4.44, -1.83], ['z']],
+    w: 15.007,
+    h: 6.84
+  },
+  'noteheads.diamand.half': {
+    d: [['M', 4.74, -3.39], ['c', 0.09, -0.03, 0.27, -0.03, 0.36, 0.00], ['c', 0.12, 0.03, 4.47, 2.88, 4.59, 2.97], ['c', 0.09, 0.09, 0.18, 0.30, 0.18, 0.42], ['c', 0.00, 0.12, -0.09, 0.33, -0.18, 0.42], ['c', -0.12, 0.09, -4.47, 2.94, -4.59, 2.97], ['c', -0.09, 0.03, -0.24, 0.03, -0.33, 0.00], ['c', -0.12, -0.03, -4.47, -2.88, -4.59, -2.97], ['c', -0.09, -0.09, -0.18, -0.30, -0.18, -0.42], ['c', 0.00, -0.12, 0.09, -0.33, 0.18, -0.42], ['c', 0.09, -0.06, 4.47, -2.94, 4.56, -2.97], ['z'], ['m', 1.35, 2.34], ['c', -0.75, -0.48, -1.38, -0.87, -1.41, -0.90], ['c', -0.03, 0.00, -0.66, 0.39, -1.41, 0.90], ['l', -1.35, 0.87], ['l', 0.27, 0.18], ['c', 0.15, 0.09, 0.87, 0.57, 1.59, 1.05], ['c', 0.75, 0.48, 1.38, 0.87, 1.41, 0.90], ['l', 1.41, -0.90], ['l', 1.35, -0.87], ['l', -0.27, -0.18], ['c', -0.15, -0.09, -0.87, -0.57, -1.59, -1.05], ['z']],
+    w: 9.87,
+    h: 6.825
+  },
+  'noteheads.diamand.quarter': {
+    d: [['M', 4.74, -3.39], ['c', 0.09, -0.03, 0.27, -0.03, 0.36, 0.00], ['c', 0.12, 0.03, 4.47, 2.88, 4.59, 2.97], ['c', 0.09, 0.09, 0.18, 0.30, 0.18, 0.42], ['c', 0.00, 0.12, -0.09, 0.33, -0.18, 0.42], ['c', -0.12, 0.09, -4.47, 2.94, -4.59, 2.97], ['c', -0.09, 0.03, -0.24, 0.03, -0.33, 0.00], ['c', -0.12, -0.03, -4.47, -2.88, -4.59, -2.97], ['c', -0.09, -0.09, -0.18, -0.30, -0.18, -0.42], ['c', 0.00, -0.12, 0.09, -0.33, 0.18, -0.42], ['c', 0.09, -0.06, 4.47, -2.94, 4.56, -2.97], ['z']],
+    w: 9.87,
+    h: 6.825
   },
   'scripts.ufermata': {
     d: [['M', -0.75, -10.77], ['c', 0.12, 0.00, 0.45, -0.03, 0.69, -0.03], ['c', 2.91, -0.03, 5.55, 1.53, 7.41, 4.35], ['c', 1.17, 1.71, 1.95, 3.72, 2.43, 6.03], ['c', 0.12, 0.51, 0.12, 0.57, 0.03, 0.69], ['c', -0.12, 0.21, -0.48, 0.27, -0.69, 0.12], ['c', -0.12, -0.09, -0.18, -0.24, -0.27, -0.69], ['c', -0.78, -3.63, -3.42, -6.54, -6.78, -7.38], ['c', -0.78, -0.21, -1.20, -0.24, -2.07, -0.24], ['c', -0.63, 0.00, -0.84, 0.00, -1.20, 0.06], ['c', -1.83, 0.27, -3.42, 1.08, -4.80, 2.37], ['c', -1.41, 1.35, -2.40, 3.21, -2.85, 5.19], ['c', -0.09, 0.45, -0.15, 0.60, -0.27, 0.69], ['c', -0.21, 0.15, -0.57, 0.09, -0.69, -0.12], ['c', -0.09, -0.12, -0.09, -0.18, 0.03, -0.69], ['c', 0.33, -1.62, 0.78, -3.00, 1.47, -4.38], ['c', 1.77, -3.54, 4.44, -5.67, 7.56, -5.97], ['z'], ['m', 0.33, 7.47], ['c', 1.38, -0.30, 2.58, 0.90, 2.31, 2.25], ['c', -0.15, 0.72, -0.78, 1.35, -1.47, 1.50], ['c', -1.38, 0.27, -2.58, -0.93, -2.31, -2.31], ['c', 0.15, -0.69, 0.78, -1.29, 1.47, -1.44], ['z']],

@@ -346,6 +346,83 @@ TabAbsoluteElements.prototype.build = function (plugin,
           var tabNoteRelative = buildRelativeTabNote(plugin, abs.x+absChild.heads[lll].dx, defNote, curNote, false);
           abs.children.push(tabNoteRelative);
         }
+		
+		//For each symbol check if it is a note head that needs to be replaced
+		for (let s = 0; s < absChild.children.length; s++) {
+			//Skip if not a note head
+			if (!absChild.children[s].c || absChild.children[s].c.substr(0, 10) != "noteheads.")
+				continue;
+			
+			//Search for not pitch listed as diamand or triangle
+			let NoteHeadDiamand  = false;
+			let NoteHeadTriangle = false;
+			for (let n = 0; n < tabPos.notes.length; n++) {
+				if (tabPos.notes[n].note.pitch == absChild.children[s].pitch) {
+					if (tabPos.notes[n].str == -10) {
+						NoteHeadDiamand = true;
+						break;
+					}
+					else if (tabPos.notes[n].str == -20) {
+						NoteHeadTriangle = true;
+						break;
+					}
+				}
+			}
+			
+			//Skip if this note head does not have to be changed
+			if (!NoteHeadDiamand && !NoteHeadTriangle)
+				continue;
+			
+			//Lookup the replacement note head
+			let StemPitch = NaN;
+			switch (absChild.children[s].c) {
+				case "noteheads.dbl":
+					if (NoteHeadDiamand)
+						absChild.children[s].c = "noteheads.diamand.whole";
+					else
+						absChild.children[s].c = "noteheads.triangle2.whole";
+					break;
+				case "noteheads.whole":
+					if (NoteHeadDiamand)
+						absChild.children[s].c = "noteheads.diamand.whole";
+					else
+						absChild.children[s].c = "noteheads.triangle2.whole";
+					break;
+				case "noteheads.half":
+					StemPitch = absChild.children[s].pitch;
+					if (NoteHeadDiamand)
+						absChild.children[s].c = "noteheads.diamand.half";
+					else {
+						absChild.children[s].c = "noteheads.triangle2.half";
+						StemPitch -= 0.5;
+					}
+					
+					break;
+				case "noteheads.quarter":
+					StemPitch = absChild.children[s].pitch;
+					if (NoteHeadDiamand)
+						absChild.children[s].c = "noteheads.diamand.quarter";
+					else {
+						absChild.children[s].c = "noteheads.triangle2.quarter";
+						StemPitch -= 0.5;
+					}
+					
+					break;
+			}
+			
+			//For 1/8 notes and smaller, adjust vertical lines to connect to the note head
+			if (!isNaN(StemPitch)) {
+				for (let s = 0; s < absChild.children.length; s++) {
+					if (absChild.children[s].name == "stem") {
+						if (Math.abs(absChild.children[s].pitch - StemPitch) < 1)
+							absChild.children[s].pitch = StemPitch;
+						else if (Math.abs(absChild.children[s].pitch2 - StemPitch) < 1)
+							absChild.children[s].pitch2 = StemPitch;
+					}
+				}
+			}
+		}
+		
         if (defNote.notes.length > 0) {
           defNote.abselem = abs;
           tabVoice.push(defNote);

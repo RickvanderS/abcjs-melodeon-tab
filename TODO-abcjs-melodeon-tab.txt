@@ -2,11 +2,13 @@ Bugs:
 - Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 - Melodeon: Do show button numbers on tie when at least one note changed
+- Melodeon: Algorithms quits on tie ends, should check tie is same note and should continue in order to do note head change (same note head as tie start)
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Harmonica: Syncronize with changes in Melodeon
 New features:
 - 2.5 and 3 row melodeons
-- Hide tableture, but do show rows by changing note heads (take inspiration from %percmap or !style=rhythm!)
+- Hide tablature (useful when we only want note heads and/or push pull indicators)
+- Optional push/pull indicators next to chords
 abcjs:
 - Key change end of bar

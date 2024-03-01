@@ -206,17 +206,31 @@ window.scale_font = function(font, size, raphael, output) {
 				continue;
 			}
 			path = raphael.toRelative(path);
+			
+			var scalex = scale;
+			var scaley = scale;
+			if (glyphnames[glyph].substr(0, 17) == "noteheads.diamand") {
+				scalex *= 1.125;
+				scaley *= 1.3;
+			}
+			else if (glyphnames[glyph].substr(0, 19) == "noteheads.triangle2") {
+				scaley *= 1.3;
+			}
+			
 			// Do the scaling
 			for (var i = 0; i < path.length; i++) {
 				path[i][0] = "'" + path[i][0] + "'";
 				for (var j = 1; j < path[i].length; j++) {
-					path[i][j] = (path[i][j] * scale).toFixed(2);
+					if (j % 2)
+						path[i][j] = (path[i][j] * scalex).toFixed(2);
+					else
+						path[i][j] = (path[i][j] * scaley).toFixed(2);
 				}
 			}
 //			path[0][1] = +path[0][1].toFixed(3); // round out the M part
 //			path[0][2] = +path[0][2].toFixed(3);
-			var w = Math.round(symb.getBBox().width * scale * 1000) / 1000;
-			var h = Math.round(symb.getBBox().height * scale * 1000) / 1000;
+			var w = Math.round(symb.getBBox().width * scalex * 1000) / 1000;
+			var h = Math.round(symb.getBBox().height * scaley * 1000) / 1000;
 			var gstr = "'";
 			gstr += glyphnames[glyph];
 			gstr += "':{d:";

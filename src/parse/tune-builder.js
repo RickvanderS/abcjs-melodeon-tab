@@ -1,5 +1,6 @@
 var parseKeyVoice = require('../parse/abc_parse_key_voice');
 var parseCommon = require('../parse/abc_common');
+var parseDirective = require('./abc_parse_directive');
 
 var TuneBuilder = function(tune) {
 	var self = this;
@@ -146,6 +147,9 @@ var TuneBuilder = function(tune) {
 	this.cleanUp = function(barsperstaff, staffnonote, currSlur) {
 		this.closeLine();	// Close the last line.
 		delete tune.runningFonts;
+
+		simplifyMetaText(tune)
+		//addRichTextToAnnotationsAndLyrics(tune)
 
 		// If the tempo was created with a string like "Allegro", then the duration of a beat needs to be set at the last moment, when it is most likely known.
 		if (tune.metaText.tempo && tune.metaText.tempo.bpm && !tune.metaText.tempo.duration)
@@ -878,7 +882,15 @@ var TuneBuilder = function(tune) {
 			tune.metaText[key] = value;
 			tune.metaTextInfo[key] = info;
 		} else {
-			tune.metaText[key] += "\n" + value;
+			if (typeof tune.metaText[key] === 'string' && typeof value === 'string')
+				tune.metaText[key] += "\n" + value;
+			else {
+				if (tune.metaText[key] === 'string')
+					tune.metaText[key] = [{text: tune.metaText[key]}]
+				if (typeof value === 'string')
+					value = [{text: value}]
+				tune.metaText[key] =tune.metaText[key].concat(value)
+			}
 			tune.metaTextInfo[key].endChar = info.endChar;
 		}
 	};
@@ -897,5 +909,52 @@ var TuneBuilder = function(tune) {
 		tune.metaTextInfo[key] = info;
 	};
 };
+
+function isArrayOfStrings(arr) {
+	if (!arr) return false
+	if (typeof arr === "string") return false
+	var str = ''
+	for (var i = 0; i < arr.length; i++) {
+		if (typeof arr[i] !== 'string')
+			return false
+	}
+	return true
+}
+
+function simplifyMetaText(tune) {
+	if (isArrayOfStrings(tune.metaText.notes))
+		tune.metaText.notes = tune.metaText.notes.join("\n")
+	if (isArrayOfStrings(tune.metaText.history))
+		tune.metaText.history = tune.metaText.history.join("\n")
+}
+
+function addRichTextToAnnotationsAndLyrics(tune) {
+	var lines = tune.lines
+	for (var i = 0; i < lines.length; i++) {
+		if (lines[i].staff !== undefined) {
+			for (var s = 0; s < lines[i].staff.length; s++) {
+				for (var v = 0; v < lines[i].staff[s].voices.length; v++) {
+					var voice = lines[i].staff[s].voices[v];
+					for (var n = 0; n < voice.length; n++) {
+						var element = voice[n]
+						if (element.chord) {
+							for (var c = 0; c < element.chord.length; c++) {
+								element.chord[c].name = parseDirective.parseFontChangeLine(element.chord[c].name)
+								console.log(element.chord[c].name)
+							}
+						}
+						if (element.lyric) {
+							for (var l = 0; l < element.lyric.length; l++) {
+								element.lyric[l].syllable = parseDirective.parseFontChangeLine(element.lyric[l].syllable)
+								console.log(element.lyric[l].syllable)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+}
 
 module.exports = TuneBuilder;

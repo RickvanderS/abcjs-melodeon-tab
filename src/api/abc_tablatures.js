@@ -5,8 +5,7 @@
  * where plugin represents a plugin instance 
  * 
  */
-var ViolinTablature = require('../tablatures/instruments/violin/tab-violin');
-var GuitarTablature = require('../tablatures/instruments/guitar/tab-guitar');
+var StringTablature = require('../tablatures/instruments/tab-string');
 var HarmonicaTablature = require('../tablatures/instruments/harmonica/tab-harmonica');
 var MelodeonTablature = require('../tablatures/instruments/melodeon/tab-melodeon');
 
@@ -14,12 +13,13 @@ var MelodeonTablature = require('../tablatures/instruments/melodeon/tab-melodeon
 
 // Existing tab classes 
 var pluginTab = {
-  'violin': 'ViolinTab',
-  'fiddle': 'ViolinTab',
-  'mandolin': 'ViolinTab',
-  'guitar': 'GuitarTab',
-  'harmonica': 'HarmonicaTab',
-  'melodeon': 'MelodeonTab'
+  'violin': { name: 'StringTab', defaultTuning: ['G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: 0},
+  'fiddle': { name: 'StringTab', defaultTuning: ['G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: 0},
+  'mandolin': { name: 'StringTab', defaultTuning: ['G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: 0},
+  'guitar': { name: 'StringTab', defaultTuning: ['E,', 'A,', 'D', 'G' , 'B' , 'e'], isTabBig: true, tabSymbolOffset: 0},
+  'fiveString': { name: 'StringTab', defaultTuning: ['C,', 'G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: -.95},
+  'harmonica': {name : 'HarmonicaTab'},
+  'melodeon': {name : 'MelodeonTab'}
 };
 
 var abcTablatures = {
@@ -109,6 +109,7 @@ var abcTablatures = {
    */
   layoutTablatures: function (renderer, abcTune) {
     var tabs = abcTune.tablatures;
+
     // chack tabs request for each staffs
     for (var ii = 0; ii < abcTune.lines.length; ii++) {
       var line = abcTune.lines[ii];
@@ -142,8 +143,7 @@ var abcTablatures = {
   init: function () {
     // just register plugin hosted by abcjs 
     if (!this.inited) {
-      this.register(new ViolinTablature());
-      this.register(new GuitarTablature());
+      this.register(new StringTablature());
       this.register(new HarmonicaTablature());
       this.register(new MelodeonTablature());
       this.inited = true;

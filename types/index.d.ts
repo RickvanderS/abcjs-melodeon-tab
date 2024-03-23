@@ -262,6 +262,7 @@ declare module 'abcjs' {
 	}
 
 	export interface AbcVisualParams {
+		accentAbove?: boolean;
 		add_classes?: boolean;
 		afterParsing?: AfterParsing;
 		ariaLabel?: string;
@@ -317,8 +318,8 @@ declare module 'abcjs' {
 	export interface EditorSynth {
 		synthControl?: SynthObjectController;
 		el: Selector;
-		cursorControl: CursorControl;
-		options: SynthOptions;
+		cursorControl?: CursorControl;
+		options?: SynthOptions;
 	}
 
 	export interface EditorOptions {
@@ -336,7 +337,7 @@ declare module 'abcjs' {
 	// Audio
 	export interface NoteMapTrackItem {
 		pitch: number;
-		instrument: number;
+		instrument: string;
 		start: number;
 		end: number;
 		startChar: number;
@@ -846,6 +847,7 @@ declare module 'abcjs' {
 		getElementFromChar: (charPos: number) => VoiceItem | null;
 		millisecondsPerMeasure: (bpm?: number) => number;
 		setTiming: (bpm?: number, measuresOfDelay? : number) => void;
+		setupEvents: (startingDelay: number, timeDivider:number, startingBpm: number, warp?: number) => Array<NoteTimingEvent>;
 		setUpAudio: (options: SynthOptions) => AudioTracks;
 		makeVoicesArray: () => Array<Selectable[]>
 		deline: () => Array<TuneLine>;
@@ -1026,10 +1028,30 @@ declare module 'abcjs' {
 		loaded: Array<string>;
 	}
 
-	export interface AudioTrack {
-		cmd: AudioTrackCommand;
-		[param: string]: any; // TODO - make this a union
+	export interface AudioTrackProgramItem {
+		cmd: 'program';
+		channel: number;
+		instrument: number;
 	}
+
+	export interface AudioTrackNoteItem {
+		cmd: 'note';
+		duration: number;
+		endChar: number;
+		endType?: "staccato"|"tenuto";
+		gap: number;
+		instrument: number;
+		pitch: number;
+		start: number;
+		startChar: number;
+		volume: number;
+	}
+	export interface AudioTrackTextItem {
+		cmd: 'text';
+		type: 'name';
+		text: string;
+	}
+	export type AudioTrack = Array<AudioTrackProgramItem|AudioTrackNoteItem|AudioTrackTextItem>
 
 	export interface AudioTracks {
 		tempo: number;
@@ -1157,6 +1179,7 @@ declare module 'abcjs' {
 		stop(): number
 		download(): string // returns audio buffer in wav format as a reference to a blob
 		getIsRunning(): boolean
+		getAudioBuffer(): AudioBuffer | undefined
 	}
 
 	export interface SynthInitResponse {
@@ -1188,6 +1211,22 @@ declare module 'abcjs' {
 		appendNote(trackNumber: number, pitch: number, durationInMeasures: number, volume: number, cents: number): void
 	}
 
+	export interface MidiRenderer {
+		setTempo(bpm: number): void
+		setGlobalInfo(bpm: number, name: string, key:KeySignature, time:MeterFraction): void
+		startTrack(): void
+		endTrack(): void
+		setText(type: string, text: string):void
+		setInstrument(instrument: number):void
+		setChannel(channel:number, pan?: number):void
+		startNote(pitch:number, loudness:number, cents?:number):void
+		endNote(pitch:number):void
+		addRest(length:number):void
+
+		getData():string
+		embed(parent:Element, noplayer:boolean):void
+	}
+
 	export namespace synth {
 		let instrumentIndexToName: [string]
 		let pitchToNoteName: [string]
@@ -1202,6 +1241,7 @@ declare module 'abcjs' {
 		export function getMidiFile(source: string | TuneObject, options?: MidiFileOptions): MidiFile;
 		export function playEvent(pitches: MidiPitches, graceNotes: MidiGracePitches | undefined, milliSecondsPerMeasure: number, soundFontUrl? : string, debugCallback?: (message: string) => void): Promise<void>;
 		export function sequence(visualObj: TuneObject, options: AbcVisualParams): AudioSequence
+		export function midiRenderer(): MidiRenderer
 	}
 
 	//

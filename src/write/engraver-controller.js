@@ -65,6 +65,8 @@ var EngraverController = function (paper, params) {
 		this.renderer.showDebug = params.showDebug;
 	if (params.jazzchords)
 		this.jazzchords = params.jazzchords;
+	if (params.accentAbove)
+		this.accentAbove = params.accentAbove;
 	if (params.germanAlphabet)
 		this.germanAlphabet = params.germanAlphabet;
 	if (params.lineThickness)
@@ -123,6 +125,7 @@ EngraverController.prototype.getMeasureWidths = function (abcTune) {
 	this.reset();
 	this.getFontAndAttr = new GetFontAndAttr(abcTune.formatting, this.classes);
 	this.getTextSize = new GetTextSize(this.getFontAndAttr, this.renderer.paper);
+	var origJazzChords = this.jazzchords
 
 	this.setupTune(abcTune, 0);
 	this.constructTuneElements(abcTune);
@@ -170,6 +173,7 @@ EngraverController.prototype.getMeasureWidths = function (abcTune) {
 		} else
 			needNewSection = true;
 	}
+	this.jazzchords = origJazzChords
 	return ret;
 };
 
@@ -178,6 +182,8 @@ EngraverController.prototype.setupTune = function (abcTune, tuneNumber) {
 
 	if (abcTune.formatting.jazzchords !== undefined)
 		this.jazzchords = abcTune.formatting.jazzchords;
+	if (abcTune.formatting.accentAbove !== undefined)
+		this.accentAbove = abcTune.formatting.accentAbove;
 
 	this.renderer.newTune(abcTune);
 	this.engraver = new AbstractEngraver(this.getTextSize, tuneNumber, {
@@ -187,6 +193,7 @@ EngraverController.prototype.setupTune = function (abcTune, tuneNumber) {
 		percmap: abcTune.formatting.percmap,
 		initialClef: this.initialClef,
 		jazzchords: this.jazzchords,
+		accentAbove: this.accentAbove,
 		germanAlphabet: this.germanAlphabet
 	});
 	this.engraver.setStemHeight(this.renderer.spacing.stemHeight);
@@ -206,7 +213,7 @@ EngraverController.prototype.setupTune = function (abcTune, tuneNumber) {
 };
 
 EngraverController.prototype.constructTuneElements = function (abcTune) {
-	abcTune.topText = new TopText(abcTune.metaText, abcTune.metaTextInfo, abcTune.formatting, abcTune.lines, this.width, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.getTextSize);
+	abcTune.topText = new TopText(abcTune.metaText, abcTune.metaTextInfo, abcTune.formatting, abcTune.lines, this.width, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.classes.shouldAddClasses, this.getTextSize);
 
 	// Generate the raw staff line data
 	var i;
@@ -233,40 +240,74 @@ EngraverController.prototype.constructTuneElements = function (abcTune) {
 			abcLine.nonMusic = new Separator(abcLine.separator.spaceAbove, abcLine.separator.lineLength, abcLine.separator.spaceBelow);
 		}
 	}
-	abcTune.bottomText = new BottomText(abcTune.metaText, this.width, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.getTextSize);
+	abcTune.bottomText = new BottomText(abcTune.metaText, this.width, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.classes.shouldAddClasses, this.getTextSize);
 };
 
 EngraverController.prototype.engraveTune = function (abcTune, tuneNumber, lineOffset) {
-	var scale = this.setupTune(abcTune, tuneNumber);
 
+	var origJazzChords = this.jazzchords
+	var scale = this.setupTune(abcTune, tuneNumber);
+  
 	// Create all of the element objects that will appear on the page.
 	this.constructTuneElements(abcTune);
-
+  
+	//Set the top text now that we know the width
+  
 	// Do all the positioning, both horizontally and vertically
 	var maxWidth = layout(this.renderer, abcTune, this.width, this.space, this.expandToWidest);
-
+  
 	//Set the top text now that we know the width
-	if (this.expandToWidest && maxWidth > this.width+1) {
-		abcTune.topText = new TopText(abcTune.metaText, abcTune.metaTextInfo, abcTune.formatting, abcTune.lines, maxWidth, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.getTextSize);
+	if (this.expandToWidest && maxWidth > this.width + 1) {
+  
+		abcTune.topText = new TopText(abcTune.metaText, abcTune.metaTextInfo, abcTune.formatting, abcTune.lines, maxWidth, this.renderer.isPrint, this.renderer.padding.left, this.renderer.spacing, this.classes.shouldAddClasses, this.getTextSize);
+  
+		if ((abcTune.lines)&&(abcTune.lines.length > 0)){
+			var nlines = abcTune.lines.length;
+
+			for (var i=0;i<nlines;++i){
+				var entry = abcTune.lines[i];
+				if (entry.nonMusic){
+					if ((entry.nonMusic.rows) && (entry.nonMusic.rows.length > 0)){
+						var nRows = entry.nonMusic.rows.length;
+						for (var j=0;j<nRows;++j){
+							var thisRow = entry.nonMusic.rows[j];
+							// Recenter the element if it's a subtitle or centered text 
+							if (thisRow.left){
+								if (entry.subtitle){
+									thisRow.left = (maxWidth/2) + this.renderer.padding.left;
+								} else {
+									if ((entry.text)&&(entry.text.length>0)){
+										if (entry.text[0].center){
+											thisRow.left = (maxWidth/2) + this.renderer.padding.left;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Deal with tablature for staff
 	if (abcTune.tablatures) {
-		tablatures.layoutTablatures(this.renderer, abcTune);
+	  tablatures.layoutTablatures(this.renderer, abcTune);
 	}
-
+  
 	// Do all the writing to the SVG
 	var ret = draw(this.renderer, this.classes, abcTune, this.width, maxWidth, this.responsive, scale, this.selectTypes, tuneNumber, lineOffset);
 	this.staffgroups = ret.staffgroups;
 	this.selectables = ret.selectables;
-
 	if (this.oneSvgPerLine) {
-		var div = this.renderer.paper.svg.parentNode
-		this.svgs = splitSvgIntoLines(this.renderer, div, abcTune.metaText.title, this.responsive)
+	  var div = this.renderer.paper.svg.parentNode;
+	  this.svgs = splitSvgIntoLines(this.renderer, div, abcTune.metaText.title, this.responsive);
 	} else {
-		this.svgs = [this.renderer.paper.svg];
+	  this.svgs = [this.renderer.paper.svg];
 	}
 	setupSelection(this, this.svgs);
+	
+	this.jazzchords = origJazzChords
 };
 
 function splitSvgIntoLines(renderer, output, title, responsive) {

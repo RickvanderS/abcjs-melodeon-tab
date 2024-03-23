@@ -8,10 +8,10 @@ function addTextIf(rows, params, getTextSize) {
 
 	if (params.marginTop)
 		rows.push({ move: params.marginTop });
-	var attr = { left: params.marginLeft, text: params.text, font: params.font, anchor: params.anchor, startChar: params.info.startChar, endChar: params.info.endChar };
+	var attr = { left: params.marginLeft, text: params.text, font: params.font, anchor: params.anchor, startChar: params.info.startChar, endChar: params.info.endChar, 'dominant-baseline': params['dominant-baseline'] };
 	if (params.absElemType)
 		attr.absElemType = params.absElemType;
-	if (!params.inGroup)
+	if (!params.inGroup && params.klass)
 		attr.klass = params.klass;
 	if (params.name)
 		attr.name = params.name;

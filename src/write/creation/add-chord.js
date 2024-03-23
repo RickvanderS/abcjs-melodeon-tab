@@ -19,8 +19,8 @@ var addChord = function (getTextSize, abselem, elem, roomTaken, roomTakenRight, 
 			} else {
 				font = 'gchordfont';
 				klass = "chord";
+				chord = translateChord(chord, jazzchords, germanAlphabet);
 			}
-			chord = translateChord(chord, jazzchords, germanAlphabet);
 			var attr = getTextSize.attr(font, klass);
 			var dim = getTextSize.calc(chord, font, klass);
 			var chordWidth = dim.width;

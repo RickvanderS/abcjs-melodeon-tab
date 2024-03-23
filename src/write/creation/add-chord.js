@@ -6,22 +6,44 @@ var addChord = function (getTextSize, abselem, elem, roomTaken, roomTakenRight, 
 	for (var i = 0; i < elem.chord.length; i++) {
 		var pos = elem.chord[i].position;
 		var rel_position = elem.chord[i].rel_position;
-		var chords = elem.chord[i].name.split("\n");
-		for (var j = chords.length - 1; j >= 0; j--) { // parse these in opposite order because we place them from bottom to top.
-			var chord = chords[j];
-			var x = 0;
-			var y;
+		var isAnnotation = pos === "left" || pos === "right" || pos === "below" || pos === "above" || !!rel_position
 			var font;
 			var klass;
-			if (pos === "left" || pos === "right" || pos === "below" || pos === "above" || !!rel_position) {
+		if (isAnnotation) {
 				font = 'annotationfont';
-				klass = "annotation";
+			klass = "abcjs-annotation";
 			} else {
 				font = 'gchordfont';
-				klass = "chord";
-				chord = translateChord(chord, jazzchords, germanAlphabet);
+			klass = "abcjs-chord";
 			}
 			var attr = getTextSize.attr(font, klass);
+
+		var name = elem.chord[i].name
+		var ret;
+		//console.log("chord",name)
+		if (typeof name === "string") {
+			ret = chordString(name, pos, rel_position, isAnnotation, font, klass, attr, getTextSize, abselem, elem, roomTaken, roomTakenRight, noteheadWidth, jazzchords, germanAlphabet)
+			roomTaken = ret.roomTaken
+			roomTakenRight = ret.roomTakenRight
+		} else {
+			for (var j = 0; j < name.length; j++) {
+				ret = chordString(name[j].text, pos, rel_position, isAnnotation, font, klass, attr, getTextSize, abselem, elem, roomTaken, roomTakenRight, noteheadWidth, jazzchords, germanAlphabet)
+				roomTaken = ret.roomTaken
+				roomTakenRight = ret.roomTakenRight
+			}
+		}
+	}
+	return { roomTaken: roomTaken, roomTakenRight: roomTakenRight };
+};
+
+function chordString(chordString, pos, rel_position, isAnnotation, font, klass, attr, getTextSize, abselem, elem, roomTaken, roomTakenRight, noteheadWidth, jazzchords, germanAlphabet) {
+	var chords = chordString.split("\n");
+	for (var j = chords.length - 1; j >= 0; j--) { // parse these in opposite order because we place them from bottom to top.
+		var chord = chords[j];
+		var x = 0;
+		var y;
+		if (!isAnnotation)
+			chord = translateChord(chord, jazzchords, germanAlphabet);
 			var dim = getTextSize.calc(chord, font, klass);
 			var chordWidth = dim.width;
 			var chordHeight = dim.height / spacing.STEP;
@@ -95,8 +117,6 @@ var addChord = function (getTextSize, abselem, elem, roomTaken, roomTakenRight, 
 					}
 			}
 		}
-	}
 	return { roomTaken: roomTaken, roomTakenRight: roomTakenRight };
-};
-
+}
 module.exports = addChord;

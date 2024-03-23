@@ -1,4 +1,5 @@
 Bugs:
+- Melodeon: Show all remaining possibilities does not always take row annotations into account
 - Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 - Melodeon: Do show button numbers on tie when at least one note changed

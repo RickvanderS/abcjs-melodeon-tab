@@ -12,6 +12,7 @@ function HarmonicaPatterns(plugin) {
   
   this.strings = {
     tabInfos          : function (plugin) {return ""},
+    suppress          : function (plugin) {return false},
     accidentals       : {},
     measureAccidentals: {}
   };

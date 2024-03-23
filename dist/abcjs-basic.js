@@ -15571,6 +15571,9 @@ function HarmonicaPatterns(plugin) {
     tabInfos: function tabInfos(plugin) {
       return "";
     },
+    suppress: function suppress(plugin) {
+      return false;
+    },
     accidentals: {},
     measureAccidentals: {}
   };
@@ -16182,6 +16185,9 @@ function MelodeonPatterns(plugin) {
   this.strings = {
     tabInfos: function tabInfos(plugin) {
       return "";
+    },
+    suppress: function suppress(plugin) {
+      return false;
     },
     accidentals: {},
     measureAccidentals: {}

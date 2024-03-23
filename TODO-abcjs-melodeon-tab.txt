@@ -1,8 +1,6 @@
 Bugs:
 - Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
-- Melodeon: Do show button numbers on tie when at least one note changed
-- Melodeon: Algorithms quits on tie ends, should check tie is same note and should continue in order to do note head change (same note head as tie start)
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Harmonica: Syncronize with changes in Melodeon

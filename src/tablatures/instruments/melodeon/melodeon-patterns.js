@@ -1301,6 +1301,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		let _pull1 = this.noteToPullButtonRow1(noteName);
 		let _pull2 = this.noteToPullButtonRow2(noteName);
 		let _pull3 = this.noteToPullButtonRow3(noteName);
+		let NotePush = _push1.length != 0 || _push2.length != 0 || _push3.length != 0;
+		let NotePull = _pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0;
 	
 		//Get user specified row preference
 		let AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
@@ -1313,12 +1315,12 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			if (_push2.length == 0 && _pull2.length == 0) AllowRow2 = false;
 			if (_push3.length == 0 && _pull3.length == 0) AllowRow3 = false;
 		}
-		else if (this.ChordPush) {
+		else if (this.ChordPush || (NotePush && !NotePull)) {
 			if (_push1.length == 0) AllowRow1 = false;
 			if (_push2.length == 0) AllowRow2 = false;
 			if (_push3.length == 0) AllowRow3 = false;
 		}
-		else if (this.ChordPull) {
+		else if (this.ChordPull || (NotePull && !NotePush)) {
 			if (_pull1.length == 0) AllowRow1 = false;
 			if (_pull2.length == 0) AllowRow2 = false;
 			if (_pull3.length == 0) AllowRow3 = false;

@@ -16899,6 +16899,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     var _pull = this.noteToPullButtonRow1(noteName);
     var _pull4 = this.noteToPullButtonRow2(noteName);
     var _pull5 = this.noteToPullButtonRow3(noteName);
+    var NotePush = _push.length != 0 || _push4.length != 0 || _push5.length != 0;
+    var NotePull = _pull.length != 0 || _pull4.length != 0 || _pull5.length != 0;
 
     //Get user specified row preference
     var AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
@@ -16910,11 +16912,11 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
       if (_push.length == 0 && _pull.length == 0) AllowRow1 = false;
       if (_push4.length == 0 && _pull4.length == 0) AllowRow2 = false;
       if (_push5.length == 0 && _pull5.length == 0) AllowRow3 = false;
-    } else if (this.ChordPush) {
+    } else if (this.ChordPush || NotePush && !NotePull) {
       if (_push.length == 0) AllowRow1 = false;
       if (_push4.length == 0) AllowRow2 = false;
       if (_push5.length == 0) AllowRow3 = false;
-    } else if (this.ChordPull) {
+    } else if (this.ChordPull || NotePull && !NotePush) {
       if (_pull.length == 0) AllowRow1 = false;
       if (_pull4.length == 0) AllowRow2 = false;
       if (_pull5.length == 0) AllowRow3 = false;

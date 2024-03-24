@@ -108,7 +108,11 @@ var abcTablatures = {
    * @param {*} renderer 
    * @param {*} abcTune 
    */
-  layoutTablatures: function layoutTablatures(renderer, abcTune) {
+  layoutTablatures: function layoutTablatures(renderer, abcTune, MelodeonScan) {
+    //Normal call from abcjs trigger pre-scan
+    if (typeof(MelodeonScan) == "undefined")
+      MelodeonScan = true;
+    
     var tabs = abcTune.tablatures;
 
     // chack tabs request for each staffs
@@ -164,12 +168,24 @@ var abcTablatures = {
                 tabPlugin.tabType
               );
             }
-            // render next
-            tabPlugin.instance.render(renderer, line, jj);
+            
+            if (MelodeonScan) {
+              //Scan if function exists
+              if (tabPlugin.instance.scan)
+                tabPlugin.instance.scan(renderer, line, jj);
+            }
+            else {
+              // render next
+              tabPlugin.instance.render(renderer, line, jj);
+            }
           }
         }
       }  
     }
+    
+    //Call again but now render instead of pre-scan
+    if (MelodeonScan)
+      layoutTablatures(renderer, abcTune, false);
   },
 
   /**

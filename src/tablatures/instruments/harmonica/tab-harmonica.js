@@ -53,10 +53,6 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   return tabAbsolute;
 }
 
-Plugin.prototype.scan = function (renderer, line, staffIndex) {
-
-}
-
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;

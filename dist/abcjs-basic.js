@@ -336,7 +336,9 @@ var abcTablatures = {
    * @param {*} renderer 
    * @param {*} abcTune 
    */
-  layoutTablatures: function layoutTablatures(renderer, abcTune) {
+  layoutTablatures: function layoutTablatures(renderer, abcTune, MelodeonScan) {
+    //Normal call from abcjs trigger pre-scan
+    if (typeof MelodeonScan == "undefined") MelodeonScan = true;
     var tabs = abcTune.tablatures;
 
     // chack tabs request for each staffs
@@ -383,12 +385,20 @@ var abcTablatures = {
               // call initer first
               tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, jj, tabPlugin.tabType);
             }
-            // render next
-            tabPlugin.instance.render(renderer, line, jj);
+            if (MelodeonScan) {
+              //Scan if function exists
+              if (tabPlugin.instance.scan) tabPlugin.instance.scan(renderer, line, jj);
+            } else {
+              // render next
+              tabPlugin.instance.render(renderer, line, jj);
+            }
           }
         }
       }
     }
+
+    //Call again but now render instead of pre-scan
+    if (MelodeonScan) layoutTablatures(renderer, abcTune, false);
   },
   /**
    * called once internally to register internal plugins
@@ -15809,7 +15819,6 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   }
   return tabAbsolute;
 };
-Plugin.prototype.scan = function (renderer, line, staffIndex) {};
 Plugin.prototype.render = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;
@@ -15877,8 +15886,6 @@ function MelodeonPatterns(plugin) {
   var Row3Invert = "";
   this.push_chords = new Array();
   this.pull_chords = new Array();
-  this.OffsetRow2 = 0;
-  this.OffsetRow3 = 3;
   var push_row1 = new Array();
   var pull_row1 = new Array();
   var push_row2 = new Array();
@@ -15914,6 +15921,8 @@ function MelodeonPatterns(plugin) {
     }
 
     //Define right hand buttons for G melodeon
+    push_row1.push(""); // 0
+    pull_row1.push("");
     if (!Mini) {
       push_row1.push("B,,"); // 1
       pull_row1.push("D,");
@@ -15946,7 +15955,7 @@ function MelodeonPatterns(plugin) {
     var _Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
     var Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
     Row1Invert = this.tuning[0].substring(_Row1Tuning.length);
-    Row2Invert = this.tuning[1].substring(_Row1Tuning.length);
+    Row2Invert = this.tuning[1].substring(Row2Tuning.length);
     if ((_Row1Tuning == "Eb" || _Row1Tuning == "D#") && (Row2Tuning == "Ab" || Row2Tuning == "G#"))
       //Very rare
       TransposeHalfSteps = -3;else if (_Row1Tuning == "E" && Row2Tuning == "A")
@@ -15983,6 +15992,8 @@ function MelodeonPatterns(plugin) {
     this.pull_chords.push("F"); // F pull
 
     //Define right hand buttons for G/C melodeon
+    push_row1.push(""); // 0
+    pull_row1.push("");
     if (this.chinacc) {
       push_row1.push("^C"); // 1
       pull_row1.push("_E");
@@ -16010,6 +16021,8 @@ function MelodeonPatterns(plugin) {
     pull_row1.push("^f");
     push_row1.push("d'"); // 11
     pull_row1.push("a");
+    push_row2.push(""); // 0'
+    pull_row2.push("");
     if (this.chinacc) {
       push_row2.push("_B"); // 1'
       pull_row2.push("^G");
@@ -16036,10 +16049,85 @@ function MelodeonPatterns(plugin) {
     push_row2.push("e'"); // 10'
     pull_row2.push("b");
 
-    //Lookup extra row3
+    //Lookup extra row3 by its special name
     if (this.tuning.length == 3) {
       var Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
-      if (false) {} else if (false) {} else if (false) {} else {
+      if (Row3Tuning.substring(0, 4) == "club") {
+        //Read the total number of melody buttons for the club layout
+        var Buttons = parseInt(this.tuning[2].substring(0, 2));
+        if (isNaN(Buttons)) Buttons = 33;
+        if (Buttons != 33 && Buttons != 31 && Buttons != 30 && Buttons != 27 && Buttons != 25) {
+          console.error('club layour with ' + Buttons + ' buttons is not supported');
+          return;
+        }
+
+        //Overwrite chords
+        this.push_chords[3] = "Bb";
+
+        //Overwrite outside row
+        if (Buttons == 33 || Buttons == 27) {
+          push_row1[0] = "G,,"; // 0
+          pull_row1[0] = "A,,";
+        } else if (Buttons == 31 || Buttons == 30) {
+          push_row1[0] = "^C,";
+          pull_row1[0] = "_E,";
+        }
+        push_row1[1] = "B,,"; // 1
+        pull_row1[1] = "D,";
+        pull_row1[11] = "a"; //11
+
+        //Overwrite middle row
+        if (Buttons == 33 || Buttons == 27 || Buttons == 31 || Buttons == 30) {
+          push_row2[0] = "C,"; // 0'
+          pull_row2[0] = "F,";
+        }
+        push_row2[1] = "E,"; // 1'
+        pull_row2[1] = "G,";
+        pull_row2[5] = "G"; // 5'
+
+        //Define inside row
+        if (Buttons == 33) {
+          push_row3.push("^C,"); //0"
+          pull_row3.push("^D,");
+        } else {
+          push_row3.push(""); //0"
+          pull_row3.push("");
+        }
+        if (Buttons == 33 || Buttons == 31) {
+          push_row3.push("A,"); //1"
+          pull_row3.push("_B,");
+        } else {
+          push_row3.push(""); //1"
+          pull_row3.push("");
+        }
+        if (Buttons == 33 || Buttons == 31 || Buttons == 30) {
+          push_row3.push("_B,"); //2"
+          pull_row3.push("^G,");
+          push_row3.push("F"); //3"
+          pull_row3.push("^C");
+        } else {
+          push_row3.push(""); //2"
+          pull_row3.push("");
+          push_row3.push(""); //3"
+          pull_row3.push("");
+        }
+        push_row3.push("^C"); //4"
+        pull_row3.push("_E");
+        push_row3.push("_B"); //5"
+        pull_row3.push("^G");
+        push_row3.push("A"); //6"
+        pull_row3.push("_B");
+        push_row3.push("^c"); //7"
+        pull_row3.push("_e");
+        if (Buttons == 33 || Buttons == 31 || Buttons == 30) {
+          push_row3.push("_b"); //8"
+          pull_row3.push("^g");
+        }
+        if (Buttons == 33) {
+          push_row3.push("a"); //9"
+          pull_row3.push("_b");
+        }
+      } else if (false) {} else if (false) {} else if (false) {} else {
         console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');
         return;
       }
@@ -16090,21 +16178,21 @@ function MelodeonPatterns(plugin) {
   }
 
   //Handle button push/pull inversions for each row
-  for (var _i8 = this.push_row1.length; _i8 >= 1; --_i8) {
+  for (var _i8 = this.push_row1.length - 1; _i8 >= 0; --_i8) {
     var Pos = Row1Invert.search(_i8.toString());
     if (Pos >= 0) {
-      var Tmp = this.push_row1[_i8 - 1];
-      this.push_row1[_i8 - 1] = this.pull_row1[_i8 - 1];
-      this.pull_row1[_i8 - 1] = Tmp;
+      var Tmp = this.push_row1[_i8];
+      this.push_row1[_i8] = this.pull_row1[_i8];
+      this.pull_row1[_i8] = Tmp;
       Row1Invert = Row1Invert.substr(0, Pos) + Row1Invert.substr(Pos + _i8.toString().length);
     }
   }
-  for (var _i9 = this.push_row2.length; _i9 >= 1; --_i9) {
+  for (var _i9 = this.push_row2.length - 1; _i9 >= 1; --_i9) {
     var _Pos = Row2Invert.search(_i9.toString());
     if (_Pos >= 0) {
-      var _Tmp = this.push_row2[_i9 - 1];
-      this.push_row2[_i9 - 1] = this.pull_row2[_i9 - 1];
-      this.pull_row2[_i9 - 1] = _Tmp;
+      var _Tmp = this.push_row2[_i9];
+      this.push_row2[_i9] = this.pull_row2[_i9];
+      this.pull_row2[_i9] = _Tmp;
       Row2Invert = Row2Invert.substr(0, _Pos) + Row2Invert.substr(_Pos + _i9.toString().length);
     }
   }
@@ -16117,8 +16205,8 @@ function MelodeonPatterns(plugin) {
   //console.log(this.pull_row3);
 
   var Row1HandPosCount = Math.ceil(this.push_row1.length);
-  var Row2HandPosCount = Math.ceil(this.OffsetRow2 + this.push_row2.length);
-  var Row3HandPosCount = Math.ceil(this.OffsetRow3 + this.push_row3.length);
+  var Row2HandPosCount = Math.ceil(this.push_row2.length);
+  var Row3HandPosCount = Math.ceil(this.push_row3.length);
   HandPosCount = Math.max(Row1HandPosCount, Row2HandPosCount, Row3HandPosCount);
   HandPosCount -= 3;
   this.HandPos = new Array();
@@ -16131,13 +16219,13 @@ function MelodeonPatterns(plugin) {
       for (var Finger = 0; Finger < 4; ++Finger) {
         if (Row == 1) {
           var Row1Index = h + Finger;
-          if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index + 1).toString());
+          if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push(Row1Index.toString());
         } else if (Row == 2) {
-          var Row2Index = h + Finger - this.OffsetRow2;
-          if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push((Row2Index + 1 + this.OffsetRow2).toString() + "'");
+          var Row2Index = h + Finger;
+          if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push(Row2Index.toString() + "'");
         } else if (Row == 3) {
-          var Row3Index = h + Finger - this.OffsetRow3;
-          if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push((Row3Index + 1 + this.OffsetRow3).toString() + "\"");
+          var Row3Index = h + Finger;
+          if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push(Row3Index.toString() + "\"");
         }
       }
     }
@@ -16150,13 +16238,13 @@ function MelodeonPatterns(plugin) {
         var _Finger = aFinger[_i10];
         if (_Row == 1) {
           var _Row1Index = h + _Finger;
-          if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push((_Row1Index + 1).toString());
+          if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString());
         } else if (_Row == 2) {
-          var _Row2Index = h + _Finger - this.OffsetRow2;
-          if (0 <= _Row2Index && _Row2Index < this.push_row2.length) this.HandPos[h].hard.push((_Row2Index + 1 + this.OffsetRow2).toString() + "'");
+          var _Row2Index = h + _Finger;
+          if (0 <= _Row2Index && _Row2Index < this.push_row2.length) this.HandPos[h].hard.push(_Row2Index.toString() + "'");
         } else if (_Row == 3) {
-          var _Row3Index = h + _Finger - this.OffsetRow3;
-          if (0 <= _Row3Index && _Row3Index < this.push_row3.length) this.HandPos[h].hard.push((_Row3Index + 1 + this.OffsetRow3).toString() + "\"");
+          var _Row3Index = h + _Finger;
+          if (0 <= _Row3Index && _Row3Index < this.push_row3.length) this.HandPos[h].hard.push(_Row3Index.toString() + "\"");
         }
       }
     }
@@ -16215,6 +16303,7 @@ function CreateTransposeLookup() {
   return TransposeLookup;
 }
 function TransposeNameToNote(noteName, TransposeHalfSteps, TransposeLookup) {
+  if (noteName.length == 0) return "";
   for (var i = 0; i < TransposeLookup.length; ++i) {
     if (TransposeLookup[i].SharpName == noteName || TransposeLookup[i].FlatName == noteName) return TransposeLookup[i + TransposeHalfSteps];
   }
@@ -16226,7 +16315,7 @@ function TransposeNameToNote(noteName, TransposeHalfSteps, TransposeLookup) {
 function noteToButton(noteName, LookupArray) {
   for (var i = 0; i < LookupArray.length; ++i) {
     if (LookupArray[i].SharpName == noteName || LookupArray[i].FlatName == noteName) {
-      return (i + 1).toString();
+      return i.toString();
     }
   }
   return "";
@@ -16279,58 +16368,92 @@ function NextNonEmptyBarIndex(aBars, Index) {
   return -1;
 }
 function FirstLast(Bar, Push) {
-  if (Push) {
-    if (Bar.notes[0].push1 != '') {
-      FirstR = 1;
-      First = parseInt(Bar.notes[0].push1);
+  var FirstRow = -1;
+  var FirstButton = -1;
+  var LastRow = -1;
+  var LastButton = -1;
+  for (var n = 0; n < Bar.notes.length; ++n) {
+    //Find row/button in the bar's direction
+    var Row = -1;
+    var Button = -1;
+    if (Push) {
+      if (Bar.notes[n].push1 != '') {
+        Row = 1;
+        Button = parseInt(Bar.notes[n].push1);
+      } else if (Bar.notes[n].push2 != '') {
+        Row = 2;
+        Button = parseInt(Bar.notes[n].push2);
+      } else if (Bar.notes[n].push3 != '') {
+        Row = 3;
+        Button = parseInt(Bar.notes[n].push3);
+      }
     } else {
-      FirstR = 2;
-      First = parseInt(Bar.notes[0].push2);
+      if (Bar.notes[n].pull1 != '') {
+        Row = 1;
+        Button = parseInt(Bar.notes[n].pull1);
+      } else if (Bar.notes[n].pull2 != '') {
+        Row = 2;
+        Button = parseInt(Bar.notes[n].pull2);
+      } else if (Bar.notes[n].pull3 != '') {
+        Row = 3;
+        Button = parseInt(Bar.notes[n].pull3);
+      }
     }
-  } else {
-    if (Bar.notes[0].pull1 != '') {
-      FirstR = 1;
-      First = parseInt(Bar.notes[0].pull1);
-    } else {
-      FirstR = 2;
-      First = parseInt(Bar.notes[0].pull2);
+
+    //If not found, try against bar direction
+    if (Row < 0) {
+      if (Bar.notes[n].push1 != '') {
+        Row = 1;
+        Button = parseInt(Bar.notes[n].push1);
+      } else if (Bar.notes[n].push2 != '') {
+        Row = 2;
+        Button = parseInt(Bar.notes[n].push2);
+      } else if (Bar.notes[n].push3 != '') {
+        Row = 3;
+        Button = parseInt(Bar.notes[n].push3);
+      } else if (Bar.notes[n].pull1 != '') {
+        Row = 1;
+        Button = parseInt(Bar.notes[n].pull1);
+      } else if (Bar.notes[n].pull2 != '') {
+        Row = 2;
+        Button = parseInt(Bar.notes[n].pull2);
+      } else if (Bar.notes[n].pull3 != '') {
+        Row = 3;
+        Button = parseInt(Bar.notes[n].pull3);
+      }
     }
-  }
-  if (Push) {
-    if (Bar.notes[Bar.notes.length - 1].push1 != '') {
-      LastR = 1;
-      Last = parseInt(Bar.notes[Bar.notes.length - 1].push1);
-    } else {
-      LastR = 2;
-      Last = parseInt(Bar.notes[Bar.notes.length - 1].push2);
-    }
-  } else {
-    if (Bar.notes[Bar.notes.length - 1].pull1 != '') {
-      LastR = 1;
-      Last = parseInt(Bar.notes[Bar.notes.length - 1].pull1);
-    } else {
-      LastR = 2;
-      Last = parseInt(Bar.notes[Bar.notes.length - 1].pull2);
+
+    //If found
+    if (Row > 0) {
+      //Set first row/button if not already set
+      if (FirstRow < 0) {
+        FirstRow = Row;
+        FirstButton = Button;
+      }
+
+      //Update last row/button
+      LastRow = Row;
+      LastButton = Button;
     }
   }
   return {
-    FirstRow: FirstR,
-    FirstButton: First,
-    LastRow: LastR,
-    LastButton: Last
+    FirstRow: FirstRow,
+    FirstButton: FirstButton,
+    LastRow: LastRow,
+    LastButton: LastButton
   };
 }
 function ChosenBarNumbers(Bar, Push) {
   Low = 100;
   High = 0;
   for (var NoteIndex = 0; NoteIndex < Bar.notes.length; ++NoteIndex) {
-    var Num = 0;
+    var Num = -1;
     if (Push) {
-      if (Bar.notes[NoteIndex].push1 != '') Num = parseInt(Bar.notes[NoteIndex].push1);else Num = parseInt(Bar.notes[NoteIndex].push2);
+      if (Bar.notes[NoteIndex].push1 != '') Num = parseInt(Bar.notes[NoteIndex].push1);else if (Bar.notes[NoteIndex].push2 != '') Num = parseInt(Bar.notes[NoteIndex].push2);else if (Bar.notes[NoteIndex].push3 != '') Num = parseInt(Bar.notes[NoteIndex].push3);
     } else {
-      if (Bar.notes[NoteIndex].pull1 != '') Num = parseInt(Bar.notes[NoteIndex].pull1);else Num = parseInt(Bar.notes[NoteIndex].pull2);
+      if (Bar.notes[NoteIndex].pull1 != '') Num = parseInt(Bar.notes[NoteIndex].pull1);else if (Bar.notes[NoteIndex].pull2 != '') Num = parseInt(Bar.notes[NoteIndex].pull2);else if (Bar.notes[NoteIndex].pull3 != '') Num = parseInt(Bar.notes[NoteIndex].pull3);
     }
-    if (Num != 0) {
+    if (Num >= 0) {
       if (Num < Low) Low = Num;
       if (Num > High) High = Num;
     }
@@ -16341,10 +16464,10 @@ function ChosenBarNumbers(Bar, Push) {
   };
 }
 function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
-  var BeforeLow = 0;
-  var BeforeHigh = 0;
-  var PrevLast = 0;
-  var PrevLastRow = 0;
+  var BeforeLow = -1;
+  var BeforeHigh = -1;
+  var PrevLast = -1;
+  var PrevLastRow = -1;
   var PrevBarIndex = PrevNonEmptyBarIndex(aBars, BarIndex);
   if (AllowPrev && PrevBarIndex >= 0 && aBars[PrevBarIndex].chosen) {
     var Ch = ChosenBarNumbers(aBars[PrevBarIndex], aBars[PrevBarIndex].push);
@@ -16354,10 +16477,10 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
     PrevLast = Ch.LastButton;
     PrevLastRow = Ch.LastRow;
   }
-  var AfterLow = 0;
-  var AfterHigh = 0;
-  var NextFirst = 0;
-  var NextFirstRow = 0;
+  var AfterLow = -1;
+  var AfterHigh = -1;
+  var NextFirst = -1;
+  var NextFirstRow = -1;
   var NextBarIndex = NextNonEmptyBarIndex(aBars, BarIndex);
   if (AllowNext && NextBarIndex >= 0 && aBars[NextBarIndex].chosen) {
     var Ch = ChosenBarNumbers(aBars[NextBarIndex], aBars[NextBarIndex].push);
@@ -16383,8 +16506,8 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
   var PullFirstRow = Ch.FirstRow;
   var PullLast = Ch.LastButton;
   var PullLastRow = Ch.LastRow;
-  if (PrevLast != 0 || NextFirst != 0) {
-    if (NeedBoth && (PrevLast == 0 || NextFirst == 0)) return false;
+  if (PrevLast >= 0 || NextFirst >= 0) {
+    if (NeedBoth && (PrevLast < 0 || NextFirst < 0)) return false;
     aBars[BarIndex].chosen = true;
     var PushDistance = 0;
     var PullDistance = 0;
@@ -16439,8 +16562,8 @@ MelodeonPatterns.prototype.StartBuild = function () {
     for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
       for (var NoteIndex = 0; NoteIndex < this.aBars[BarIndex].notes.length; ++NoteIndex) {
         this.aBars[BarIndex].notecount++;
-        if (this.aBars[BarIndex].notes[NoteIndex].push1 != '' || this.aBars[BarIndex].notes[NoteIndex].push2 != '') this.aBars[BarIndex].pushcount++;
-        if (this.aBars[BarIndex].notes[NoteIndex].pull1 != '' || this.aBars[BarIndex].notes[NoteIndex].pull2 != '') this.aBars[BarIndex].pullcount++;
+        if (this.aBars[BarIndex].notes[NoteIndex].push1 != '' || this.aBars[BarIndex].notes[NoteIndex].push2 != '' || this.aBars[BarIndex].notes[NoteIndex].push3 != '') this.aBars[BarIndex].pushcount++;
+        if (this.aBars[BarIndex].notes[NoteIndex].pull1 != '' || this.aBars[BarIndex].notes[NoteIndex].pull2 != '' || this.aBars[BarIndex].notes[NoteIndex].pull3 != '') this.aBars[BarIndex].pullcount++;
       }
     }
 
@@ -16776,11 +16899,11 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           if (Push) {
             if (_push1 != '') aButtons.push(_push1);
             if (_push2 != '') aButtons.push(_push2);
-            if (_push3 != '') aButtons.push(_push2);
+            if (_push3 != '') aButtons.push(_push3);
           } else {
             if (_pull1 != '') aButtons.push(_pull1);
             if (_pull2 != '') aButtons.push(_pull2);
-            if (_pull3 != '') aButtons.push(_pull2);
+            if (_pull3 != '') aButtons.push(_pull3);
           }
           var aRowOrder = new Array();
           if (this.RowPrefer1 >= 0) aRowOrder.push(this.RowPrefer1);
@@ -16912,7 +17035,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           //Only when the note head change option is enabled
           if (this.changenoteheads) {
             //Row2 gets diamands, row3 gets triangles
-            if (Button.search("'") >= 0) aDiamandNotes.push(notes[i]);else if (Button.search("\"") >= 0) aTriangleNotes(notes[i]);
+            if (Button.search("'") >= 0) aDiamandNotes.push(notes[i]);else if (Button.search("\"") >= 0) aTriangleNotes.push(notes[i]);
           }
         }
       }
@@ -17180,11 +17303,16 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   }
   return tabAbsolute;
 };
-Plugin.prototype.render = function (renderer, line, staffIndex) {
+Plugin.prototype.scan = function (renderer, line, staffIndex) {
   if (this._super.inError) return;
   if (this.tablature.bypass(line)) return;
   var rndrer = new TabRenderer(this, renderer, line, staffIndex);
   rndrer.doScan();
+};
+Plugin.prototype.render = function (renderer, line, staffIndex) {
+  if (this._super.inError) return;
+  if (this.tablature.bypass(line)) return;
+  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
   rndrer.doLayout();
 };
 function Plugin() {}

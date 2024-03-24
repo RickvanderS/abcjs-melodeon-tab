@@ -110,18 +110,6 @@ function noteToHole(noteName, tuning) {
 	return '';
 }
 
-HarmonicaPatterns.prototype.StartScan = function () {
-	
-}
-
-HarmonicaPatterns.prototype.StartBuild = function () {
-	
-}
-
-HarmonicaPatterns.prototype.MarkBar = function () {
-	
-}
-
 HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
   var error     = null; 
   var retNotes  = new Array;
@@ -130,9 +118,7 @@ HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
   var tuning = this.tuning;
   
   //For all notes at this count
-  for (var i = 0; i < notes.length; ++i) {
-
-
+  for (var i = 0; notes && i < notes.length; ++i) {
 	var TNote = new TabNote.TabNote(notes[i].name);
 	TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
 	if (TNote.isAltered || TNote.natural) {

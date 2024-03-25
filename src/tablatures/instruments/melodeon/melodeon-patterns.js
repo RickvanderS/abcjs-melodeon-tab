@@ -623,9 +623,28 @@ MelodeonPatterns.prototype.StartScan = function () {
 	
 }
 
+function BarHasButtons(Bar) {
+	for (let n = 0; n < Bar.notes.length; ++n) {
+		if (Bar.notes[n].push1.length)
+			return true;
+		if (Bar.notes[n].push2.length)
+			return true;
+		if (Bar.notes[n].push3.length)
+			return true;
+		if (Bar.notes[n].pull1.length)
+			return true;
+		if (Bar.notes[n].pull2.length)
+			return true;
+		if (Bar.notes[n].pull3.length)
+			return true;
+	}
+	
+	return false;
+}
+
 function PrevNonEmptyBarIndex(aBars, Index) {
 	for (var PrevIndex = Index - 1; PrevIndex >= 0; --PrevIndex) {
-		if (aBars[PrevIndex].notes.length > 0)
+		if (BarHasButtons(aBars[PrevIndex]))
 			return PrevIndex;
 	}
 	return -1;
@@ -633,7 +652,7 @@ function PrevNonEmptyBarIndex(aBars, Index) {
 
 function NextNonEmptyBarIndex(aBars, Index) {
 	for (var NextIndex = Index + 1; NextIndex < aBars.length; ++NextIndex) {
-		if (aBars[NextIndex].notes.length > 0)
+		if (BarHasButtons(aBars[NextIndex]))
 			return NextIndex;
 	}
 	return -1;
@@ -1003,6 +1022,22 @@ MelodeonPatterns.prototype.StartBuild = function () {
 						BarsChosen++;
 						AnyChosen = true;
 					}
+				}
+			}
+			
+			//No progress was made
+			if (AnyChosen == false) {
+				console.warn('no bar direction progress');
+				for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
+					if (this.aBars[BarIndex].chosen)
+						continue;
+					
+					//Set bar to push to prevent infinite loop
+					this.aBars[BarIndex].chosen = true;
+					this.aBars[BarIndex].push   = true;
+					BarsChosen++;
+					AnyChosen = true;
+					break;
 				}
 			}
 		}

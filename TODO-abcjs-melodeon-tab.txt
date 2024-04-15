@@ -8,5 +8,6 @@ New features:
 - 2.5 and 3 row melodeons
 - Hide tablature (useful when we only want note heads and/or push pull indicators)
 - Optional push/pull indicators next to chords
+- Export ABC with injected tablature
 abcjs:
 - Key change end of bar

@@ -16676,7 +16676,7 @@ MelodeonPatterns.prototype.StartBuild = function () {
         }
       }
 
-      //No progress was mode
+      //No progress was made
       if (AnyChosen == false) {
         console.warn('no bar direction progress');
         for (var BarIndex = 0; BarIndex < this.aBars.length; ++BarIndex) {
@@ -17140,8 +17140,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var retNotes = new Array();
   var retGraces = null;
   if (strPush.length) {
-    strPush = strPush.replace("'", this.Row2Marker);
-    strPush = strPush.replace("\"", this.Row3Marker);
+    strPush = strPush.replaceAll("'", this.Row2Marker);
+    strPush = strPush.replaceAll("\"", this.Row3Marker);
     var note = new TabNote.TabNote("");
     var number = {
       num: strPush,
@@ -17152,8 +17152,8 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     retNotes.push(number);
   }
   if (strPull.length) {
-    strPull = strPull.replace("'", this.Row2Marker);
-    strPull = strPull.replace("\"", this.Row3Marker);
+    strPull = strPull.replaceAll("'", this.Row2Marker);
+    strPull = strPull.replaceAll("\"", this.Row3Marker);
     var note = new TabNote.TabNote("");
     var number = {
       num: strPull,

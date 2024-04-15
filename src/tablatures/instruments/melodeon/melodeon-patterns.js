@@ -1151,6 +1151,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	}
 
 	//For all notes at this count
+	let aNoteNames     = new Array();
 	let PushButtons    = new Array();
 	let PullButtons    = new Array();
 	let strPush        = "";
@@ -1183,6 +1184,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			noteName = "^" + noteName;
 		else if (TNote.acc < 0)
 			noteName = "_" + noteName;
+		aNoteNames.push(noteName);
 		
 		//Run the tablature algorithm if not in 'show all' mode or node heads need to be changed
 		if (!this.showall || this.changenoteheads) {
@@ -1505,69 +1507,74 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		strPush = "";
 		strPull = "";
 		
-		//Get possibilities for the note on all rows in both directions
-		let _push1 = this.noteToPushButtonRow1(noteName);
-		let _push2 = this.noteToPushButtonRow2(noteName);
-		let _push3 = this.noteToPushButtonRow3(noteName);
-		let _pull1 = this.noteToPullButtonRow1(noteName);
-		let _pull2 = this.noteToPullButtonRow2(noteName);
-		let _pull3 = this.noteToPullButtonRow3(noteName);
-		let NotePush = _push1.length != 0 || _push2.length != 0 || _push3.length != 0;
-		let NotePull = _pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0;
-	
-		//Get user specified row preference
-		let AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
-		let AllowRow2 = this.RowPrefer2 >= 0 || this.showall_ignorechords;
-		let AllowRow3 = this.RowPrefer3 >= 0 || this.showall_ignorechords;
+		//For all notes at this count
+		for (var i = 0; i < aNoteNames.length; ++i) {
+			let noteName = aNoteNames[i];
 		
-		//Check for rows with no possibilities
-		if ((this.ChordPush && this.ChordPull) || this.showall_ignorechords) {
-			if (_push1.length == 0 && _pull1.length == 0) AllowRow1 = false;
-			if (_push2.length == 0 && _pull2.length == 0) AllowRow2 = false;
-			if (_push3.length == 0 && _pull3.length == 0) AllowRow3 = false;
-		}
-		else if (this.ChordPush || (NotePush && !NotePull)) {
-			if (_push1.length == 0) AllowRow1 = false;
-			if (_push2.length == 0) AllowRow2 = false;
-			if (_push3.length == 0) AllowRow3 = false;
-		}
-		else if (this.ChordPull || (NotePull && !NotePush)) {
-			if (_pull1.length == 0) AllowRow1 = false;
-			if (_pull2.length == 0) AllowRow2 = false;
-			if (_pull3.length == 0) AllowRow3 = false;
-		}
+			//Get possibilities for the note on all rows in both directions
+			let _push1 = this.noteToPushButtonRow1(noteName);
+			let _push2 = this.noteToPushButtonRow2(noteName);
+			let _push3 = this.noteToPushButtonRow3(noteName);
+			let _pull1 = this.noteToPullButtonRow1(noteName);
+			let _pull2 = this.noteToPullButtonRow2(noteName);
+			let _pull3 = this.noteToPullButtonRow3(noteName);
+			let NotePush = _push1.length != 0 || _push2.length != 0 || _push3.length != 0;
+			let NotePull = _pull1.length != 0 || _pull2.length != 0 || _pull3.length != 0;
 		
-		//Allow all rows if no possibilities remain
-		if (!AllowRow1 && !AllowRow2 && !AllowRow3) {
-			AllowRow1 = true;
-			AllowRow2 = true;
-			AllowRow3 = true;
-		}
-		
-		//Check push/pull allowed and possible
-		let AllowPush = this.ChordPush || this.showall_ignorechords;
-		if ((!AllowRow1 || _push1.length == 0) && (!AllowRow2 || _push2.length == 0) && (!AllowRow3 || _push3.length == 0))
-			AllowPush = false;
-		let AllowPull = this.ChordPull || this.showall_ignorechords;
-		if ((!AllowRow1 || _pull1.length == 0) && (!AllowRow2 || _pull2.length == 0) && (!AllowRow3 || _pull3.length == 0))
-			AllowPull = false;
-		if (!AllowPush && !AllowPull) {
-			AllowPush = true;
-			AllowPull = true;
-		}
-		
-		//Set push buttons
-		if (AllowPush) {
-			if (AllowRow1 && _push1.length) strPush = AppendButton(strPush, _push1);
-			if (AllowRow2 && _push2.length) strPush = AppendButton(strPush, _push2);
-			if (AllowRow3 && _push3.length) strPush = AppendButton(strPush, _push3);
-		}
-		
-		//Set pull buttons
-		if (AllowPull) {
-			if (AllowRow1 && _pull1.length) strPull = AppendButton(strPull, _pull1);
-			if (AllowRow2 && _pull2.length) strPull = AppendButton(strPull, _pull2);
-			if (AllowRow3 && _pull3.length) strPull = AppendButton(strPull, _pull3);
+			//Get user specified row preference
+			let AllowRow1 = this.RowPrefer1 >= 0 || this.showall_ignorechords;
+			let AllowRow2 = this.RowPrefer2 >= 0 || this.showall_ignorechords;
+			let AllowRow3 = this.RowPrefer3 >= 0 || this.showall_ignorechords;
+			
+			//Check for rows with no possibilities
+			if ((this.ChordPush && this.ChordPull) || this.showall_ignorechords) {
+				if (_push1.length == 0 && _pull1.length == 0) AllowRow1 = false;
+				if (_push2.length == 0 && _pull2.length == 0) AllowRow2 = false;
+				if (_push3.length == 0 && _pull3.length == 0) AllowRow3 = false;
+			}
+			else if (this.ChordPush || (NotePush && !NotePull)) {
+				if (_push1.length == 0) AllowRow1 = false;
+				if (_push2.length == 0) AllowRow2 = false;
+				if (_push3.length == 0) AllowRow3 = false;
+			}
+			else if (this.ChordPull || (NotePull && !NotePush)) {
+				if (_pull1.length == 0) AllowRow1 = false;
+				if (_pull2.length == 0) AllowRow2 = false;
+				if (_pull3.length == 0) AllowRow3 = false;
+			}
+			
+			//Allow all rows if no possibilities remain
+			if (!AllowRow1 && !AllowRow2 && !AllowRow3) {
+				AllowRow1 = true;
+				AllowRow2 = true;
+				AllowRow3 = true;
+			}
+			
+			//Check push/pull allowed and possible
+			let AllowPush = this.ChordPush || this.showall_ignorechords;
+			if ((!AllowRow1 || _push1.length == 0) && (!AllowRow2 || _push2.length == 0) && (!AllowRow3 || _push3.length == 0))
+				AllowPush = false;
+			let AllowPull = this.ChordPull || this.showall_ignorechords;
+			if ((!AllowRow1 || _pull1.length == 0) && (!AllowRow2 || _pull2.length == 0) && (!AllowRow3 || _pull3.length == 0))
+				AllowPull = false;
+			if (!AllowPush && !AllowPull) {
+				AllowPush = true;
+				AllowPull = true;
+			}
+			
+			//Set push buttons
+			if (AllowPush) {
+				if (AllowRow1 && _push1.length) strPush = AppendButton(strPush, _push1);
+				if (AllowRow2 && _push2.length) strPush = AppendButton(strPush, _push2);
+				if (AllowRow3 && _push3.length) strPush = AppendButton(strPush, _push3);
+			}
+			
+			//Set pull buttons
+			if (AllowPull) {
+				if (AllowRow1 && _pull1.length) strPull = AppendButton(strPull, _pull1);
+				if (AllowRow2 && _pull2.length) strPull = AppendButton(strPull, _pull2);
+				if (AllowRow3 && _pull3.length) strPull = AppendButton(strPull, _pull3);
+			}
 		}
 	}
 	

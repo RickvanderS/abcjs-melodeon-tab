@@ -3,6 +3,12 @@ var TabNote = require('../tab-note');
 var transposeChordName = require("../../../parse/transpose-chord")
 var allNotes = require('../../../parse/all-notes');
 
+function TransposeChordArray(aBassChords, TransposeHalfSteps) {
+	for (let i = 0; i < aBassChords.length; ++i) {
+		aBassChords[i] = transposeChordName(aBassChords[i], TransposeHalfSteps, true, true);
+	}
+}
+
 function MelodeonPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
@@ -36,6 +42,16 @@ function MelodeonPatterns(plugin) {
     this.chinacc = true;
     plugin.chinacc = this.chinacc;
   }
+  
+  //Define empty base rows (used for external access)
+  this.BassRow1Push = new Array();
+  this.BassRow1Pull = new Array();
+  this.BassRow2Push = new Array();
+  this.BassRow2Pull = new Array();
+  this.BassRow3Push = new Array();
+  this.BassRow3Pull = new Array();
+  this.BassCrossPush = new Array();
+  this.BassCrossPull = new Array();
 
   //Lookup melodeon notes
   let TransposeHalfSteps = 0;
@@ -98,12 +114,12 @@ function MelodeonPatterns(plugin) {
     }
     
     //Define left hand chords for G melodeon with 4 base buttons
-    this.push_chords.push("G"); // G push
-    this.pull_chords.push("D"); // D
-    if (!Mini) {
-      this.push_chords.push("C"); // C push
-      this.pull_chords.push("C"); // C pull
-    }
+	this.BassRow1Push = new Array("G");
+	this.BassRow1Pull = new Array("D");
+	if (!Mini) {
+		this.BassRow1Push.push("C");
+		this.BassRow1Pull.push("C");
+	}
     
     //Define right hand buttons for G melodeon
     push_row1.push(""); // 0
@@ -172,16 +188,14 @@ function MelodeonPatterns(plugin) {
       return;
     }
     
-    //Define left hand chords for G/C melodeon with 8 base buttons
-    this.push_chords.push("G"); // G push
-    this.pull_chords.push("D"); // D / Dm7
-    this.push_chords.push("E"); // E / Em7
-    this.pull_chords.push("A"); // Am
-    this.push_chords.push("C");
-    this.pull_chords.push("G"); // G pull
-    this.push_chords.push("F"); // F push
-    this.pull_chords.push("F"); // F pull
-    
+	//Define left hand chords for G/C melodeon with 8 base buttons
+	this.BassRow1Push  = new Array("G", "C");
+	this.BassRow1Pull  = new Array("D", "G");
+	this.BassRow2Push  = new Array("E", "F");
+	this.BassRow2Pull  = new Array("Am", "F");
+	this.BassCrossPush = new Array("Em7");
+	this.BassCrossPull = new Array("Dm7");
+	
     //Define right hand buttons for G/C melodeon
     push_row1.push(""); // 0
     pull_row1.push("");
@@ -256,8 +270,9 @@ function MelodeonPatterns(plugin) {
 				return;
 			}
 			
-			//Overwrite chords
-			this.push_chords[3] = "Bb";
+			//Update bass chords
+			this.BassRow2Push[1] = "Bb";
+			this.BassCrossPush.push("Gm7");
 			
 			//Overwrite outside row
 			if (Buttons == 33 || Buttons == 27) {
@@ -330,46 +345,52 @@ function MelodeonPatterns(plugin) {
 		else if (false && Row3Tuning == "vanderaa") {
 			
 		}
-		else if (false && Row3Tuning == "saltarelle") {
-			this.push_chords.push("D");
-			this.pull_chords.push("C");
-			this.push_chords.push("B");
-			this.pull_chords.push("Bb"); //TODO: Check if this works
-
+		else if (Row3Tuning == "saltarelle") {
 			//TODO: this has button 4 start on row 1/2
-			/*
-			push_row3.push("^g"); // 1"
-			pull_row3.push("_b");
-			push_row3.push("f'" ); // 2"
-			pull_row3.push("_e'");
-
-			push_row3.push("c'" ); // 3" TODO: which octave?
-			pull_row3.push("f'" );
-
-			push_row3.push("^g'"); // 4"
-			pull_row3.push("_b'");
-			push_row3.push("f''" ); // 5"
-			pull_row3.push("_e''");*/
-		}
-		else if (false && Row3Tuning == "castagnari") {
-			this.push_chords.push("Ab"); //TODO: Check if this works
-			this.pull_chords.push("B");
-			this.push_chords.push("Eb"); //TODO: Check if this works
-			this.pull_chords.push("Bb"); //TODO: Check if this works
-
-			push_row3.push(""); // 0"
+			
+			//Add bass chords
+			this.BassRow1Push.splice(0, 0, "D");
+			this.BassRow1Pull.splice(0, 0, "C");
+			this.BassRow2Push.splice(0, 0, "Bm");
+			this.BassRow2Pull.splice(0, 0, "Bb"); //TODO: Check if this works
+			
+			push_row3.push(""); // 0" //TODO: Figure out the octaves
 			pull_row3.push("");
-			push_row3.push("^G"); // 1"
-			pull_row3.push("_B");
-			push_row3.push("_E"); // 2"
-			pull_row3.push("^C");
-
-			push_row3.push("^A"); // 3" TODO: which octave?
-			pull_row3.push("G");
-
-			push_row3.push("^g"); // 4"
+			push_row3.push(""); // 1"
+			pull_row3.push("");
+			push_row3.push(""); // 2"
+			pull_row3.push("");
+			push_row3.push("^g"); // 3"
 			pull_row3.push("_b");
-			push_row3.push("_e"); // 5"
+			push_row3.push("f'" ); // 4"
+			pull_row3.push("_e'");
+			push_row3.push("c'" ); // 5"
+			pull_row3.push("f'" );
+			push_row3.push("^g'"); // 6"
+			pull_row3.push("_b'");
+			push_row3.push("f''" ); // 7"
+			pull_row3.push("_e''");
+		}
+		else if (Row3Tuning == "castagnari") {
+			//Add bass chords
+			this.BassRow1Push.splice(0, 0, "Ab"); //TODO: Check if this works
+			this.BassRow1Pull.splice(0, 0, "Bm");
+			this.BassRow2Push.splice(0, 0, "Eb"); //TODO: Check if this works
+			this.BassRow2Pull.splice(0, 0, "Bb"); //TODO: Check if this works
+
+			push_row3.push(""); // 0" //TODO: Figure out the octaves
+			pull_row3.push("");
+			push_row3.push(""); // 1"
+			pull_row3.push("");
+			push_row3.push("^G,"); // 2"
+			pull_row3.push("_B,");
+			push_row3.push("_E"); // 3"
+			pull_row3.push("^C");
+			push_row3.push("^A"); // 4"
+			pull_row3.push("G");
+			push_row3.push("^G"); // 5"
+			pull_row3.push("_B");
+			push_row3.push("_e"); // 6"
 			pull_row3.push("^c");
 		}
 		else {
@@ -386,16 +407,32 @@ function MelodeonPatterns(plugin) {
     console.error('Too many melodeon rows defined');
     return;
   }
-
-  //Transpose left hand chords if required
-  if (TransposeHalfSteps != 0) {
-    for (let i = 0; i < this.push_chords.length; ++i) {
-      this.push_chords[i] = transposeChordName(this.push_chords[i], TransposeHalfSteps, true, true);
-    }
-    for (let i = 0; i < this.pull_chords.length; ++i) {
-      this.pull_chords[i] = transposeChordName(this.pull_chords[i], TransposeHalfSteps, true, true);
-    }
-  }
+  
+	//Transpose left hand bass chords if required
+	if (TransposeHalfSteps != 0) {
+		TransposeChordArray(this.BassRow1Push , TransposeHalfSteps);
+		TransposeChordArray(this.BassRow1Pull , TransposeHalfSteps);
+		TransposeChordArray(this.BassRow2Push , TransposeHalfSteps);
+		TransposeChordArray(this.BassRow2Pull , TransposeHalfSteps);
+		TransposeChordArray(this.BassRow3Push , TransposeHalfSteps);
+		TransposeChordArray(this.BassRow3Pull , TransposeHalfSteps);
+		TransposeChordArray(this.BassCrossPush, TransposeHalfSteps);
+		TransposeChordArray(this.BassCrossPull, TransposeHalfSteps);
+	}
+	
+	//Combine left hand into push and pull arrays
+	this.push_chords = this.BassRow1Push.concat(this.BassRow2Push).concat(this.BassRow3Push).concat(this.BassCrossPush);
+	this.pull_chords = this.BassRow1Pull.concat(this.BassRow2Pull).concat(this.BassRow3Pull).concat(this.BassCrossPull);
+	for (let i = 0; i < this.push_chords.length; ++i) {
+		this.push_chords[i] = this.push_chords[i].replaceAll("m7", "");
+		this.push_chords[i] = this.push_chords[i].replaceAll("m", "");
+	}
+	for (let i = 0; i < this.pull_chords.length; ++i) {
+		this.pull_chords[i] = this.pull_chords[i].replaceAll("m7", "");
+		this.pull_chords[i] = this.pull_chords[i].replaceAll("m", "");
+	}
+	this.push_chords = [...new Set(this.push_chords)];
+	this.pull_chords = [...new Set(this.pull_chords)];
   
   //Define right hand notes from the note names, transpose if required
   let TransposeLookup = CreateTransposeLookup();

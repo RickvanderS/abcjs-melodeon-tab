@@ -143,7 +143,20 @@ var instrumentIndexToName = [
 	"applause",
 	"gunshot",
 
-	"percussion"
+	"percussion",
+	
+	"melodeon_Off", //129
+	"melodeon_M", 
+	"melodeon_MM+",
+	"melodeon_MM-",
+	"melodeon_LMM+",
+	"melodeon_LMM-",
+	"melodeon_MM-M+",
+	"melodeon_LMM+H",
+	"melodeon_LMM-H",
+	"melodeon_LMM-M+",
+	
+	"melodeon_basschord" //139
 ];
 
 module.exports = instrumentIndexToName;

@@ -14009,7 +14009,15 @@ var originalSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/abcjs
 // These are the original soundfonts supplied. They will need a volume boost:
 var defaultSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/";
 var alternateSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/";
-function CreateSynth() {
+function CreateSynth(ClearSoundsCache) {
+  if (ClearSoundsCache && typeof soundsCache !== 'undefined') {
+    for (var key in soundsCache) {
+      if (soundsCache.hasOwnProperty(key)) {
+        console.log(key, soundsCache[key]);
+        soundsCache[key] = {};
+      }
+    }
+  }
   var self = this;
   self.audioBufferPossible = undefined;
   self.directSource = []; // type: AudioBufferSourceNode
@@ -14775,6 +14783,8 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
   var FadeIn = window.g_FadeIn;
   if (typeof Cents == "undefined") Cents = 5;
   if (typeof FadeIn == "undefined") FadeIn = 10;
+  var HarmonicCount = 5;
+  var Seconds = 10;
 
   //Get tone and octabe from the note name
   var Tone = name.substr(0, name.length - 1);
@@ -14887,10 +14897,9 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 
   //Audio rendered to buffer
   var OfflineAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  var offlineCtx = new OfflineAC(2, 10 * audioContext.sampleRate, audioContext.sampleRate);
+  var offlineCtx = new OfflineAC(2, Seconds * audioContext.sampleRate, audioContext.sampleRate);
 
   //Level the gain to the same volume, no matter the amount of reeds and harmonics
-  var HarmonicCount = 5;
   var GainSum = 0.0;
   for (var ReedIndex = 1; ReedIndex <= ReedCount; ++ReedIndex) {
     for (var HarmonicIndex = 1; HarmonicIndex <= HarmonicCount; ++HarmonicIndex) {
@@ -14902,7 +14911,6 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 
   //Further reduce the gain, webkit browser had clipping without this due to multiple notes being played at the same time (Firefox was ok)
   GainLimit = GainLimit / 16;
-  console.log(GainLimit);
 
   //For every reed
   for (var _ReedIndex = 1; _ReedIndex <= ReedCount; ++_ReedIndex) {

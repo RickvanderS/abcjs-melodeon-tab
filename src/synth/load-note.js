@@ -56,6 +56,8 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 		Cents = 5;
 	if (typeof(FadeIn) == "undefined")
 		FadeIn = 10;
+	const HarmonicCount = 5;
+	const Seconds       = 10;
 	
 	//Get tone and octabe from the note name
 	var Tone   = name.substr(0, name.length - 1);
@@ -169,10 +171,9 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 	
 	//Audio rendered to buffer
 	var OfflineAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-	var offlineCtx = new OfflineAC(2, 10 * audioContext.sampleRate, audioContext.sampleRate);
+	var offlineCtx = new OfflineAC(2, Seconds * audioContext.sampleRate, audioContext.sampleRate);
 	
 	//Level the gain to the same volume, no matter the amount of reeds and harmonics
-	const HarmonicCount = 5;
 	var   GainSum = 0.0;
 	for (let ReedIndex = 1; ReedIndex <= ReedCount; ++ReedIndex) {
 		for (let HarmonicIndex = 1; HarmonicIndex <= HarmonicCount; ++HarmonicIndex) {
@@ -184,7 +185,6 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 	
 	//Further reduce the gain, webkit browser had clipping without this due to multiple notes being played at the same time (Firefox was ok)
 	GainLimit = GainLimit / 16;
-	console.log(GainLimit);
 	
 	//For every reed
 	for (let ReedIndex = 1; ReedIndex <= ReedCount; ++ReedIndex) {

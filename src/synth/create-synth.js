@@ -17,7 +17,17 @@ var originalSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/abcjs
 var defaultSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/";
 var alternateSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/";
 
-function CreateSynth() {
+
+function CreateSynth(ClearSoundsCache) {
+	if (ClearSoundsCache && typeof soundsCache !== 'undefined') {
+		for (let key in soundsCache) {
+			if (soundsCache.hasOwnProperty(key)) {
+				console.log(key, soundsCache[key]);
+				soundsCache[key] = {};
+			}
+		}
+	}
+	
 	var self = this;
 	self.audioBufferPossible = undefined;
 	self.directSource = []; // type: AudioBufferSourceNode

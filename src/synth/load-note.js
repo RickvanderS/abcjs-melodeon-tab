@@ -171,6 +171,21 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 	var OfflineAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 	var offlineCtx = new OfflineAC(2, 10 * audioContext.sampleRate, audioContext.sampleRate);
 	
+	//Level the gain to the same volume, no matter the amount of reeds and harmonics
+	const HarmonicCount = 5;
+	var   GainSum = 0.0;
+	for (let ReedIndex = 1; ReedIndex <= ReedCount; ++ReedIndex) {
+		for (let HarmonicIndex = 1; HarmonicIndex <= HarmonicCount; ++HarmonicIndex) {
+			let HarmGain = 1 / Math.pow(2, HarmonicIndex);
+			GainSum += HarmGain;
+		}
+	}
+	GainLimit = 1.0 / GainSum;
+	
+	//Further reduce the gain, webkit browser had clipping without this due to multiple notes being played at the same time (Firefox was ok)
+	GainLimit = GainLimit / 16;
+	console.log(GainLimit);
+	
 	//For every reed
 	for (let ReedIndex = 1; ReedIndex <= ReedCount; ++ReedIndex) {
 		let ReedFreq  = Frequency;
@@ -189,9 +204,9 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 		}
 		
 		//For all harmonics
-		for (let HarmonicIndex = 1; HarmonicIndex <= 5; ++HarmonicIndex) {
+		for (let HarmonicIndex = 1; HarmonicIndex <= HarmonicCount; ++HarmonicIndex) {
 			let HarmFreq = ReedFreq * HarmonicIndex;
-			let HarmGain = 1 / Math.pow(2, HarmonicIndex);
+			let HarmGain = GainLimit / Math.pow(2, HarmonicIndex);
 			
 			//Create oscillator with frequency and detuning
 			var Osc = new OscillatorNode(offlineCtx,

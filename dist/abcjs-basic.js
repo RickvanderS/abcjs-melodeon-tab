@@ -14889,11 +14889,26 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
   var OfflineAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   var offlineCtx = new OfflineAC(2, 10 * audioContext.sampleRate, audioContext.sampleRate);
 
-  //For every reed
+  //Level the gain to the same volume, no matter the amount of reeds and harmonics
+  var HarmonicCount = 5;
+  var GainSum = 0.0;
   for (var ReedIndex = 1; ReedIndex <= ReedCount; ++ReedIndex) {
+    for (var HarmonicIndex = 1; HarmonicIndex <= HarmonicCount; ++HarmonicIndex) {
+      var HarmGain = 1 / Math.pow(2, HarmonicIndex);
+      GainSum += HarmGain;
+    }
+  }
+  GainLimit = 1.0 / GainSum;
+
+  //Further reduce the gain, webkit browser had clipping without this due to multiple notes being played at the same time (Firefox was ok)
+  GainLimit = GainLimit / 16;
+  console.log(GainLimit);
+
+  //For every reed
+  for (var _ReedIndex = 1; _ReedIndex <= ReedCount; ++_ReedIndex) {
     var ReedFreq = Frequency;
     var ReedCents = 0;
-    switch (ReedIndex) {
+    switch (_ReedIndex) {
       case 2:
         ReedCents = Reed2Cents;
         break;
@@ -14907,9 +14922,9 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
     }
 
     //For all harmonics
-    for (var HarmonicIndex = 1; HarmonicIndex <= 5; ++HarmonicIndex) {
-      var HarmFreq = ReedFreq * HarmonicIndex;
-      var HarmGain = 1 / Math.pow(2, HarmonicIndex);
+    for (var _HarmonicIndex = 1; _HarmonicIndex <= HarmonicCount; ++_HarmonicIndex) {
+      var HarmFreq = ReedFreq * _HarmonicIndex;
+      var _HarmGain = GainLimit / Math.pow(2, _HarmonicIndex);
 
       //Create oscillator with frequency and detuning
       var Osc = new OscillatorNode(offlineCtx, {
@@ -14922,7 +14937,7 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
       var Gain = new GainNode(offlineCtx, {
         gain: 0
       });
-      Gain.gain.setTargetAtTime(HarmGain, offlineCtx.currentTime, FadeIn / 1000);
+      Gain.gain.setTargetAtTime(_HarmGain, offlineCtx.currentTime, FadeIn / 1000);
 
       //Connect the graph
       Gain.connect(offlineCtx.destination);

@@ -16063,6 +16063,128 @@ function TransposeChordArray(aBassChords, TransposeHalfSteps) {
     aBassChords[i] = transposeChordName(aBassChords[i], TransposeHalfSteps, true, true);
   }
 }
+function GetChordNotes(ChordName, ForceSharp) {
+  var aAllSharp = new Array();
+  aAllSharp.push("C,,");
+  aAllSharp.push("^C,,");
+  aAllSharp.push("D,,");
+  aAllSharp.push("^D,,");
+  aAllSharp.push("E,,");
+  aAllSharp.push("F,,");
+  aAllSharp.push("^F,,");
+  aAllSharp.push("G,,");
+  aAllSharp.push("^G,,");
+  aAllSharp.push("A,,");
+  aAllSharp.push("^A,,");
+  aAllSharp.push("B,,");
+  aAllSharp.push("C,");
+  aAllSharp.push("^C,");
+  aAllSharp.push("D,");
+  aAllSharp.push("^D,");
+  aAllSharp.push("E,");
+  aAllSharp.push("F,");
+  aAllSharp.push("^F,");
+  aAllSharp.push("G,");
+  aAllSharp.push("^G,");
+  aAllSharp.push("A,");
+  aAllSharp.push("^A,");
+  aAllSharp.push("B,");
+  var aAllFlat = new Array();
+  aAllFlat.push("C,,");
+  aAllFlat.push("_D,,");
+  aAllFlat.push("D,,");
+  aAllFlat.push("_E,,");
+  aAllFlat.push("E,,");
+  aAllFlat.push("F,,");
+  aAllFlat.push("_G,,");
+  aAllFlat.push("G,,");
+  aAllFlat.push("_A,,");
+  aAllFlat.push("A,,");
+  aAllFlat.push("_B,,");
+  aAllFlat.push("B,,");
+  aAllFlat.push("C,");
+  aAllFlat.push("_D,");
+  aAllFlat.push("D,");
+  aAllFlat.push("_E,");
+  aAllFlat.push("E,");
+  aAllFlat.push("F,");
+  aAllFlat.push("_G,");
+  aAllFlat.push("G,");
+  aAllFlat.push("_A,");
+  aAllFlat.push("A,");
+  aAllFlat.push("_B,");
+  aAllFlat.push("B,");
+  var BassSearch = ChordName[0];
+  if (ChordName.length > 1) {
+    if (ChordName[1] == "#") BassSearch = "^" + BassSearch[0];else if (ChordName[1] == "b") BassSearch = "_" + BassSearch[0];
+  }
+  var UseFlat = false;
+  var BassIndex = 0;
+  for (; BassIndex < aAllSharp.length; ++BassIndex) {
+    if (aAllSharp[BassIndex].startsWith(BassSearch)) break;else if (aAllFlat[BassIndex].startsWith(BassSearch)) {
+      UseFlat = true;
+      break;
+    }
+  }
+  if (ChordName[0] == "G") UseFlat = true;
+  if (ForceSharp) UseFlat = false;
+  if (BassIndex >= aAllSharp.length) return "";
+  var aChordNotes = new Array();
+  //Major chord
+  var Index1 = BassIndex + 0;
+  var Index2 = BassIndex + 4;
+  var Index3 = BassIndex + 7;
+  //Minor chord
+  if (ChordName.indexOf("m") >= 0) Index2 = BassIndex + 3;
+  if (!UseFlat) {
+    aChordNotes.push(aAllSharp[Index1]);
+    aChordNotes.push(aAllSharp[Index2]);
+    aChordNotes.push(aAllSharp[Index3]);
+  } else {
+    aChordNotes.push(aAllFlat[Index1]);
+    aChordNotes.push(aAllFlat[Index2]);
+    aChordNotes.push(aAllFlat[Index3]);
+  }
+  if (ChordName.indexOf("m7") >= 0) {
+    var Index4 = BassIndex + 10;
+    if (!UseFlat) aChordNotes.push(aAllSharp[Index4]);else aChordNotes.push(aAllFlat[Index4]);
+  }
+  return aChordNotes;
+}
+
+/// Return Xm7 cross-bass chords for chords in the same direction
+function FindCrossBassChords(aDirChords) {
+  var aCrossChords = new Array();
+  for (var i = 0; i < aDirChords.length; ++i) {
+    //Skip minor chords
+    if (aDirChords[i].indexOf("m") >= 0) continue;
+    var CrossChordName = aDirChords[i] + "m7";
+
+    //Get the notes for the potential Xm7 chord
+    var aChordM7Notes = GetChordNotes(CrossChordName, true);
+
+    //See if there is a chord with matching notes (except for the bass)
+    for (var j = 0; j < aDirChords.length; ++j) {
+      var aChordNotes = GetChordNotes(aDirChords[j], true);
+      var Match = true;
+      for (n = 1; n < aChordM7Notes.length; ++n) {
+        var len = aChordM7Notes[n].length;
+        if (aChordNotes[n - 1].length < len) len = aChordNotes[n - 1].length;
+        if (aChordM7Notes[n].substr(0, len) != aChordNotes[n - 1].substr(0, len)) {
+          Match = false;
+          break;
+        }
+      }
+      if (Match) aCrossChords.push(CrossChordName + " " + aDirChords[j]);
+    }
+  }
+
+  //Remove duplicates
+  aCrossChords = aCrossChords.filter(function (elem, index, self) {
+    return index === self.indexOf(elem);
+  });
+  return aCrossChords;
+}
 function MelodeonPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
@@ -16209,8 +16331,6 @@ function MelodeonPatterns(plugin) {
     this.BassRow1Pull = new Array("D", "G");
     this.BassRow2Push = new Array("E", "F");
     this.BassRow2Pull = new Array("Am", "F");
-    this.BassCrossPush = new Array("Em7");
-    this.BassCrossPull = new Array("Dm7");
 
     //Define right hand buttons for G/C melodeon
     push_row1.push(""); // 0
@@ -16284,7 +16404,6 @@ function MelodeonPatterns(plugin) {
 
         //Update bass chords
         this.BassRow2Push[1] = "Bb";
-        this.BassCrossPush.push("Gm7");
 
         //Overwrite outside row
         if (Buttons == 33 || Buttons == 27) {
@@ -16349,52 +16468,102 @@ function MelodeonPatterns(plugin) {
           push_row3.push("a"); //9"
           pull_row3.push("_b");
         }
-      } else if (false) {} else if (Row3Tuning == "saltarelle") {
-        //TODO: this has button 4 start on row 1/2
+      } else if (Row3Tuning == "vanderaa") {
+        //Add bass chords
+        this.BassRow1Push.splice(0, 0, "G#");
+        this.BassRow1Pull.splice(0, 0, "Bb");
+        this.BassRow2Push.splice(0, 0, "B");
+        this.BassRow2Pull.splice(0, 0, "F#");
 
+        //TODO: Treble
+      } else if (Row3Tuning == "saltarelle") {
         //Add bass chords
         this.BassRow1Push.splice(0, 0, "D");
         this.BassRow1Pull.splice(0, 0, "C");
         this.BassRow2Push.splice(0, 0, "Bm");
-        this.BassRow2Pull.splice(0, 0, "Bb"); //TODO: Check if this works
+        this.BassRow2Pull.splice(0, 0, "Bb");
 
+        //This layout has 4th button starts, add new button at the begin and remove the 12th button
+        push_row1.splice(0, 0, ""); //0
+        pull_row1.splice(0, 0, "");
+        push_row2.splice(0, 0, ""); //0'
+        pull_row2.splice(0, 0, "");
+        push_row1.pop();
+        pull_row1.pop();
+        push_row2.pop();
+        pull_row2.pop();
+
+        //Override buttons 1 and 2
+        push_row1[1] = "^C,"; // 1
+        pull_row1[1] = "_E,";
+        push_row1[2] = "_B,,"; // 2
+        pull_row1[2] = "D,";
+        push_row2[1] = "_B,"; // 1'
+        pull_row2[1] = "_A,";
+        push_row2[2] = "E,"; // 2'
+        pull_row2[2] = "G,";
         push_row3.push(""); // 0" //TODO: Figure out the octaves
         pull_row3.push("");
         push_row3.push(""); // 1"
         pull_row3.push("");
         push_row3.push(""); // 2"
         pull_row3.push("");
-        push_row3.push("^g"); // 3"
-        pull_row3.push("_b");
-        push_row3.push("f'"); // 4"
-        pull_row3.push("_e'");
-        push_row3.push("c'"); // 5"
-        pull_row3.push("f'");
-        push_row3.push("^g'"); // 6"
-        pull_row3.push("_b'");
-        push_row3.push("f''"); // 7"
-        pull_row3.push("_e''");
+        push_row3.push("^C"); // 3"
+        pull_row3.push("_E");
+        push_row3.push("_B"); // 4"
+        pull_row3.push("_A");
+        push_row3.push("F"); // 5"
+        pull_row3.push("_B");
+        push_row3.push("^c"); // 6"
+        pull_row3.push("_e");
+        push_row3.push("_b"); // 7"
+        pull_row3.push("_a");
       } else if (Row3Tuning == "castagnari") {
         //Add bass chords
-        this.BassRow1Push.splice(0, 0, "Ab"); //TODO: Check if this works
+        this.BassRow1Push.splice(0, 0, "Ab");
         this.BassRow1Pull.splice(0, 0, "Bm");
-        this.BassRow2Push.splice(0, 0, "Eb"); //TODO: Check if this works
-        this.BassRow2Pull.splice(0, 0, "Bb"); //TODO: Check if this works
-
-        push_row3.push(""); // 0" //TODO: Figure out the octaves
+        this.BassRow2Push.splice(0, 0, "Eb");
+        this.BassRow2Pull.splice(0, 0, "Bb");
+        push_row3.push(""); // 0"
         pull_row3.push("");
         push_row3.push(""); // 1"
         pull_row3.push("");
-        push_row3.push("^G,"); // 2"
-        pull_row3.push("_B,");
+        push_row3.push("^G"); // 2"
+        pull_row3.push("_B");
         push_row3.push("_E"); // 3"
         pull_row3.push("^C");
         push_row3.push("^A"); // 4"
         pull_row3.push("G");
-        push_row3.push("^G"); // 5"
-        pull_row3.push("_B");
+        push_row3.push("^g"); // 5"
+        pull_row3.push("_b");
         push_row3.push("_e"); // 6"
         pull_row3.push("^c");
+      } else if (Row3Tuning == "rick") {
+        //Add bass chords
+        this.BassRow1Push.push("A");
+        this.BassRow1Pull.push("B");
+        this.BassRow2Push.push("Eb");
+        this.BassRow2Pull.push("Bb");
+        push_row1[1] = "_E"; // 1
+        pull_row1[1] = "^C";
+        push_row2[1] = "^G"; // 1'
+        pull_row2[1] = "_B";
+        push_row3.push(""); // 0"
+        pull_row3.push("");
+        push_row3.push(""); // 1"
+        pull_row3.push("");
+        push_row3.push(""); // 2"
+        pull_row3.push("");
+        push_row3.push(""); // 3"
+        pull_row3.push("");
+        push_row3.push("_B"); // 4"
+        pull_row3.push("^G");
+        push_row3.push("_e"); // 5"
+        pull_row3.push("^c");
+        push_row3.push("^g"); // 6"
+        pull_row3.push("_b");
+        push_row3.push("_b"); // 7"
+        pull_row3.push("g");
       } else {
         console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');
         return;
@@ -16416,20 +16585,26 @@ function MelodeonPatterns(plugin) {
     TransposeChordArray(this.BassRow2Pull, TransposeHalfSteps);
     TransposeChordArray(this.BassRow3Push, TransposeHalfSteps);
     TransposeChordArray(this.BassRow3Pull, TransposeHalfSteps);
-    TransposeChordArray(this.BassCrossPush, TransposeHalfSteps);
-    TransposeChordArray(this.BassCrossPull, TransposeHalfSteps);
   }
 
   //Combine left hand into push and pull arrays
   this.push_chords = this.BassRow1Push.concat(this.BassRow2Push).concat(this.BassRow3Push).concat(this.BassCrossPush);
   this.pull_chords = this.BassRow1Pull.concat(this.BassRow2Pull).concat(this.BassRow3Pull).concat(this.BassCrossPull);
+
+  //Calculate minor7 cross basses
+  this.BassCrossPush = FindCrossBassChords(this.push_chords);
+  this.BassCrossPull = FindCrossBassChords(this.pull_chords);
+
+  //Add them to the push/pull arrays
+  this.push_chords = this.push_chords.concat(this.BassCrossPush);
+  this.pull_chords = this.pull_chords.concat(this.BassCrossPull);
   for (var i = 0; i < this.push_chords.length; ++i) {
-    this.push_chords[i] = this.push_chords[i].replaceAll("m7", "");
-    this.push_chords[i] = this.push_chords[i].replaceAll("m", "");
+    var pos = this.push_chords[i].search(" ");
+    if (pos >= 0) this.push_chords[i] = this.push_chords[i].substr(0, pos);
   }
   for (var _i = 0; _i < this.pull_chords.length; ++_i) {
-    this.pull_chords[_i] = this.pull_chords[_i].replaceAll("m7", "");
-    this.pull_chords[_i] = this.pull_chords[_i].replaceAll("m", "");
+    var _pos = this.pull_chords[_i].search(" ");
+    if (_pos >= 0) this.pull_chords[_i] = this.pull_chords[_i].substr(0, _pos);
   }
   this.push_chords = _toConsumableArray(new Set(this.push_chords));
   this.pull_chords = _toConsumableArray(new Set(this.pull_chords));
@@ -16640,13 +16815,13 @@ MelodeonPatterns.prototype.StartScan = function () {
   }
 };
 function BarHasButtons(Bar) {
-  for (var n = 0; n < Bar.notes.length; ++n) {
-    if (Bar.notes[n].push1.length) return true;
-    if (Bar.notes[n].push2.length) return true;
-    if (Bar.notes[n].push3.length) return true;
-    if (Bar.notes[n].pull1.length) return true;
-    if (Bar.notes[n].pull2.length) return true;
-    if (Bar.notes[n].pull3.length) return true;
+  for (var _n = 0; _n < Bar.notes.length; ++_n) {
+    if (Bar.notes[_n].push1.length) return true;
+    if (Bar.notes[_n].push2.length) return true;
+    if (Bar.notes[_n].push3.length) return true;
+    if (Bar.notes[_n].pull1.length) return true;
+    if (Bar.notes[_n].pull2.length) return true;
+    if (Bar.notes[_n].pull3.length) return true;
   }
   return false;
 }
@@ -16667,54 +16842,54 @@ function FirstLast(Bar, Push) {
   var FirstButton = -1;
   var LastRow = -1;
   var LastButton = -1;
-  for (var n = 0; n < Bar.notes.length; ++n) {
+  for (var _n2 = 0; _n2 < Bar.notes.length; ++_n2) {
     //Find row/button in the bar's direction
     var Row = -1;
     var Button = -1;
     if (Push) {
-      if (Bar.notes[n].push1 != '') {
+      if (Bar.notes[_n2].push1 != '') {
         Row = 1;
-        Button = parseInt(Bar.notes[n].push1);
-      } else if (Bar.notes[n].push2 != '') {
+        Button = parseInt(Bar.notes[_n2].push1);
+      } else if (Bar.notes[_n2].push2 != '') {
         Row = 2;
-        Button = parseInt(Bar.notes[n].push2);
-      } else if (Bar.notes[n].push3 != '') {
+        Button = parseInt(Bar.notes[_n2].push2);
+      } else if (Bar.notes[_n2].push3 != '') {
         Row = 3;
-        Button = parseInt(Bar.notes[n].push3);
+        Button = parseInt(Bar.notes[_n2].push3);
       }
     } else {
-      if (Bar.notes[n].pull1 != '') {
+      if (Bar.notes[_n2].pull1 != '') {
         Row = 1;
-        Button = parseInt(Bar.notes[n].pull1);
-      } else if (Bar.notes[n].pull2 != '') {
+        Button = parseInt(Bar.notes[_n2].pull1);
+      } else if (Bar.notes[_n2].pull2 != '') {
         Row = 2;
-        Button = parseInt(Bar.notes[n].pull2);
-      } else if (Bar.notes[n].pull3 != '') {
+        Button = parseInt(Bar.notes[_n2].pull2);
+      } else if (Bar.notes[_n2].pull3 != '') {
         Row = 3;
-        Button = parseInt(Bar.notes[n].pull3);
+        Button = parseInt(Bar.notes[_n2].pull3);
       }
     }
 
     //If not found, try against bar direction
     if (Row < 0) {
-      if (Bar.notes[n].push1 != '') {
+      if (Bar.notes[_n2].push1 != '') {
         Row = 1;
-        Button = parseInt(Bar.notes[n].push1);
-      } else if (Bar.notes[n].push2 != '') {
+        Button = parseInt(Bar.notes[_n2].push1);
+      } else if (Bar.notes[_n2].push2 != '') {
         Row = 2;
-        Button = parseInt(Bar.notes[n].push2);
-      } else if (Bar.notes[n].push3 != '') {
+        Button = parseInt(Bar.notes[_n2].push2);
+      } else if (Bar.notes[_n2].push3 != '') {
         Row = 3;
-        Button = parseInt(Bar.notes[n].push3);
-      } else if (Bar.notes[n].pull1 != '') {
+        Button = parseInt(Bar.notes[_n2].push3);
+      } else if (Bar.notes[_n2].pull1 != '') {
         Row = 1;
-        Button = parseInt(Bar.notes[n].pull1);
-      } else if (Bar.notes[n].pull2 != '') {
+        Button = parseInt(Bar.notes[_n2].pull1);
+      } else if (Bar.notes[_n2].pull2 != '') {
         Row = 2;
-        Button = parseInt(Bar.notes[n].pull2);
-      } else if (Bar.notes[n].pull3 != '') {
+        Button = parseInt(Bar.notes[_n2].pull2);
+      } else if (Bar.notes[_n2].pull3 != '') {
         Row = 3;
-        Button = parseInt(Bar.notes[n].pull3);
+        Button = parseInt(Bar.notes[_n2].pull3);
       }
     }
 
@@ -17029,31 +17204,62 @@ function AppendButton(strButtons, Button) {
   strButtons += Button;
   return strButtons;
 }
+function ChordReduce(Chord, MaxLength) {
+  Chord = Chord.replace("♭", "b");
+
+  //Keep removing character while longer then the maximum length
+  while (Chord.length > MaxLength) {
+    //Never remove flats or sharps
+    if (Chord.slice(-1) == "b" || Chord.slice(-1) == "#") break;
+
+    //Remove last character
+    Chord = Chord.substr(0, Chord.length - 1);
+  }
+  return Chord;
+}
+function ChordMatch(Chord1, Chord2, MaxLength) {
+  Chord1 = ChordReduce(Chord1, MaxLength);
+  Chord2 = ChordReduce(Chord2, MaxLength);
+  if (Chord1 == Chord2) return true;
+  return false;
+}
 MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   //Update chord push/pull on change
   if (chord && chord.length > 0) {
     var Chord = chord[0].name.trim();
-
-    //Can the current chord be played in push?
     this.ChordPush = false;
-    if (!Chord.includes("<")) {
-      if (Chord.length == 0 || Chord.includes(">")) this.ChordPush = true;
-      for (var i = 0; i < this.push_chords.length; i++) {
-        if (this.push_chords[i].startsWith(Chord[0]))
-          //TODO: Does not work be Bb, F# etc.
-          this.ChordPush = true;
-      }
-    }
-
-    //Can the current chord be played in pull?
     this.ChordPull = false;
-    if (!Chord.includes(">")) {
-      if (Chord.length == 0 || Chord.includes("<")) this.ChordPull = true;
-      for (var i = 0; i < this.pull_chords.length; i++) {
-        if (this.pull_chords[i].startsWith(Chord[0]))
-          //TODO: Does not work be Bb, F# etc.
-          this.ChordPull = true;
+    for (var MaxLength = 5; MaxLength >= 1; --MaxLength) {
+      //Can the current chord be played in push?
+      if (!Chord.includes("<")) {
+        if (Chord.length == 0 || Chord.includes(">")) {
+          this.ChordPush = true;
+        } else {
+          for (var i = 0; i < this.push_chords.length; i++) {
+            if (ChordMatch(Chord, this.push_chords[i], MaxLength)) {
+              this.ChordPush = true;
+              break;
+            }
+          }
+        }
       }
+
+      //Can the current chord be played in pull?
+      if (!Chord.includes(">")) {
+        if (Chord.length == 0 || Chord.includes("<")) {
+          this.ChordPull = true;
+        } else {
+          for (var i = 0; i < this.pull_chords.length; i++) {
+            if (ChordMatch(Chord, this.pull_chords[i], MaxLength)) {
+              this.ChordPull = true;
+              break;
+            }
+          }
+        }
+      }
+
+      //No need to continue of a match was found
+      if (this.ChordPush || this.ChordPull) break;
     }
 
     //If chord is not recognized, assume both directions are possible

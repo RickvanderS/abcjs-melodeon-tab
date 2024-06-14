@@ -9,5 +9,6 @@ New features:
 - Hide tablature (useful when we only want note heads and/or push pull indicators)
 - Optional push/pull indicators next to chords
 - Export ABC with injected tablature
+- Option to disable chord thirds (so chord is neither minor or major)
 abcjs:
 - Key change end of bar

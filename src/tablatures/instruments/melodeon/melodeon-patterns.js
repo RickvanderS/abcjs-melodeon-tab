@@ -576,11 +576,11 @@ function MelodeonPatterns(plugin) {
 			this.BassRow2Push.push("Eb");
 			this.BassRow2Pull.push("Bb");
 			
-			push_row1[1] = "_E"; // 1
-			pull_row1[1] = "^C";
+			push_row1[1] = "B,,"; // 1
+			pull_row1[1] = "D,";
 			
-			push_row2[1] = "^G"; // 1'
-			pull_row2[1] = "_B";
+			push_row2[1] = "^G,"; // 1'
+			pull_row2[1] = "_B,";
 			
 			push_row3.push(""); // 0"
 			pull_row3.push("");
@@ -590,14 +590,14 @@ function MelodeonPatterns(plugin) {
 			pull_row3.push("");
 			push_row3.push(""); // 3"
 			pull_row3.push("");
-			push_row3.push("_B"); // 4"
-			pull_row3.push("^G");
-			push_row3.push("_e"); // 5"
+			push_row3.push("_E"); // 4"
+			pull_row3.push("^C");
+			push_row3.push("^G"); // 5"
+			pull_row3.push("_B");
+			push_row3.push("_e"); // 6"
 			pull_row3.push("^c");
-			push_row3.push("^g"); // 6"
+			push_row3.push("^g"); // 7"
 			pull_row3.push("_b");
-			push_row3.push("_b"); // 7"
-			pull_row3.push("g");
 		}
 		else {
 			console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');

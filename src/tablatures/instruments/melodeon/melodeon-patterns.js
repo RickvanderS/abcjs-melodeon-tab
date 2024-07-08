@@ -163,6 +163,162 @@ function FindCrossBassChords(aDirChords) {
 	return aCrossChords;
 }
 
+function DecodeRowInfo(TuningString) {
+	let Buttons = parseInt(TuningString.substring(0, 2));
+	let Key     = TuningString.replace(/[0-9]/g, '');
+	Key = Key.replaceAll("^", "");
+	Key = Key.replaceAll(">", "");
+	let Acc     = TuningString.includes("^");
+	let Start   = TuningString.includes(">") ? 4 : 3;
+	
+	aInvert = new Array();
+	for (let i = TuningString.length - 1; i >= 0; --i) {
+		if ('0' <= TuningString[i] && TuningString[i] <= '9')
+			aInvert.push(TuningString[i]);
+		else
+			break;
+	}
+	
+	return {
+		Buttons: Buttons,
+		Key    : Key    ,
+		Acc    : Acc    ,
+		Start  : Start  ,
+		aInvert: aInvert
+	}
+}
+
+function LoadRowD(aOutPush, aOutPull, RowInfo) {
+	if (isNaN(RowInfo.Buttons))
+		RowInfo.Buttons = 12;
+	
+	//Define D row
+	aOutPush.push("^F,,"); // 1_
+	aOutPull.push("A,,");
+	aOutPush.push("A,,"); // 2_
+	aOutPull.push("^C,");
+	aOutPush.push("D,"); // 3_
+	aOutPull.push("E,");
+	aOutPush.push("^F,"); // 4_
+	aOutPull.push("G,");
+	aOutPush.push("A,"); // 5_
+	aOutPull.push("B,");
+	aOutPush.push("D"); // 6_
+	aOutPull.push("^C");
+	aOutPush.push("^F"); // 7_
+	aOutPull.push("E");
+	aOutPush.push("A"); // 8_
+	aOutPull.push("G");
+	aOutPush.push("d"); // 9_
+	aOutPull.push("B");
+	aOutPush.push("^f"); // 10_
+	aOutPull.push("^c");
+	aOutPush.push("a"); // 11_
+	aOutPull.push("e");
+	aOutPush.push("d,"); // 12_
+	aOutPull.push("g");
+	
+	//Remove buttons not required
+	while (aOutPush.length > RowInfo.Buttons) {
+		aOutPush.splice(aOutPush.length-1, 1);
+		aOutPull.splice(aOutPull.length-1, 1);
+	}
+	
+	//Override accidental button
+	if (RowInfo.Acc) {
+		aOutPush[0] = "^G,"; // 0 or 1
+		aOutPull[0] = "_B,";
+	}
+}
+
+function LoadRowG(aOutPush, aOutPull, RowInfo) {
+	if (isNaN(RowInfo.Buttons))
+		RowInfo.Buttons = 11;
+	
+	//Define G row
+	if (RowInfo.Buttons == 12 || RowInfo.Start == 4) {
+		aOutPush.push("G,,"); // 0
+		aOutPull.push("C,");
+	}
+	aOutPush.push("B,,"); // 1
+	aOutPull.push("D," );
+	aOutPush.push("D," ); // 2
+	aOutPull.push("^F,");
+	aOutPush.push("G," ); // 3
+	aOutPull.push("A," );
+	aOutPush.push("B," ); // 4
+	aOutPull.push("C"  );
+	aOutPush.push("D"  ); // 5
+	aOutPull.push("E"  );
+	aOutPush.push("G"  ); // 6
+	aOutPull.push("^F" );
+	aOutPush.push("B"  ); // 7
+	aOutPull.push("A"  );
+	aOutPush.push("d"  ); // 8
+	aOutPull.push("c"  );
+	aOutPush.push("g"  ); // 9
+	aOutPull.push("e"  );
+	aOutPush.push("b"  ); // 10
+	aOutPull.push("^f" );
+	aOutPush.push("d'" ); // 11
+	aOutPull.push("a"  );
+	
+	//Remove buttons not required
+	while (aOutPush.length > RowInfo.Buttons) {
+		aOutPush.splice(aOutPush.length-1, 1);
+		aOutPull.splice(aOutPull.length-1, 1);
+	}
+	
+	//Override accidental button
+	if (RowInfo.Acc) {
+		aOutPush[0] = "^C"; // 0 or 1
+		aOutPull[0] = "_E";
+	}
+}
+
+function LoadRowC(aOutPush, aOutPull, RowInfo) {
+	if (isNaN(RowInfo.Buttons))
+		RowInfo.Buttons = 10;
+	
+	//Define C row
+	if (RowInfo.Buttons == 11 || RowInfo.Start == 4) {
+		aOutPush.push("C,"); // 0'
+		aOutPull.push("F,");
+	}
+	aOutPush.push("E,"); // 1'
+	aOutPull.push("G,");
+	aOutPush.push("G,"); // 2'
+	aOutPull.push("B,");
+	aOutPush.push("C" ); // 3'
+	aOutPull.push("D" );
+	aOutPush.push("E" ); // 4'
+	aOutPull.push("F" );
+	aOutPush.push("G" ); // 5'
+	aOutPull.push("A" );
+	aOutPush.push("c" ); // 6'
+	aOutPull.push("B" );
+	aOutPush.push("e" ); // 7'
+	aOutPull.push("d" );
+	aOutPush.push("g" ); // 8'
+	aOutPull.push("f" );
+	aOutPush.push("c'"); // 9'
+	aOutPull.push("a" );
+	aOutPush.push("e'"); // 10'
+	aOutPull.push("b" );
+	
+	//Remove buttons not required
+	while (aOutPush.length > RowInfo.Buttons) {
+		aOutPush.splice(aOutPush.length-1, 1);
+		aOutPull.splice(aOutPull.length-1, 1);
+	}
+	
+	//Override accidentals
+	if (RowInfo.Acc) {
+		aOutPush[0] = "_B"; // 0' or 1'
+		aOutPull[0] = "^G";
+	}
+}
+
 function MelodeonPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
@@ -191,10 +347,10 @@ function MelodeonPatterns(plugin) {
   }
   
   //Set default chin accidentals of not specified
-  this.chinacc = plugin._super.params.chinacc;
-  if (this.chinacc == null) {
-    this.chinacc = true;
-    plugin.chinacc = this.chinacc;
+  this.startzero = plugin._super.params.startzero;
+  if (this.startzero == null) {
+    this.startzero = true;
+    plugin.startzero = this.startzero;
   }
   
   //Define empty base rows (used for external access)
@@ -209,9 +365,9 @@ function MelodeonPatterns(plugin) {
 
   //Lookup melodeon notes
   let TransposeHalfSteps = 0;
-  let Row1Invert = "";
-  let Row2Invert = "";
-  let Row3Invert = "";
+  let Row1Info;
+  let Row2Info;
+  let Row3Info;
   this.push_chords = new Array;
   this.pull_chords = new Array;
   let push_row1 = new Array;
@@ -307,313 +463,411 @@ function MelodeonPatterns(plugin) {
       pull_row1.push("e"  );
     }
   }
-  else if (this.tuning.length == 2 || this.tuning.length == 3) {
-    //For non-G/C figure out how to transpose
-    let Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
-    let Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
-    Row1Invert = this.tuning[0].substring(Row1Tuning.length);
-    Row2Invert = this.tuning[1].substring(Row2Tuning.length);
-    if      ((Row1Tuning == "Eb" || Row1Tuning == "D#") && (Row2Tuning == "Ab" || Row2Tuning == "G#")) //Very rare
-      TransposeHalfSteps = -3;
-    else if ((Row1Tuning == "E"                       ) && (Row2Tuning == "A"                       )) //Very rare
-      TransposeHalfSteps = -3;
-    else if ((Row1Tuning == "F"                       ) && (Row2Tuning == "Bb" || Row2Tuning == "A#"))
-      TransposeHalfSteps = -2;
-    else if ((Row1Tuning == "Gb" || Row1Tuning == "F#") && (Row2Tuning == "B"                       )) //Very rare
-      TransposeHalfSteps = -1;
-    else if ((Row1Tuning == "G"                       ) && (Row2Tuning == "C"                       )) //France, South America
-      TransposeHalfSteps =  0;
-    else if ((Row1Tuning == "Ab" || Row1Tuning == "G#") && (Row2Tuning == "Db" || Row2Tuning == "C#")) //Very rare
-      TransposeHalfSteps =  1;
-    else if ((Row1Tuning == "A"                       ) && (Row2Tuning == "D"                       )) //France
-      TransposeHalfSteps =  2;
-    else if ((Row1Tuning == "Bb" || Row1Tuning == "A#") && (Row2Tuning == "Eb" || Row2Tuning == "D#"))
-      TransposeHalfSteps =  3;
-    else if ((Row1Tuning == "B"                       ) && (Row2Tuning == "E"                       )) //Very rare
-      TransposeHalfSteps =  4;
-    else if ((Row1Tuning == "C"                       ) && (Row2Tuning == "F"                       )) //Netherlands, Germany
-      TransposeHalfSteps =  5;
-    else if ((Row1Tuning == "Db" || Row1Tuning == "C#") && (Row2Tuning == "Gb" || Row2Tuning == "F#")) //Very rare
-      TransposeHalfSteps =  6;
-    else if ((Row1Tuning == "D"                       ) && (Row2Tuning == "G"                       )) //England
-      TransposeHalfSteps =  7;
-    else {
-      console.error(tuning.length.toString() + ' row melodeon with row1 tuning \'' + Row1Tuning + '\' and row2 tuning \'' + Row2Tuning + '\' is not supported');
-      return;
-    }
-    
-	//Define left hand chords for G/C melodeon with 8 base buttons
-	this.BassRow1Push  = new Array("G", "C");
-	this.BassRow1Pull  = new Array("D", "G");
-	this.BassRow2Push  = new Array("E", "F");
-	this.BassRow2Pull  = new Array("Am", "F");
-	
-    //Define right hand buttons for G/C melodeon
-    push_row1.push(""); // 0
-    pull_row1.push("");
-    if (this.chinacc) {
-      push_row1.push("^C" ); // 1
-      pull_row1.push("_E" );
-    }
-    else {
-      push_row1.push("B,,"); // 1
-      pull_row1.push("D," );
-    }
-    push_row1.push("D," ); // 2
-    pull_row1.push("^F,");
-    push_row1.push("G," ); // 3
-    pull_row1.push("A," );
-    push_row1.push("B," ); // 4
-    pull_row1.push("C"  );
-    push_row1.push("D"  ); // 5
-    pull_row1.push("E"  );
-    push_row1.push("G"  ); // 6
-    pull_row1.push("^F" );
-    push_row1.push("B"  ); // 7
-    pull_row1.push("A"  );
-    push_row1.push("d"  ); // 8
-    pull_row1.push("c"  );
-    push_row1.push("g"  ); // 9
-    pull_row1.push("e"  );
-    push_row1.push("b"  ); // 10
-    pull_row1.push("^f" );
-    push_row1.push("d'" ); // 11
-    pull_row1.push("a"  );
-
-    push_row2.push(""); // 0'
-    pull_row2.push("");
-    if (this.chinacc) {
-      push_row2.push("_B"); // 1'
-      pull_row2.push("^G");
-    }
-    else {
-      push_row2.push("E,"); // 1'
-      pull_row2.push("G,");
-    }
-    push_row2.push("G,"); // 2'
-    pull_row2.push("B,");
-    push_row2.push("C" ); // 3'
-    pull_row2.push("D" );
-    push_row2.push("E" ); // 4'
-    pull_row2.push("F" );
-    push_row2.push("G" ); // 5'
-    pull_row2.push("A" );
-    push_row2.push("c" ); // 6'
-    pull_row2.push("B" );
-    push_row2.push("e" ); // 7'
-    pull_row2.push("d" );
-    push_row2.push("g" ); // 8'
-    pull_row2.push("f" );
-    push_row2.push("c'"); // 9'
-    pull_row2.push("a" );
-    push_row2.push("e'"); // 10'
-    pull_row2.push("b" );
-    
-	//Lookup extra row3 by its special name
-	if (this.tuning.length == 3) {
-		let Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
-		if (Row3Tuning.substring(0, 4) == "club") {
-			//Read the total number of melody buttons for the club layout
-			let Buttons = parseInt(this.tuning[2].substring(0, 2));
-			if (isNaN(Buttons))
-				Buttons = 33;
-			if (Buttons != 33 && Buttons != 31 && Buttons != 30 && Buttons != 27 && Buttons != 25) {
-				console.error('club layour with ' + Buttons + ' buttons is not supported');
-				return;
-			}
-			
-			//Update bass chords
-			this.BassRow2Push[1] = "Bb";
-			
-			//Overwrite outside row
-			if (Buttons == 33 || Buttons == 27) {
-				push_row1[0]  = "G,,"; // 0
-				pull_row1[0]  = "A,,";
-			}
-			else if (Buttons == 31 || Buttons == 30) {
-				push_row1[0]  = "^C,";
-				pull_row1[0]  = "_E,";
-			}
-			push_row1[1]  = "B,,"; // 1
-			pull_row1[1]  = "D,";
-			pull_row1[11] = "a";   //11
-			
-			//Overwrite middle row
-			if (Buttons == 33 || Buttons == 27 || Buttons == 31 || Buttons == 30) {
-				push_row2[0]  = "C,"; // 0'
-				pull_row2[0]  = "F,";
-			}
-			push_row2[1]  = "E,"; // 1'
-			pull_row2[1]  = "G,";
-			pull_row2[5]  = "G";  // 5'
-			
-			//Define inside row
-			if (Buttons == 33) {
-				push_row3.push("^C,"); //0"
-				pull_row3.push("^D,");
-			}
-			else {
-				push_row3.push(""); //0"
-				pull_row3.push("");
-			}
-			if (Buttons == 33 || Buttons == 31) {
-				push_row3.push("A,");  //1"
-				pull_row3.push("_B,");
-			}
-			else {
-				push_row3.push(""); //1"
-				pull_row3.push("");	
-			}
-			if (Buttons == 33 || Buttons == 31 || Buttons == 30) {
-				push_row3.push("_B,"); //2"
-				pull_row3.push("^G,");
-				push_row3.push("F");   //3"
-				pull_row3.push("^C");
-			}
-			else {
-				push_row3.push(""); //2"
-				pull_row3.push("");
-				push_row3.push(""); //3"
-				pull_row3.push("");
-			}
-			push_row3.push("^C");  //4"
-			pull_row3.push("_E");
-			push_row3.push("_B");  //5"
-			pull_row3.push("^G");
-			push_row3.push("A");   //6"
-			pull_row3.push("_B");
-			push_row3.push("^c");  //7"
-			pull_row3.push("_e");
-			if (Buttons == 33 || Buttons == 31 || Buttons == 30) {
-				push_row3.push("_b");  //8"
-				pull_row3.push("^g");
-			}
-			if (Buttons == 33) {
-				push_row3.push("a");   //9"
-				pull_row3.push("_b");
-			}
-		}
-		else if (Row3Tuning == "vanderaa") {
-			//Add bass chords
-			this.BassRow1Push.splice(0, 0, "G#");
-			this.BassRow1Pull.splice(0, 0, "Bb");
-			this.BassRow2Push.splice(0, 0, "B");
-			this.BassRow2Pull.splice(0, 0, "F#");
-			
-			//TODO: Treble
-			
-		}
-		else if (Row3Tuning == "saltarelle") {
-			//Add bass chords
-			this.BassRow1Push.splice(0, 0, "D");
-			this.BassRow1Pull.splice(0, 0, "C");
-			this.BassRow2Push.splice(0, 0, "Bm");
-			this.BassRow2Pull.splice(0, 0, "Bb");
-			
-			//This layout has 4th button starts, add new button at the begin and remove the 12th button
-			push_row1.splice(0, 0, ""); //0
-			pull_row1.splice(0, 0, "");
-			push_row2.splice(0, 0, ""); //0'
-			pull_row2.splice(0, 0, "");
-			push_row1.pop();
-			pull_row1.pop();
-			push_row2.pop();
-			pull_row2.pop();
-			
-			//Override buttons 1 and 2
-			push_row1[1] = "^C," ; // 1
-			pull_row1[1] = "_E," ;
-			push_row1[2] = "_B,,"; // 2
-			pull_row1[2] = "D,"  ;
-			push_row2[1] = "_B," ; // 1'
-			pull_row2[1] = "_A," ;
-			push_row2[2] = "E,"  ; // 2'
-			pull_row2[2] = "G,"  ;
-			
-			push_row3.push(""); // 0"
-			pull_row3.push("");
-			push_row3.push(""); // 1"
-			pull_row3.push("");
-			push_row3.push(""); // 2"
-			pull_row3.push("");
-			push_row3.push("^C"); // 3"
-			pull_row3.push("_E");
-			push_row3.push("_B" ); // 4"
-			pull_row3.push("_A");
-			push_row3.push("F" ); // 5"
-			pull_row3.push("_B" );
-			push_row3.push("^c"); // 6"
-			pull_row3.push("_e");
-			push_row3.push("_b" ); // 7"
-			pull_row3.push("_a");
-		}
-		else if (Row3Tuning == "castagnari") {
-			//Add bass chords
-			this.BassRow1Push.splice(0, 0, "Ab");
-			this.BassRow1Pull.splice(0, 0, "Bm");
-			this.BassRow2Push.splice(0, 0, "Eb");
-			this.BassRow2Pull.splice(0, 0, "Bb");
-			
-			push_row3.push(""); // 0"
-			pull_row3.push("");
-			push_row3.push(""); // 1"
-			pull_row3.push("");
-			push_row3.push("^G"); // 2"
-			pull_row3.push("_B");
-			push_row3.push("_E"); // 3"
-			pull_row3.push("^C");
-			push_row3.push("^A"); // 4"
-			pull_row3.push("G");
-			push_row3.push("^g"); // 5"
-			pull_row3.push("_b");
-			push_row3.push("_e"); // 6"
-			pull_row3.push("^c");
-		}
-		else if (Row3Tuning == "rick") {
-			//Add bass chords
-			this.BassRow1Push.push("A");
-			this.BassRow1Pull.push("B");
-			this.BassRow2Push.push("Eb");
-			this.BassRow2Pull.push("Bb");
-			
-			push_row1[1] = "B,,"; // 1
-			pull_row1[1] = "D,";
-			
-			push_row2[1] = "^G,"; // 1'
-			pull_row2[1] = "_B,";
-			
-			push_row3.push(""); // 0"
-			pull_row3.push("");
-			push_row3.push(""); // 1"
-			pull_row3.push("");
-			push_row3.push(""); // 2"
-			pull_row3.push("");
-			push_row3.push(""); // 3"
-			pull_row3.push("");
-			push_row3.push("_E"); // 4"
-			pull_row3.push("^C");
-			push_row3.push("^G"); // 5"
-			pull_row3.push("_B");
-			push_row3.push("_e"); // 6"
-			pull_row3.push("^c");
-			push_row3.push("^g"); // 7"
-			pull_row3.push("_b");
-		}
+	else if (this.tuning.length == 2 || this.tuning.length == 3) {
+		//Decode row info strings
+		Row1Info = DecodeRowInfo(this.tuning[0]);
+		Row2Info = DecodeRowInfo(this.tuning[1]);
+		if (this.tuning.length == 3)
+			Row3Info = DecodeRowInfo(this.tuning[2]);
+		
+		//For non-G/C figure out how to transpose
+		if      ((Row1Info.Key == "Eb" || Row1Info.Key == "D#") && (Row2Info.Key == "Ab" || Row2Info.Key == "G#")) //Very rare
+			TransposeHalfSteps = -3;
+		else if ((Row1Info.Key == "E"                         ) && (Row2Info.Key == "A"                         )) //Very rare
+			TransposeHalfSteps = -3;
+		else if ((Row1Info.Key == "F"                         ) && (Row2Info.Key == "Bb" || Row2Info.Key == "A#"))
+			TransposeHalfSteps = -2;
+		else if ((Row1Info.Key == "Gb" || Row1Info.Key == "F#") && (Row2Info.Key == "B"                         )) //Very rare
+			TransposeHalfSteps = -1;
+		else if ((Row1Info.Key == "G"                         ) && (Row2Info.Key == "C"                         )) //France, South America
+			TransposeHalfSteps =  0;
+		else if ((Row1Info.Key == "Ab" || Row1Info.Key == "G#") && (Row2Info.Key == "Db" || Row2Info.Key == "C#")) //Very rare
+			TransposeHalfSteps =  1;
+		else if ((Row1Info.Key == "A"                         ) && (Row2Info.Key == "D"                         )) //France
+			TransposeHalfSteps =  2;
+		else if ((Row1Info.Key == "Bb" || Row1Info.Key == "A#") && (Row2Info.Key == "Eb" || Row2Info.Key == "D#"))
+			TransposeHalfSteps =  3;
+		else if ((Row1Info.Key == "B"                         ) && (Row2Info.Key == "E"                         )) //Very rare
+			TransposeHalfSteps =  4;
+		else if ((Row1Info.Key == "C"                         ) && (Row2Info.Key == "F"                         )) //Netherlands, Germany
+			TransposeHalfSteps =  5;
+		else if ((Row1Info.Key == "Db" || Row1Info.Key == "C#") && (Row2Info.Key == "Gb" || Row2Info.Key == "F#")) //Very rare
+			TransposeHalfSteps =  6;
+		else if ((Row1Info.Key == "D"                         ) && (Row2Info.Key == "G"                         )) //England
+			TransposeHalfSteps =  7;
 		else {
-			console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');
+			if (this.tuning.length == 2)
+				console.error('2 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' is not supported');
+			else if (this.tuning.length == 3)
+				console.error('3 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
 			return;
 		}
-    }
-  }
-  else if (this.tuning.length == 3) {
-    console.error('3 row melodeons are not supported');
-    return;
-  }
-  else {
-    console.error('Too many melodeon rows defined');
-    return;
-  }
-  
+		
+		//Define left hand chords for G/C melodeon with 8 base buttons
+		this.BassRow1Push  = new Array("G", "C");
+		this.BassRow1Pull  = new Array("D", "G");
+		this.BassRow2Push  = new Array("E", "F");
+		this.BassRow2Pull  = new Array("Am", "F");
+		
+		//Define right hand buttons for G/C melodeon
+		LoadRowG(push_row1, pull_row1, Row1Info);
+		LoadRowC(push_row2, pull_row2, Row2Info);
+		
+		//Lookup extra row3 by its special name
+		if (this.tuning.length == 3) {
+			let Row3Tuning = Row3Info.Key.toLowerCase();
+			if (Row3Tuning == "hohner") {
+				if (isNaN(Row3Info.Buttons))
+					Row3Info.Buttons = 23; //Hohner Merlin
+				
+				//Define row 3
+				push_row3.push("");
+				pull_row3.push("");
+				push_row3.push("");
+				pull_row3.push("");
+				push_row3.push("");
+				pull_row3.push("");
+				push_row3.push("_E"); //4"
+				pull_row3.push("^C");
+				push_row3.push("^G"); //5"
+				pull_row3.push("_B");
+				if (Row3Info.Buttons == 25) { //Hohner Galaad
+					push_row3.push("_e"); //6"
+					pull_row3.push("^c");
+					push_row3.push("^g"); //7"
+					pull_row3.push("_b");
+					
+					//Add bass chords
+					this.BassRow1Push.splice(0, 0, "Ab");
+					this.BassRow1Pull.splice(0, 0, "Bm");
+					this.BassRow2Push.splice(0, 0, "Eb");
+					this.BassRow2Pull.splice(0, 0, "Bb");
+				}
+			}
+			else if (Row3Tuning == "club") {
+				//Read the total number of melody buttons for the club layout
+				if (isNaN(Row3Info.Buttons))
+					Row3Info.Buttons = 33;
+				if (Row3Info.Buttons != 33 && Row3Info.Buttons != 31 && Row3Info.Buttons != 30 && Row3Info.Buttons != 27 && Row3Info.Buttons != 25) {
+					console.error('club layout with ' + Row3Info.Buttons + ' buttons is not supported');
+					return;
+				}
+				
+				if (Row3Info.Buttons != 25) {
+					Row1Info.Buttons = 12;
+					Row2Info.Buttons = 11;
+					push_row1 = new Array();
+					pull_row1 = new Array();
+					push_row2 = new Array();
+					pull_row2 = new Array();
+					LoadRowG(push_row1, pull_row1, Row1Info);
+					LoadRowC(push_row2, pull_row2, Row2Info);
+				}
+				
+				//Update bass chords
+				this.BassRow2Push[1] = "Bb";
+				
+				//Overwrite outside row
+				if (Row3Info.Buttons == 33 || Row3Info.Buttons == 27) {
+					push_row1[0] = "G,,"; // 0
+					pull_row1[0] = "A,,";
+				}
+				else if (Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
+					push_row1[0] = "^C,"; // 0
+					pull_row1[0] = "_E,";
+				}
+				if (Row3Info.Buttons != 25) {
+					push_row1[1]  = "B,,"; // 1
+					pull_row1[1]  = "D,";
+				}
+				pull_row1[pull_row1.length-1] = "g";   //11
+				
+				//Overwrite middle row
+				if (Row3Info.Buttons == 33 || Row3Info.Buttons == 27 || Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
+					push_row2[0] = "C,"; // 0'
+					pull_row2[0] = "F,";
+				}
+				if (Row3Info.Buttons != 25) {
+					push_row2[1]  = "E,"; // 1'
+					pull_row2[1]  = "G,";
+				}
+				if (Row3Info.Buttons != 25)
+					pull_row2[5]  = "G";  // 5'
+				else
+					pull_row2[4]  = "G";  // 5'
+				
+				//Define inside row
+				if (Row3Info.Buttons == 33) {
+					push_row3.push("^C,"); //0"
+					pull_row3.push("^D,");
+				}
+				else {
+					push_row3.push(""); //0"
+					pull_row3.push("");
+				}
+				if (Row3Info.Buttons == 33 || Row3Info.Buttons == 31) {
+					push_row3.push("A,");  //1"
+					pull_row3.push("_B,");
+				}
+				else {
+					push_row3.push(""); //1"
+					pull_row3.push("");	
+				}
+				if (Row3Info.Buttons == 33 || Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
+					push_row3.push("_B,"); //2"
+					pull_row3.push("^G,");
+					push_row3.push("F");   //3"
+					pull_row3.push("^C");
+				}
+				else {
+					push_row3.push(""); //2"
+					pull_row3.push("");
+					push_row3.push(""); //3"
+					pull_row3.push("");
+				}
+				push_row3.push("^C");  //4"
+				pull_row3.push("_E");
+				push_row3.push("_B");  //5"
+				pull_row3.push("^G");
+				push_row3.push("A");   //6"
+				pull_row3.push("_B");
+				push_row3.push("^c");  //7"
+				pull_row3.push("_e");
+				if (Row3Info.Buttons == 33 || Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
+					push_row3.push("_b");  //8"
+					pull_row3.push("^g");
+				}
+				if (Row3Info.Buttons == 33) {
+					push_row3.push("a");   //9"
+					pull_row3.push("_b");
+				}
+			}
+			else if (Row3Tuning == "vanderaa") {
+				//Add bass chords
+				this.BassRow1Push.splice(0, 0, "G#");
+				this.BassRow1Pull.splice(0, 0, "Bb");
+				this.BassRow2Push.splice(0, 0, "B");
+				this.BassRow2Pull.splice(0, 0, "F#");
+				
+				//TODO: Treble
+				
+			}
+			else if (Row3Tuning == "saltarelle") {
+				//Add bass chords
+				this.BassRow1Push.splice(0, 0, "D");
+				this.BassRow1Pull.splice(0, 0, "C");
+				this.BassRow2Push.splice(0, 0, "Bm");
+				this.BassRow2Pull.splice(0, 0, "Bb");
+				
+				//Reload rows with button 4 starts and the required number of buttons
+				push_row1 = new Array();
+				pull_row1 = new Array();
+				push_row2 = new Array();
+				pull_row2 = new Array();
+				Row1Info.Start = 4;
+				Row2Info.Start = 4;
+				if (Row3Info.Buttons == 26) {
+					Row1Info.Buttons = 11;
+					Row2Info.Buttons = 10;
+				}
+				else if (Row3Info.Buttons == 27) {
+					Row1Info.Buttons = 12;
+					Row2Info.Buttons = 11;
+				}
+				else {
+					console.error('saltarelle layout with ' + Row3Info.Buttons + ' buttons is not supported');
+					return;
+				}
+				LoadRowG(push_row1, pull_row1, Row1Info);
+				LoadRowC(push_row2, pull_row2, Row2Info);
+				
+				//Override button 1 of both rows
+				push_row1[0] = "^C," ; // 1
+				pull_row1[0] = "_E," ;
+				push_row2[0] = "_B," ; // 1'
+				pull_row2[0] = "_A," ;
+				
+				//Define the helper row
+				push_row3.push(""); // 1"
+				pull_row3.push("");
+				push_row3.push(""); // 2"
+				pull_row3.push("");
+				push_row3.push("^C"); // 3"
+				pull_row3.push("_E");
+				push_row3.push("_B" ); // 4"
+				pull_row3.push("_A");
+				push_row3.push("F" ); // 5"
+				pull_row3.push("_B" );
+				push_row3.push("^c"); // 6"
+				pull_row3.push("_e");
+				if (Row3Info.Buttons == 26) {
+					push_row3.push("_b" ); // 7"
+					pull_row3.push("_a");
+				}
+			}
+			else if (Row3Tuning == "castagnari") {
+				//Add bass chords
+				this.BassRow1Push.splice(0, 0, "Ab");
+				this.BassRow1Pull.splice(0, 0, "Bm");
+				this.BassRow2Push.splice(0, 0, "Eb");
+				this.BassRow2Pull.splice(0, 0, "Bb");
+				
+				push_row3.push(""); // 0"
+				pull_row3.push("");
+				push_row3.push(""); // 1"
+				pull_row3.push("");
+				push_row3.push("^G"); // 2"
+				pull_row3.push("_B");
+				push_row3.push("_E"); // 3"
+				pull_row3.push("^C");
+				push_row3.push("^A"); // 4"
+				pull_row3.push("G");
+				push_row3.push("^g"); // 5"
+				pull_row3.push("_b");
+				push_row3.push("_e"); // 6"
+				pull_row3.push("^c");
+			}
+			else if (Row3Tuning == "rick") {
+				//Add bass chords
+				this.BassRow1Push.push("A");
+				this.BassRow1Pull.push("B");
+				this.BassRow2Push.push("Eb");
+				this.BassRow2Pull.push("Bb");
+				
+				push_row1[1] = "B,,"; // 1
+				pull_row1[1] = "D,";
+				
+				push_row2[1] = "^G,"; // 1'
+				pull_row2[1] = "_B,";
+				
+				push_row3.push(""); // 0"
+				pull_row3.push("");
+				push_row3.push(""); // 1"
+				pull_row3.push("");
+				push_row3.push(""); // 2"
+				pull_row3.push("");
+				push_row3.push(""); // 3"
+				pull_row3.push("");
+				push_row3.push("_E"); // 4"
+				pull_row3.push("^C");
+				push_row3.push("^G"); // 5"
+				pull_row3.push("_B");
+				push_row3.push("_e"); // 6"
+				pull_row3.push("^c");
+				push_row3.push("^g"); // 7"
+				pull_row3.push("_b");
+			}
+			else {
+				if      ((Row2Info.Key == "Eb" || Row2Info.Key == "D#") && (Row3Info.Key == "Ab" || Row3Info.Key == "G#")) //BbEbAb
+				  TransposeHalfSteps = -3;
+				else if ((Row2Info.Key == "E"                         ) && (Row3Info.Key == "A"                         )) //BEA
+				  TransposeHalfSteps = -3;
+				else if ((Row2Info.Key == "F"                         ) && (Row3Info.Key == "Bb" || Row3Info.Key == "A#")) //CFBb
+				  TransposeHalfSteps = -2;
+				else if ((Row2Info.Key == "Gb" || Row2Info.Key == "F#") && (Row3Info.Key == "B"                         )) //DbDbB
+				  TransposeHalfSteps = -1;
+				else if ((Row2Info.Key == "G"                         ) && (Row3Info.Key == "C"                         )) //DGC, does not exit
+				  TransposeHalfSteps =  0;
+				else if ((Row2Info.Key == "Ab" || Row2Info.Key == "G#") && (Row3Info.Key == "Db" || Row3Info.Key == "C#")) //EbAbDb
+				  TransposeHalfSteps =  1;
+				else if ((Row2Info.Key == "A"                         ) && (Row3Info.Key == "D"                         )) //EAD
+				  TransposeHalfSteps =  2;
+				else if ((Row2Info.Key == "Bb" || Row2Info.Key == "A#") && (Row3Info.Key == "Eb" || Row3Info.Key == "D#")) //FBbEb
+				  TransposeHalfSteps =  3;
+				else if ((Row2Info.Key == "B"                         ) && (Row3Info.Key == "E"                         )) //GbBE
+				  TransposeHalfSteps =  4;
+				else if ((Row2Info.Key == "C"                         ) && (Row3Info.Key == "F"                         )) //GCF
+				  TransposeHalfSteps =  5;
+				else if ((Row2Info.Key == "Db" || Row2Info.Key == "C#") && (Row3Info.Key == "Gb" || Row3Info.Key == "F#")) //AbDbGb
+				  TransposeHalfSteps =  6;
+				else if ((Row2Info.Key == "D"                         ) && (Row3Info.Key == "G"                         )) //ADG
+				  TransposeHalfSteps =  7;
+				else {
+				  console.error(this.tuning.length + ' row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
+				  return;
+				}
+				
+				//Row1 with 12 buttons is added before the other rows, define it as a D row here, event though DGC does not exist due to an octave rollover, it will be transposed below
+				//Therefore the D row is one octave lower than a normal D row
+				push_row1 = new Array();
+				pull_row1 = new Array();
+				push_row2 = new Array();
+				pull_row2 = new Array();
+				push_row3 = new Array();
+				pull_row3 = new Array();
+				Row1Info.Acc = true;
+				Row2Info.Acc = true;
+				Row3Info.Acc = true;
+				let Remove1_1 = false;
+				if (Row1Info.Buttons == 10 && Row2Info.Buttons == 11 && Row3Info.Buttons == 10) {
+					Row1Info.Buttons = 11;
+					Remove1_1 = true;
+				}
+				LoadRowD(push_row1, pull_row1, Row1Info);
+				LoadRowG(push_row2, pull_row2, Row2Info);
+				LoadRowC(push_row3, pull_row3, Row3Info);
+				if (Remove1_1) {
+					push_row1.splice(1, 1);
+					pull_row1.splice(1, 1);
+					push_row1.splice(0, 0, "");
+					pull_row1.splice(0, 0, "");
+				}
+				
+				//Add bass chords for DGC
+				this.BassRow1Push.splice(0, 0, "D");
+				this.BassRow1Pull.splice(0, 0, "A");
+				this.BassRow2Push.splice(0, 0, "B");
+				this.BassRow2Pull.splice(0, 0, "Em");
+			}
+		}
+	}
+	else {
+		console.error('Melodeon with more than 3 rows are not supported');
+		return;
+	}
+	
+	//Handle button push/pull inversions for each row
+	if (typeof Row1Info !== 'undefined') {
+		for (let i = 0; i < Row1Info.aInvert.length; ++i) {
+			let Index = Row1Info.aInvert[i] - 1;
+			let Tmp = push_row1[Index];
+			push_row1[Index] = pull_row1[Index];
+			pull_row1[Index] = Tmp;
+		}
+	}
+	if (typeof Row2Info !== 'undefined') {
+		for (let i = 0; i < Row2Info.aInvert.length; ++i) {
+			let Index = Row2Info.aInvert[i] - 1;
+			let Tmp = push_row2[Index];
+			push_row2[Index] = pull_row2[Index];
+			pull_row2[Index] = Tmp;
+		}
+	}
+	if (typeof Row3Info !== 'undefined') {
+		for (let i = 0; i < Row3Info.aInvert.length; ++i) {
+			let Index = Row3Info.aInvert[i] - 1;
+			let Tmp = push_row3[Index];
+			push_row3[Index] = pull_row3[Index];
+			pull_row3[Index] = Tmp;
+		}
+	}
+	
+	//If not starting the numbering at 0, add empty buttons to the beginning of the arrays
+	if (!this.startzero) {
+		if (push_row1.length) {
+			push_row1.splice(0, 0, "");
+			pull_row1.splice(0, 0, "");
+		}
+		if (push_row2.length) {
+			push_row2.splice(0, 0, "");
+			pull_row2.splice(0, 0, "");
+		}
+		if (push_row3.length) {
+			push_row3.splice(0, 0, "");
+			pull_row3.splice(0, 0, "");
+		}
+	}
+	
 	//Transpose left hand bass chords if required
 	if (TransposeHalfSteps != 0) {
 		TransposeChordArray(this.BassRow1Push , TransposeHalfSteps);
@@ -673,26 +927,6 @@ function MelodeonPatterns(plugin) {
   this.pull_row3 = new Array;
   for (let i = 0; i < pull_row3.length; ++i) {
     this.pull_row3.push(TransposeNameToNote(pull_row3[i], TransposeHalfSteps, TransposeLookup));
-  }
-  
-  //Handle button push/pull inversions for each row
-  for (let i = this.push_row1.length - 1; i >= 0; --i) {
-    let Pos = Row1Invert.search(i.toString());
-    if (Pos >= 0) {
-      let Tmp = this.push_row1[i];
-      this.push_row1[i] = this.pull_row1[i];
-      this.pull_row1[i] = Tmp;
-      Row1Invert = Row1Invert.substr(0, Pos) + Row1Invert.substr(Pos + i.toString().length);
-    }
-  }
-  for (let i = this.push_row2.length - 1; i >= 1; --i) {
-    let Pos = Row2Invert.search(i.toString());
-    if (Pos >= 0) {
-      let Tmp = this.push_row2[i];
-      this.push_row2[i] = this.pull_row2[i];
-      this.pull_row2[i] = Tmp;
-      Row2Invert = Row2Invert.substr(0, Pos) + Row2Invert.substr(Pos + i.toString().length);
-    }
   }
   
   //console.log(this.push_row1);

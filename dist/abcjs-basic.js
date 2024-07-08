@@ -16185,6 +16185,150 @@ function FindCrossBassChords(aDirChords) {
   });
   return aCrossChords;
 }
+function DecodeRowInfo(TuningString) {
+  var Buttons = parseInt(TuningString.substring(0, 2));
+  var Key = TuningString.replace(/[0-9]/g, '');
+  Key = Key.replaceAll("^", "");
+  Key = Key.replaceAll(">", "");
+  var Acc = TuningString.includes("^");
+  var Start = TuningString.includes(">") ? 4 : 3;
+  aInvert = new Array();
+  for (var i = TuningString.length - 1; i >= 0; --i) {
+    if ('0' <= TuningString[i] && TuningString[i] <= '9') aInvert.push(TuningString[i]);else break;
+  }
+  return {
+    Buttons: Buttons,
+    Key: Key,
+    Acc: Acc,
+    Start: Start,
+    aInvert: aInvert
+  };
+}
+function LoadRowD(aOutPush, aOutPull, RowInfo) {
+  if (isNaN(RowInfo.Buttons)) RowInfo.Buttons = 12;
+
+  //Define D row
+  aOutPush.push("^F,,"); // 1_
+  aOutPull.push("A,,");
+  aOutPush.push("A,,"); // 2_
+  aOutPull.push("^C,");
+  aOutPush.push("D,"); // 3_
+  aOutPull.push("E,");
+  aOutPush.push("^F,"); // 4_
+  aOutPull.push("G,");
+  aOutPush.push("A,"); // 5_
+  aOutPull.push("B,");
+  aOutPush.push("D"); // 6_
+  aOutPull.push("^C");
+  aOutPush.push("^F"); // 7_
+  aOutPull.push("E");
+  aOutPush.push("A"); // 8_
+  aOutPull.push("G");
+  aOutPush.push("d"); // 9_
+  aOutPull.push("B");
+  aOutPush.push("^f"); // 10_
+  aOutPull.push("^c");
+  aOutPush.push("a"); // 11_
+  aOutPull.push("e");
+  aOutPush.push("d,"); // 12_
+  aOutPull.push("g");
+
+  //Remove buttons not required
+  while (aOutPush.length > RowInfo.Buttons) {
+    aOutPush.splice(aOutPush.length - 1, 1);
+    aOutPull.splice(aOutPull.length - 1, 1);
+  }
+
+  //Override accidental button
+  if (RowInfo.Acc) {
+    aOutPush[0] = "^G,"; // 0 or 1
+    aOutPull[0] = "_B,";
+  }
+}
+function LoadRowG(aOutPush, aOutPull, RowInfo) {
+  if (isNaN(RowInfo.Buttons)) RowInfo.Buttons = 11;
+
+  //Define G row
+  if (RowInfo.Buttons == 12 || RowInfo.Start == 4) {
+    aOutPush.push("G,,"); // 0
+    aOutPull.push("C,");
+  }
+  aOutPush.push("B,,"); // 1
+  aOutPull.push("D,");
+  aOutPush.push("D,"); // 2
+  aOutPull.push("^F,");
+  aOutPush.push("G,"); // 3
+  aOutPull.push("A,");
+  aOutPush.push("B,"); // 4
+  aOutPull.push("C");
+  aOutPush.push("D"); // 5
+  aOutPull.push("E");
+  aOutPush.push("G"); // 6
+  aOutPull.push("^F");
+  aOutPush.push("B"); // 7
+  aOutPull.push("A");
+  aOutPush.push("d"); // 8
+  aOutPull.push("c");
+  aOutPush.push("g"); // 9
+  aOutPull.push("e");
+  aOutPush.push("b"); // 10
+  aOutPull.push("^f");
+  aOutPush.push("d'"); // 11
+  aOutPull.push("a");
+
+  //Remove buttons not required
+  while (aOutPush.length > RowInfo.Buttons) {
+    aOutPush.splice(aOutPush.length - 1, 1);
+    aOutPull.splice(aOutPull.length - 1, 1);
+  }
+
+  //Override accidental button
+  if (RowInfo.Acc) {
+    aOutPush[0] = "^C"; // 0 or 1
+    aOutPull[0] = "_E";
+  }
+}
+function LoadRowC(aOutPush, aOutPull, RowInfo) {
+  if (isNaN(RowInfo.Buttons)) RowInfo.Buttons = 10;
+
+  //Define C row
+  if (RowInfo.Buttons == 11 || RowInfo.Start == 4) {
+    aOutPush.push("C,"); // 0'
+    aOutPull.push("F,");
+  }
+  aOutPush.push("E,"); // 1'
+  aOutPull.push("G,");
+  aOutPush.push("G,"); // 2'
+  aOutPull.push("B,");
+  aOutPush.push("C"); // 3'
+  aOutPull.push("D");
+  aOutPush.push("E"); // 4'
+  aOutPull.push("F");
+  aOutPush.push("G"); // 5'
+  aOutPull.push("A");
+  aOutPush.push("c"); // 6'
+  aOutPull.push("B");
+  aOutPush.push("e"); // 7'
+  aOutPull.push("d");
+  aOutPush.push("g"); // 8'
+  aOutPull.push("f");
+  aOutPush.push("c'"); // 9'
+  aOutPull.push("a");
+  aOutPush.push("e'"); // 10'
+  aOutPull.push("b");
+
+  //Remove buttons not required
+  while (aOutPush.length > RowInfo.Buttons) {
+    aOutPush.splice(aOutPush.length - 1, 1);
+    aOutPull.splice(aOutPull.length - 1, 1);
+  }
+
+  //Override accidentals
+  if (RowInfo.Acc) {
+    aOutPush[0] = "_B"; // 0' or 1'
+    aOutPull[0] = "^G";
+  }
+}
 function MelodeonPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
@@ -16208,10 +16352,10 @@ function MelodeonPatterns(plugin) {
   }
 
   //Set default chin accidentals of not specified
-  this.chinacc = plugin._super.params.chinacc;
-  if (this.chinacc == null) {
-    this.chinacc = true;
-    plugin.chinacc = this.chinacc;
+  this.startzero = plugin._super.params.startzero;
+  if (this.startzero == null) {
+    this.startzero = true;
+    plugin.startzero = this.startzero;
   }
 
   //Define empty base rows (used for external access)
@@ -16226,9 +16370,9 @@ function MelodeonPatterns(plugin) {
 
   //Lookup melodeon notes
   var TransposeHalfSteps = 0;
-  var Row1Invert = "";
-  var Row2Invert = "";
-  var Row3Invert = "";
+  var Row1Info;
+  var Row2Info;
+  var Row3Info;
   this.push_chords = new Array();
   this.pull_chords = new Array();
   var push_row1 = new Array();
@@ -16296,33 +16440,34 @@ function MelodeonPatterns(plugin) {
       pull_row1.push("e");
     }
   } else if (this.tuning.length == 2 || this.tuning.length == 3) {
+    //Decode row info strings
+    Row1Info = DecodeRowInfo(this.tuning[0]);
+    Row2Info = DecodeRowInfo(this.tuning[1]);
+    if (this.tuning.length == 3) Row3Info = DecodeRowInfo(this.tuning[2]);
+
     //For non-G/C figure out how to transpose
-    var _Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
-    var Row2Tuning = this.tuning[1].replace(/[0-9]/g, '');
-    Row1Invert = this.tuning[0].substring(_Row1Tuning.length);
-    Row2Invert = this.tuning[1].substring(Row2Tuning.length);
-    if ((_Row1Tuning == "Eb" || _Row1Tuning == "D#") && (Row2Tuning == "Ab" || Row2Tuning == "G#"))
+    if ((Row1Info.Key == "Eb" || Row1Info.Key == "D#") && (Row2Info.Key == "Ab" || Row2Info.Key == "G#"))
       //Very rare
-      TransposeHalfSteps = -3;else if (_Row1Tuning == "E" && Row2Tuning == "A")
+      TransposeHalfSteps = -3;else if (Row1Info.Key == "E" && Row2Info.Key == "A")
       //Very rare
-      TransposeHalfSteps = -3;else if (_Row1Tuning == "F" && (Row2Tuning == "Bb" || Row2Tuning == "A#")) TransposeHalfSteps = -2;else if ((_Row1Tuning == "Gb" || _Row1Tuning == "F#") && Row2Tuning == "B")
+      TransposeHalfSteps = -3;else if (Row1Info.Key == "F" && (Row2Info.Key == "Bb" || Row2Info.Key == "A#")) TransposeHalfSteps = -2;else if ((Row1Info.Key == "Gb" || Row1Info.Key == "F#") && Row2Info.Key == "B")
       //Very rare
-      TransposeHalfSteps = -1;else if (_Row1Tuning == "G" && Row2Tuning == "C")
+      TransposeHalfSteps = -1;else if (Row1Info.Key == "G" && Row2Info.Key == "C")
       //France, South America
-      TransposeHalfSteps = 0;else if ((_Row1Tuning == "Ab" || _Row1Tuning == "G#") && (Row2Tuning == "Db" || Row2Tuning == "C#"))
+      TransposeHalfSteps = 0;else if ((Row1Info.Key == "Ab" || Row1Info.Key == "G#") && (Row2Info.Key == "Db" || Row2Info.Key == "C#"))
       //Very rare
-      TransposeHalfSteps = 1;else if (_Row1Tuning == "A" && Row2Tuning == "D")
+      TransposeHalfSteps = 1;else if (Row1Info.Key == "A" && Row2Info.Key == "D")
       //France
-      TransposeHalfSteps = 2;else if ((_Row1Tuning == "Bb" || _Row1Tuning == "A#") && (Row2Tuning == "Eb" || Row2Tuning == "D#")) TransposeHalfSteps = 3;else if (_Row1Tuning == "B" && Row2Tuning == "E")
+      TransposeHalfSteps = 2;else if ((Row1Info.Key == "Bb" || Row1Info.Key == "A#") && (Row2Info.Key == "Eb" || Row2Info.Key == "D#")) TransposeHalfSteps = 3;else if (Row1Info.Key == "B" && Row2Info.Key == "E")
       //Very rare
-      TransposeHalfSteps = 4;else if (_Row1Tuning == "C" && Row2Tuning == "F")
+      TransposeHalfSteps = 4;else if (Row1Info.Key == "C" && Row2Info.Key == "F")
       //Netherlands, Germany
-      TransposeHalfSteps = 5;else if ((_Row1Tuning == "Db" || _Row1Tuning == "C#") && (Row2Tuning == "Gb" || Row2Tuning == "F#"))
+      TransposeHalfSteps = 5;else if ((Row1Info.Key == "Db" || Row1Info.Key == "C#") && (Row2Info.Key == "Gb" || Row2Info.Key == "F#"))
       //Very rare
-      TransposeHalfSteps = 6;else if (_Row1Tuning == "D" && Row2Tuning == "G")
+      TransposeHalfSteps = 6;else if (Row1Info.Key == "D" && Row2Info.Key == "G")
       //England
       TransposeHalfSteps = 7;else {
-      console.error(tuning.length.toString() + ' row melodeon with row1 tuning \'' + _Row1Tuning + '\' and row2 tuning \'' + Row2Tuning + '\' is not supported');
+      if (this.tuning.length == 2) console.error('2 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' is not supported');else if (this.tuning.length == 3) console.error('3 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
       return;
     }
 
@@ -16333,115 +16478,102 @@ function MelodeonPatterns(plugin) {
     this.BassRow2Pull = new Array("Am", "F");
 
     //Define right hand buttons for G/C melodeon
-    push_row1.push(""); // 0
-    pull_row1.push("");
-    if (this.chinacc) {
-      push_row1.push("^C"); // 1
-      pull_row1.push("_E");
-    } else {
-      push_row1.push("B,,"); // 1
-      pull_row1.push("D,");
-    }
-    push_row1.push("D,"); // 2
-    pull_row1.push("^F,");
-    push_row1.push("G,"); // 3
-    pull_row1.push("A,");
-    push_row1.push("B,"); // 4
-    pull_row1.push("C");
-    push_row1.push("D"); // 5
-    pull_row1.push("E");
-    push_row1.push("G"); // 6
-    pull_row1.push("^F");
-    push_row1.push("B"); // 7
-    pull_row1.push("A");
-    push_row1.push("d"); // 8
-    pull_row1.push("c");
-    push_row1.push("g"); // 9
-    pull_row1.push("e");
-    push_row1.push("b"); // 10
-    pull_row1.push("^f");
-    push_row1.push("d'"); // 11
-    pull_row1.push("a");
-    push_row2.push(""); // 0'
-    pull_row2.push("");
-    if (this.chinacc) {
-      push_row2.push("_B"); // 1'
-      pull_row2.push("^G");
-    } else {
-      push_row2.push("E,"); // 1'
-      pull_row2.push("G,");
-    }
-    push_row2.push("G,"); // 2'
-    pull_row2.push("B,");
-    push_row2.push("C"); // 3'
-    pull_row2.push("D");
-    push_row2.push("E"); // 4'
-    pull_row2.push("F");
-    push_row2.push("G"); // 5'
-    pull_row2.push("A");
-    push_row2.push("c"); // 6'
-    pull_row2.push("B");
-    push_row2.push("e"); // 7'
-    pull_row2.push("d");
-    push_row2.push("g"); // 8'
-    pull_row2.push("f");
-    push_row2.push("c'"); // 9'
-    pull_row2.push("a");
-    push_row2.push("e'"); // 10'
-    pull_row2.push("b");
+    LoadRowG(push_row1, pull_row1, Row1Info);
+    LoadRowC(push_row2, pull_row2, Row2Info);
 
     //Lookup extra row3 by its special name
     if (this.tuning.length == 3) {
-      var Row3Tuning = this.tuning[2].replace(/[0-9]/g, '').toLowerCase();
-      if (Row3Tuning.substring(0, 4) == "club") {
+      var Row3Tuning = Row3Info.Key.toLowerCase();
+      if (Row3Tuning == "hohner") {
+        if (isNaN(Row3Info.Buttons)) Row3Info.Buttons = 23; //Hohner Merlin
+
+        //Define row 3
+        push_row3.push("");
+        pull_row3.push("");
+        push_row3.push("");
+        pull_row3.push("");
+        push_row3.push("");
+        pull_row3.push("");
+        push_row3.push("_E"); //4"
+        pull_row3.push("^C");
+        push_row3.push("^G"); //5"
+        pull_row3.push("_B");
+        if (Row3Info.Buttons == 25) {
+          //Hohner Galaad
+          push_row3.push("_e"); //6"
+          pull_row3.push("^c");
+          push_row3.push("^g"); //7"
+          pull_row3.push("_b");
+
+          //Add bass chords
+          this.BassRow1Push.splice(0, 0, "Ab");
+          this.BassRow1Pull.splice(0, 0, "Bm");
+          this.BassRow2Push.splice(0, 0, "Eb");
+          this.BassRow2Pull.splice(0, 0, "Bb");
+        }
+      } else if (Row3Tuning == "club") {
         //Read the total number of melody buttons for the club layout
-        var Buttons = parseInt(this.tuning[2].substring(0, 2));
-        if (isNaN(Buttons)) Buttons = 33;
-        if (Buttons != 33 && Buttons != 31 && Buttons != 30 && Buttons != 27 && Buttons != 25) {
-          console.error('club layour with ' + Buttons + ' buttons is not supported');
+        if (isNaN(Row3Info.Buttons)) Row3Info.Buttons = 33;
+        if (Row3Info.Buttons != 33 && Row3Info.Buttons != 31 && Row3Info.Buttons != 30 && Row3Info.Buttons != 27 && Row3Info.Buttons != 25) {
+          console.error('club layout with ' + Row3Info.Buttons + ' buttons is not supported');
           return;
+        }
+        if (Row3Info.Buttons != 25) {
+          Row1Info.Buttons = 12;
+          Row2Info.Buttons = 11;
+          push_row1 = new Array();
+          pull_row1 = new Array();
+          push_row2 = new Array();
+          pull_row2 = new Array();
+          LoadRowG(push_row1, pull_row1, Row1Info);
+          LoadRowC(push_row2, pull_row2, Row2Info);
         }
 
         //Update bass chords
         this.BassRow2Push[1] = "Bb";
 
         //Overwrite outside row
-        if (Buttons == 33 || Buttons == 27) {
+        if (Row3Info.Buttons == 33 || Row3Info.Buttons == 27) {
           push_row1[0] = "G,,"; // 0
           pull_row1[0] = "A,,";
-        } else if (Buttons == 31 || Buttons == 30) {
-          push_row1[0] = "^C,";
+        } else if (Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
+          push_row1[0] = "^C,"; // 0
           pull_row1[0] = "_E,";
         }
-        push_row1[1] = "B,,"; // 1
-        pull_row1[1] = "D,";
-        pull_row1[11] = "a"; //11
+        if (Row3Info.Buttons != 25) {
+          push_row1[1] = "B,,"; // 1
+          pull_row1[1] = "D,";
+        }
+        pull_row1[pull_row1.length - 1] = "g"; //11
 
         //Overwrite middle row
-        if (Buttons == 33 || Buttons == 27 || Buttons == 31 || Buttons == 30) {
+        if (Row3Info.Buttons == 33 || Row3Info.Buttons == 27 || Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
           push_row2[0] = "C,"; // 0'
           pull_row2[0] = "F,";
         }
-        push_row2[1] = "E,"; // 1'
-        pull_row2[1] = "G,";
-        pull_row2[5] = "G"; // 5'
+        if (Row3Info.Buttons != 25) {
+          push_row2[1] = "E,"; // 1'
+          pull_row2[1] = "G,";
+        }
+        if (Row3Info.Buttons != 25) pull_row2[5] = "G"; // 5'
+        else pull_row2[4] = "G"; // 5'
 
         //Define inside row
-        if (Buttons == 33) {
+        if (Row3Info.Buttons == 33) {
           push_row3.push("^C,"); //0"
           pull_row3.push("^D,");
         } else {
           push_row3.push(""); //0"
           pull_row3.push("");
         }
-        if (Buttons == 33 || Buttons == 31) {
+        if (Row3Info.Buttons == 33 || Row3Info.Buttons == 31) {
           push_row3.push("A,"); //1"
           pull_row3.push("_B,");
         } else {
           push_row3.push(""); //1"
           pull_row3.push("");
         }
-        if (Buttons == 33 || Buttons == 31 || Buttons == 30) {
+        if (Row3Info.Buttons == 33 || Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
           push_row3.push("_B,"); //2"
           pull_row3.push("^G,");
           push_row3.push("F"); //3"
@@ -16460,11 +16592,11 @@ function MelodeonPatterns(plugin) {
         pull_row3.push("_B");
         push_row3.push("^c"); //7"
         pull_row3.push("_e");
-        if (Buttons == 33 || Buttons == 31 || Buttons == 30) {
+        if (Row3Info.Buttons == 33 || Row3Info.Buttons == 31 || Row3Info.Buttons == 30) {
           push_row3.push("_b"); //8"
           pull_row3.push("^g");
         }
-        if (Buttons == 33) {
+        if (Row3Info.Buttons == 33) {
           push_row3.push("a"); //9"
           pull_row3.push("_b");
         }
@@ -16483,27 +16615,33 @@ function MelodeonPatterns(plugin) {
         this.BassRow2Push.splice(0, 0, "Bm");
         this.BassRow2Pull.splice(0, 0, "Bb");
 
-        //This layout has 4th button starts, add new button at the begin and remove the 12th button
-        push_row1.splice(0, 0, ""); //0
-        pull_row1.splice(0, 0, "");
-        push_row2.splice(0, 0, ""); //0'
-        pull_row2.splice(0, 0, "");
-        push_row1.pop();
-        pull_row1.pop();
-        push_row2.pop();
-        pull_row2.pop();
+        //Reload rows with button 4 starts and the required number of buttons
+        push_row1 = new Array();
+        pull_row1 = new Array();
+        push_row2 = new Array();
+        pull_row2 = new Array();
+        Row1Info.Start = 4;
+        Row2Info.Start = 4;
+        if (Row3Info.Buttons == 26) {
+          Row1Info.Buttons = 11;
+          Row2Info.Buttons = 10;
+        } else if (Row3Info.Buttons == 27) {
+          Row1Info.Buttons = 12;
+          Row2Info.Buttons = 11;
+        } else {
+          console.error('saltarelle layout with ' + Row3Info.Buttons + ' buttons is not supported');
+          return;
+        }
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        LoadRowC(push_row2, pull_row2, Row2Info);
 
-        //Override buttons 1 and 2
-        push_row1[1] = "^C,"; // 1
-        pull_row1[1] = "_E,";
-        push_row1[2] = "_B,,"; // 2
-        pull_row1[2] = "D,";
-        push_row2[1] = "_B,"; // 1'
-        pull_row2[1] = "_A,";
-        push_row2[2] = "E,"; // 2'
-        pull_row2[2] = "G,";
-        push_row3.push(""); // 0"
-        pull_row3.push("");
+        //Override button 1 of both rows
+        push_row1[0] = "^C,"; // 1
+        pull_row1[0] = "_E,";
+        push_row2[0] = "_B,"; // 1'
+        pull_row2[0] = "_A,";
+
+        //Define the helper row
         push_row3.push(""); // 1"
         pull_row3.push("");
         push_row3.push(""); // 2"
@@ -16516,8 +16654,10 @@ function MelodeonPatterns(plugin) {
         pull_row3.push("_B");
         push_row3.push("^c"); // 6"
         pull_row3.push("_e");
-        push_row3.push("_b"); // 7"
-        pull_row3.push("_a");
+        if (Row3Info.Buttons == 26) {
+          push_row3.push("_b"); // 7"
+          pull_row3.push("_a");
+        }
       } else if (Row3Tuning == "castagnari") {
         //Add bass chords
         this.BassRow1Push.splice(0, 0, "Ab");
@@ -16565,16 +16705,113 @@ function MelodeonPatterns(plugin) {
         push_row3.push("^g"); // 7"
         pull_row3.push("_b");
       } else {
-        console.error('Melodeon row3 \'' + Row3Tuning + '\' not supported');
-        return;
+        if ((Row2Info.Key == "Eb" || Row2Info.Key == "D#") && (Row3Info.Key == "Ab" || Row3Info.Key == "G#"))
+          //BbEbAb
+          TransposeHalfSteps = -3;else if (Row2Info.Key == "E" && Row3Info.Key == "A")
+          //BEA
+          TransposeHalfSteps = -3;else if (Row2Info.Key == "F" && (Row3Info.Key == "Bb" || Row3Info.Key == "A#"))
+          //CFBb
+          TransposeHalfSteps = -2;else if ((Row2Info.Key == "Gb" || Row2Info.Key == "F#") && Row3Info.Key == "B")
+          //DbDbB
+          TransposeHalfSteps = -1;else if (Row2Info.Key == "G" && Row3Info.Key == "C")
+          //DGC, does not exit
+          TransposeHalfSteps = 0;else if ((Row2Info.Key == "Ab" || Row2Info.Key == "G#") && (Row3Info.Key == "Db" || Row3Info.Key == "C#"))
+          //EbAbDb
+          TransposeHalfSteps = 1;else if (Row2Info.Key == "A" && Row3Info.Key == "D")
+          //EAD
+          TransposeHalfSteps = 2;else if ((Row2Info.Key == "Bb" || Row2Info.Key == "A#") && (Row3Info.Key == "Eb" || Row3Info.Key == "D#"))
+          //FBbEb
+          TransposeHalfSteps = 3;else if (Row2Info.Key == "B" && Row3Info.Key == "E")
+          //GbBE
+          TransposeHalfSteps = 4;else if (Row2Info.Key == "C" && Row3Info.Key == "F")
+          //GCF
+          TransposeHalfSteps = 5;else if ((Row2Info.Key == "Db" || Row2Info.Key == "C#") && (Row3Info.Key == "Gb" || Row3Info.Key == "F#"))
+          //AbDbGb
+          TransposeHalfSteps = 6;else if (Row2Info.Key == "D" && Row3Info.Key == "G")
+          //ADG
+          TransposeHalfSteps = 7;else {
+          console.error(this.tuning.length + ' row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
+          return;
+        }
+
+        //Row1 with 12 buttons is added before the other rows, define it as a D row here, event though DGC does not exist due to an octave rollover, it will be transposed below
+        //Therefore the D row is one octave lower than a normal D row
+        push_row1 = new Array();
+        pull_row1 = new Array();
+        push_row2 = new Array();
+        pull_row2 = new Array();
+        push_row3 = new Array();
+        pull_row3 = new Array();
+        Row1Info.Acc = true;
+        Row2Info.Acc = true;
+        Row3Info.Acc = true;
+        var Remove1_1 = false;
+        if (Row1Info.Buttons == 10 && Row2Info.Buttons == 11 && Row3Info.Buttons == 10) {
+          Row1Info.Buttons = 11;
+          Remove1_1 = true;
+        }
+        LoadRowD(push_row1, pull_row1, Row1Info);
+        LoadRowG(push_row2, pull_row2, Row2Info);
+        LoadRowC(push_row3, pull_row3, Row3Info);
+        if (Remove1_1) {
+          push_row1.splice(1, 1);
+          pull_row1.splice(1, 1);
+          push_row1.splice(0, 0, "");
+          pull_row1.splice(0, 0, "");
+        }
+
+        //Add bass chords for DGC
+        this.BassRow1Push.splice(0, 0, "D");
+        this.BassRow1Pull.splice(0, 0, "A");
+        this.BassRow2Push.splice(0, 0, "B");
+        this.BassRow2Pull.splice(0, 0, "Em");
       }
     }
-  } else if (this.tuning.length == 3) {
-    console.error('3 row melodeons are not supported');
-    return;
   } else {
-    console.error('Too many melodeon rows defined');
+    console.error('Melodeon with more than 3 rows are not supported');
     return;
+  }
+
+  //Handle button push/pull inversions for each row
+  if (typeof Row1Info !== 'undefined') {
+    for (var i = 0; i < Row1Info.aInvert.length; ++i) {
+      var Index = Row1Info.aInvert[i] - 1;
+      var Tmp = push_row1[Index];
+      push_row1[Index] = pull_row1[Index];
+      pull_row1[Index] = Tmp;
+    }
+  }
+  if (typeof Row2Info !== 'undefined') {
+    for (var _i = 0; _i < Row2Info.aInvert.length; ++_i) {
+      var _Index = Row2Info.aInvert[_i] - 1;
+      var _Tmp = push_row2[_Index];
+      push_row2[_Index] = pull_row2[_Index];
+      pull_row2[_Index] = _Tmp;
+    }
+  }
+  if (typeof Row3Info !== 'undefined') {
+    for (var _i2 = 0; _i2 < Row3Info.aInvert.length; ++_i2) {
+      var _Index2 = Row3Info.aInvert[_i2] - 1;
+      var _Tmp2 = push_row3[_Index2];
+      push_row3[_Index2] = pull_row3[_Index2];
+      pull_row3[_Index2] = _Tmp2;
+    }
+  }
+
+  //If not starting the numbering at 0, add empty buttons to the beginning of the arrays
+  if (!this.startzero) {
+    if (push_row1.length) {
+      push_row1.splice(0, 0, "");
+      pull_row1.splice(0, 0, "");
+    }
+    if (push_row2.length) {
+      push_row2.splice(0, 0, "");
+      pull_row2.splice(0, 0, "");
+    }
+    if (push_row3.length) {
+      push_row3.splice(0, 0, "");
+      pull_row3.splice(0, 0, "");
+    }
   }
 
   //Transpose left hand bass chords if required
@@ -16598,13 +16835,13 @@ function MelodeonPatterns(plugin) {
   //Add them to the push/pull arrays
   this.push_chords = this.push_chords.concat(this.BassCrossPush);
   this.pull_chords = this.pull_chords.concat(this.BassCrossPull);
-  for (var i = 0; i < this.push_chords.length; ++i) {
-    var pos = this.push_chords[i].search(" ");
-    if (pos >= 0) this.push_chords[i] = this.push_chords[i].substr(0, pos);
+  for (var _i3 = 0; _i3 < this.push_chords.length; ++_i3) {
+    var pos = this.push_chords[_i3].search(" ");
+    if (pos >= 0) this.push_chords[_i3] = this.push_chords[_i3].substr(0, pos);
   }
-  for (var _i = 0; _i < this.pull_chords.length; ++_i) {
-    var _pos = this.pull_chords[_i].search(" ");
-    if (_pos >= 0) this.pull_chords[_i] = this.pull_chords[_i].substr(0, _pos);
+  for (var _i4 = 0; _i4 < this.pull_chords.length; ++_i4) {
+    var _pos = this.pull_chords[_i4].search(" ");
+    if (_pos >= 0) this.pull_chords[_i4] = this.pull_chords[_i4].substr(0, _pos);
   }
   this.push_chords = _toConsumableArray(new Set(this.push_chords));
   this.pull_chords = _toConsumableArray(new Set(this.pull_chords));
@@ -16612,48 +16849,28 @@ function MelodeonPatterns(plugin) {
   //Define right hand notes from the note names, transpose if required
   var TransposeLookup = CreateTransposeLookup();
   this.push_row1 = new Array();
-  for (var _i2 = 0; _i2 < push_row1.length; ++_i2) {
-    this.push_row1.push(TransposeNameToNote(push_row1[_i2], TransposeHalfSteps, TransposeLookup));
+  for (var _i5 = 0; _i5 < push_row1.length; ++_i5) {
+    this.push_row1.push(TransposeNameToNote(push_row1[_i5], TransposeHalfSteps, TransposeLookup));
   }
   this.pull_row1 = new Array();
-  for (var _i3 = 0; _i3 < pull_row1.length; ++_i3) {
-    this.pull_row1.push(TransposeNameToNote(pull_row1[_i3], TransposeHalfSteps, TransposeLookup));
+  for (var _i6 = 0; _i6 < pull_row1.length; ++_i6) {
+    this.pull_row1.push(TransposeNameToNote(pull_row1[_i6], TransposeHalfSteps, TransposeLookup));
   }
   this.push_row2 = new Array();
-  for (var _i4 = 0; _i4 < push_row2.length; ++_i4) {
-    this.push_row2.push(TransposeNameToNote(push_row2[_i4], TransposeHalfSteps, TransposeLookup));
+  for (var _i7 = 0; _i7 < push_row2.length; ++_i7) {
+    this.push_row2.push(TransposeNameToNote(push_row2[_i7], TransposeHalfSteps, TransposeLookup));
   }
   this.pull_row2 = new Array();
-  for (var _i5 = 0; _i5 < pull_row2.length; ++_i5) {
-    this.pull_row2.push(TransposeNameToNote(pull_row2[_i5], TransposeHalfSteps, TransposeLookup));
+  for (var _i8 = 0; _i8 < pull_row2.length; ++_i8) {
+    this.pull_row2.push(TransposeNameToNote(pull_row2[_i8], TransposeHalfSteps, TransposeLookup));
   }
   this.push_row3 = new Array();
-  for (var _i6 = 0; _i6 < push_row3.length; ++_i6) {
-    this.push_row3.push(TransposeNameToNote(push_row3[_i6], TransposeHalfSteps, TransposeLookup));
+  for (var _i9 = 0; _i9 < push_row3.length; ++_i9) {
+    this.push_row3.push(TransposeNameToNote(push_row3[_i9], TransposeHalfSteps, TransposeLookup));
   }
   this.pull_row3 = new Array();
-  for (var _i7 = 0; _i7 < pull_row3.length; ++_i7) {
-    this.pull_row3.push(TransposeNameToNote(pull_row3[_i7], TransposeHalfSteps, TransposeLookup));
-  }
-
-  //Handle button push/pull inversions for each row
-  for (var _i8 = this.push_row1.length - 1; _i8 >= 0; --_i8) {
-    var Pos = Row1Invert.search(_i8.toString());
-    if (Pos >= 0) {
-      var Tmp = this.push_row1[_i8];
-      this.push_row1[_i8] = this.pull_row1[_i8];
-      this.pull_row1[_i8] = Tmp;
-      Row1Invert = Row1Invert.substr(0, Pos) + Row1Invert.substr(Pos + _i8.toString().length);
-    }
-  }
-  for (var _i9 = this.push_row2.length - 1; _i9 >= 1; --_i9) {
-    var _Pos = Row2Invert.search(_i9.toString());
-    if (_Pos >= 0) {
-      var _Tmp = this.push_row2[_i9];
-      this.push_row2[_i9] = this.pull_row2[_i9];
-      this.pull_row2[_i9] = _Tmp;
-      Row2Invert = Row2Invert.substr(0, _Pos) + Row2Invert.substr(_Pos + _i9.toString().length);
-    }
+  for (var _i10 = 0; _i10 < pull_row3.length; ++_i10) {
+    this.pull_row3.push(TransposeNameToNote(pull_row3[_i10], TransposeHalfSteps, TransposeLookup));
   }
 
   //console.log(this.push_row1);
@@ -16693,8 +16910,8 @@ function MelodeonPatterns(plugin) {
     this.HandPos[h].hard = new Array();
     var aFinger = [-1, 4];
     for (var _Row = 1; _Row <= 3; ++_Row) {
-      for (var _i10 = 0; _i10 < aFinger.length; ++_i10) {
-        var _Finger = aFinger[_i10];
+      for (var _i11 = 0; _i11 < aFinger.length; ++_i11) {
+        var _Finger = aFinger[_i11];
         if (_Row == 1) {
           var _Row1Index = h + _Finger;
           if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString());
@@ -17430,10 +17647,10 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           aRowOrder.sort(function (a, b) {
             return a - b;
           });
-          for (var _i11 = 0; _i11 < aRowOrder.length; ++_i11) {
-            if (aRowOrder[_i11] == this.RowPrefer1) aRowOrder[_i11] = 1;
-            if (aRowOrder[_i11] == this.RowPrefer2) aRowOrder[_i11] = 2;
-            if (aRowOrder[_i11] == this.RowPrefer3) aRowOrder[_i11] = 3;
+          for (var _i12 = 0; _i12 < aRowOrder.length; ++_i12) {
+            if (aRowOrder[_i12] == this.RowPrefer1) aRowOrder[_i12] = 1;
+            if (aRowOrder[_i12] == this.RowPrefer2) aRowOrder[_i12] = 2;
+            if (aRowOrder[_i12] == this.RowPrefer3) aRowOrder[_i12] = 3;
           }
 
           //Any
@@ -17450,14 +17667,14 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
               for (var HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
                 for (var f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
                   //Search all buttons
-                  for (var _i12 = 0; _i12 < aButtons.length; ++_i12) {
+                  for (var _i13 = 0; _i13 < aButtons.length; ++_i13) {
                     var Row = 1;
-                    if (aButtons[_i12][aButtons[_i12].length - 1] == "'") Row = 2;else if (aButtons[_i12][aButtons[_i12].length - 1] == "\"") Row = 3;
+                    if (aButtons[_i13][aButtons[_i13].length - 1] == "'") Row = 2;else if (aButtons[_i13][aButtons[_i13].length - 1] == "\"") Row = 3;
 
                     //If button match on the required row
-                    if ((RequireRow == 0 || Row == RequireRow) && aButtons[_i12] == this.HandPos[HandPosIndex].easy[f]) {
+                    if ((RequireRow == 0 || Row == RequireRow) && aButtons[_i13] == this.HandPos[HandPosIndex].easy[f]) {
                       this.HandPosIndex = HandPosIndex;
-                      Button = aButtons[_i12];
+                      Button = aButtons[_i13];
                       Found = true;
                       break;
                     }
@@ -17491,9 +17708,9 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
                     //Find same as last button
                     if (!Found) {
-                      for (var _i13 = 0; _i13 < aHandPosButtons.length; ++_i13) {
-                        if (this.LastButton == aHandPosButtons[_i13]) {
-                          Button = aHandPosButtons[_i13];
+                      for (var _i14 = 0; _i14 < aHandPosButtons.length; ++_i14) {
+                        if (this.LastButton == aHandPosButtons[_i14]) {
+                          Button = aHandPosButtons[_i14];
                           Found = true;
                           break;
                         }
@@ -17504,11 +17721,11 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
                     if (!Found) {
                       var LastRow = 1;
                       if (this.LastButton[this.LastButton.length - 1] == "'") LastRow = 2;else if (this.LastButton[this.LastButton.length - 1] == "\"") LastRow = 3;
-                      for (var _i14 = 0; _i14 < aHandPosButtons.length; ++_i14) {
+                      for (var _i15 = 0; _i15 < aHandPosButtons.length; ++_i15) {
                         var _Row3 = 1;
-                        if (aHandPosButtons[_i14][aHandPosButtons[_i14].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i14][aHandPosButtons[_i14].length - 1] == "\"") _Row3 = 3;
+                        if (aHandPosButtons[_i15][aHandPosButtons[_i15].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i15][aHandPosButtons[_i15].length - 1] == "\"") _Row3 = 3;
                         if (LastRow == _Row3) {
-                          Button = aHandPosButtons[_i14];
+                          Button = aHandPosButtons[_i15];
                           Found = true;
                           break;
                         }
@@ -17517,10 +17734,10 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
                     //Find same number as last button
                     if (!Found) {
-                      for (var _i15 = 0; _i15 < aHandPosButtons.length; ++_i15) {
+                      for (var _i16 = 0; _i16 < aHandPosButtons.length; ++_i16) {
                         //TODO: 10 / 1 risk
-                        if (this.LastButton.substring(0, 1) == aHandPosButtons[_i15].substring(0, 1)) {
-                          Button = aHandPosButtons[_i15];
+                        if (this.LastButton.substring(0, 1) == aHandPosButtons[_i16].substring(0, 1)) {
+                          Button = aHandPosButtons[_i16];
                           Found = true;
                           break;
                         }
@@ -17665,9 +17882,9 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   }
 
   //Create returns values for note head changes
-  for (var _i16 = 0; _i16 < aDiamandNotes.length; ++_i16) {
+  for (var _i17 = 0; _i17 < aDiamandNotes.length; ++_i17) {
     var note = new TabNote.TabNote("");
-    note.pitch = aDiamandNotes[_i16].pitch;
+    note.pitch = aDiamandNotes[_i17].pitch;
     var number = {
       num: "",
       str: -10,
@@ -17676,9 +17893,9 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     };
     retNotes.push(number);
   }
-  for (var _i17 = 0; _i17 < aTriangleNotes.length; ++_i17) {
+  for (var _i18 = 0; _i18 < aTriangleNotes.length; ++_i18) {
     var note = new TabNote.TabNote("");
-    note.pitch = aTriangleNotes[_i17].pitch;
+    note.pitch = aTriangleNotes[_i18].pitch;
     var number = {
       num: "",
       str: -20,

@@ -2,7 +2,6 @@ Bugs:
 - Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 Improvements:
-- Use , instead of ; to indicate row 3
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Harmonica: Syncronize with changes in Melodeon
 New features:

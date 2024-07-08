@@ -16,7 +16,7 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
 	aMelodeonAnnotation.push(">");
 	aMelodeonAnnotation.push(".");
 	aMelodeonAnnotation.push(":");
-	aMelodeonAnnotation.push(";");
+	aMelodeonAnnotation.push(",");
 
 	var lines = chordString.split("\n");
 	for (let i = 0; i < lines.length; i++) {

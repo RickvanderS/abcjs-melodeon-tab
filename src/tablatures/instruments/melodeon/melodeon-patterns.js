@@ -1668,7 +1668,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		//Check if row annotation is added to the chord
 		this.RowPrefer1 = Chord.indexOf(".");
 		this.RowPrefer2 = Chord.indexOf(":");
-		this.RowPrefer3 = Chord.indexOf(";");
+		this.RowPrefer3 = Chord.indexOf(",");
 	}
 
 	if (this.Scan) {

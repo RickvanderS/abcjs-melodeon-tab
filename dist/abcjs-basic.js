@@ -6959,7 +6959,7 @@ var letter_to_chord = function letter_to_chord(line, i) {
   aMelodeonAnnotation.push(">");
   aMelodeonAnnotation.push(".");
   aMelodeonAnnotation.push(":");
-  aMelodeonAnnotation.push(";");
+  aMelodeonAnnotation.push(",");
   if (line[i] === '"') {
     var chord = tokenizer.getBrackettedSubstring(line, i, 5);
     if (!chord[2]) warn("Missing the closing quote while parsing the chord symbol", line, i);
@@ -17488,7 +17488,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     //Check if row annotation is added to the chord
     this.RowPrefer1 = Chord.indexOf(".");
     this.RowPrefer2 = Chord.indexOf(":");
-    this.RowPrefer3 = Chord.indexOf(";");
+    this.RowPrefer3 = Chord.indexOf(",");
   }
   if (this.Scan) {
     if (this.aBars.length == 0) this.MarkBar();
@@ -23873,7 +23873,7 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
   aMelodeonAnnotation.push(">");
   aMelodeonAnnotation.push(".");
   aMelodeonAnnotation.push(":");
-  aMelodeonAnnotation.push(";");
+  aMelodeonAnnotation.push(",");
   var lines = chordString.split("\n");
   for (var i = 0; i < lines.length; i++) {
     var chord = lines[i];

@@ -593,7 +593,7 @@ var letter_to_chord = function(line, i) {
 	aMelodeonAnnotation.push(">");
 	aMelodeonAnnotation.push(".");
 	aMelodeonAnnotation.push(":");
-	aMelodeonAnnotation.push(";");
+	aMelodeonAnnotation.push(",");
 	
 	if (line[i] === '"')
 	{

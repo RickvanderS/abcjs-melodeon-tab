@@ -215,7 +215,7 @@ function LoadRowD(aOutPush, aOutPull, RowInfo) {
 	aOutPull.push("^c");
 	aOutPush.push("a"); // 11_
 	aOutPull.push("e");
-	aOutPush.push("d,"); // 12_
+	aOutPush.push("d'"); // 12_
 	aOutPull.push("g");
 	
 	//Remove buttons not required

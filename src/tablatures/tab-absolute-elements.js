@@ -276,31 +276,33 @@ TabAbsoluteElements.prototype.build = function (plugin,
         break;
       case 'bar':
         plugin.semantics.strings.measureAccidentals = {}
-        var lastBar = false;
-        if (ii === source.children.length-1) {
-          // used for final line bar drawing
-          // for multi tabs / multi staves
-          lastBar = true;
-        }
-        var cloned = cloneAbsoluteAndRelatives(absChild, plugin);
-        if (cloned.abcelem.barNumber) {
-          delete cloned.abcelem.barNumber;
-          for (var bn = 0; bn < cloned.children.length; bn++) {
-            if (cloned.children[bn].type === "barNumber" ) {
-              cloned.children.splice(bn, 1);
-              break;
-            }
-          }
-        }
-        cloned.abcelem.lastBar = lastBar;
-        dest.children.push(cloned);
-        tabVoice.push({
-          el_type: absChild.abcelem.el_type,
-          type: absChild.abcelem.type,
-          endChar: absChild.abcelem.endChar,
-          startChar: absChild.abcelem.startChar,
-          abselem: cloned
-        });
+		if (plugin.nbLines >= 1) {
+			var lastBar = false;
+			if (ii === source.children.length-1) {
+			  // used for final line bar drawing
+			  // for multi tabs / multi staves
+			  lastBar = true;
+			}
+			var cloned = cloneAbsoluteAndRelatives(absChild, plugin);
+			if (cloned.abcelem.barNumber) {
+			  delete cloned.abcelem.barNumber;
+			  for (var bn = 0; bn < cloned.children.length; bn++) {
+				if (cloned.children[bn].type === "barNumber" ) {
+				  cloned.children.splice(bn, 1);
+				  break;
+				}
+			  }
+			}
+			cloned.abcelem.lastBar = lastBar;
+			dest.children.push(cloned);
+			tabVoice.push({
+			  el_type: absChild.abcelem.el_type,
+			  type: absChild.abcelem.type,
+			  endChar: absChild.abcelem.endChar,
+			  startChar: absChild.abcelem.startChar,
+			  abselem: cloned
+			});
+		}
 		
 		if (plugin.semantics.MarkBar)
 			plugin.semantics.MarkBar();

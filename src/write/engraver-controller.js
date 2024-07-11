@@ -17,6 +17,7 @@ var GetFontAndAttr = require('./helpers/get-font-and-attr');
 var GetTextSize = require('./helpers/get-text-size');
 var draw = require('./draw/draw');
 var tablatures = require('../api/abc_tablatures');
+var findSelectableElement = require('./interactive/find-selectable-element');
 
 /**
  * @class
@@ -32,6 +33,7 @@ var tablatures = require('../api/abc_tablatures');
  */
 var EngraverController = function (paper, params) {
 	params = params || {};
+	this.findSelectableElement = findSelectableElement;
 	this.oneSvgPerLine = params.oneSvgPerLine;
 	this.selectionColor = params.selectionColor;
 	this.dragColor = params.dragColor ? params.dragColor : params.selectionColor;
@@ -40,6 +42,7 @@ var EngraverController = function (paper, params) {
 	this.responsive = params.responsive;
 	this.space = 3 * spacing.SPACE;
 	this.initialClef = params.initialClef;
+	this.timeBasedLayout = params.timeBasedLayout;
 	this.expandToWidest = !!params.expandToWidest;
 	this.scale = params.scale ? parseFloat(params.scale) : 0;
 	this.classes = new Classes({ shouldAddClasses: params.add_classes });
@@ -131,7 +134,7 @@ EngraverController.prototype.getMeasureWidths = function (abcTune) {
 	this.constructTuneElements(abcTune);
 	// layout() sets the x-coordinate of the abcTune element here:
 	// abcTune.lines[0].staffGroup.voices[0].children[0].x
-	layout(this.renderer, abcTune, 0, this.space);
+	layout(this.renderer, abcTune, 0, this.space, this.timeBasedLayout);
 
 	var ret = [];
 	var section;
@@ -193,6 +196,7 @@ EngraverController.prototype.setupTune = function (abcTune, tuneNumber) {
 		percmap: abcTune.formatting.percmap,
 		initialClef: this.initialClef,
 		jazzchords: this.jazzchords,
+		timeBasedLayout: this.timeBasedLayout,
 		accentAbove: this.accentAbove,
 		germanAlphabet: this.germanAlphabet
 	});
@@ -254,7 +258,7 @@ EngraverController.prototype.engraveTune = function (abcTune, tuneNumber, lineOf
 	//Set the top text now that we know the width
   
 	// Do all the positioning, both horizontally and vertically
-	var maxWidth = layout(this.renderer, abcTune, this.width, this.space, this.expandToWidest);
+	var maxWidth = layout(this.renderer, abcTune, this.width, this.space, this.expandToWidest, this.timeBasedLayout);
   
 	//Set the top text now that we know the width
 	if (this.expandToWidest && maxWidth > this.width + 1) {
@@ -301,7 +305,7 @@ EngraverController.prototype.engraveTune = function (abcTune, tuneNumber, lineOf
 	this.selectables = ret.selectables;
 	if (this.oneSvgPerLine) {
 	  var div = this.renderer.paper.svg.parentNode;
-	  this.svgs = splitSvgIntoLines(this.renderer, div, abcTune.metaText.title, this.responsive);
+	  this.svgs = splitSvgIntoLines(this.renderer, div, abcTune.metaText.title, this.responsive, scale);
 	} else {
 	  this.svgs = [this.renderer.paper.svg];
 	}
@@ -310,7 +314,7 @@ EngraverController.prototype.engraveTune = function (abcTune, tuneNumber, lineOf
 	this.jazzchords = origJazzChords
 };
 
-function splitSvgIntoLines(renderer, output, title, responsive) {
+function splitSvgIntoLines(renderer, output, title, responsive, scale) {
 	// Each line is a top level <g> in the svg. To split it into separate
 	// svgs iterate through each of those and put them in a new svg. Since
 	// they are placed absolutely, the viewBox needs to be manipulated to
@@ -335,7 +339,7 @@ function splitSvgIntoLines(renderer, output, title, responsive) {
 		var wrapper = document.createElement("div");
 		var divStyles = "overflow: hidden;"
 		if (responsive !== 'resize')
-			divStyles += "height:" + height + "px;"
+			divStyles += "height:" + (height * scale) + "px;"
 		wrapper.setAttribute("style", divStyles)
 		var svg = duplicateSvg(source)
 		var fullTitle = "Sheet Music for \"" + title + "\" section " + (i + 1)

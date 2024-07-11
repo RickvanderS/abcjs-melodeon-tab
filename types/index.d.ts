@@ -48,14 +48,14 @@ declare module 'abcjs' {
 
 	export type FormatAttributes = "titlefont" | "gchordfont" | "composerfont" | "footerfont" | "headerfont" | "historyfont" | "infofont" |
 		"measurefont" | "partsfont" | "repeatfont" | "subtitlefont" | "tempofont" | "textfont" | "voicefont" | "tripletfont" | "vocalfont" |
-		"wordsfont" | "annotationfont" | "scale" | "partsbox" | "freegchord" | "fontboxpadding" | "stretchlast" | "tablabelfont" | "tabnumberfont" | "tabgracefont";
+		"wordsfont" | "annotationfont" | "scale" | "partsbox" | "freegchord" | "fontboxpadding" | "stretchlast" | "tablabelfont" | "tabnumberfont" | "tabgracefont" | 'stafftopmargin';
 
 	export type MidiCommands = "nobarlines" | "barlines" | "beataccents" | "nobeataccents" | "droneon" | "droneoff" | "noportamento" | "channel" | "c" |
 		"drumon" | "drumoff" | "fermatafixed" | "fermataproportional" | "gchordon" | "gchordoff" | "bassvol" | "chordvol" | "bassprog" | "chordprog" |
 		"controlcombo" | "temperamentnormal" | "gchord" | "ptstress" | "beatmod" | "deltaloudness" | "drumbars" | "pitchbend" |
 		"gracedivider" | "makechordchannels" | "randomchordattack" | "chordattack" | "stressmodel" | "transpose" |
 		"rtranspose" | "volinc" | "program" | "ratio" | "snt" | "bendvelocity" | "control" | "temperamentlinear" | "beat" | "beatstring" |
-		"drone" | "bassprog" | "chordprog" | "drummap" | "portamento" | "expand" | "grace" | "trim" | "drum" | "chordname";
+		"drone" | "drummap" | "portamento" | "expand" | "grace" | "trim" | "drum" | "chordname";
 
 	export type StemDirection = 'up' | 'down' | 'auto' | 'none';
 
@@ -292,10 +292,12 @@ declare module 'abcjs' {
 		selectTypes?: boolean | Array<DragTypes>;
 		showDebug?: Array<"grid" | "box">;
 		staffwidth?: number;
+		stafftopmargin?: number;
 		startingTune?: number;
 		stop_on_warning?: boolean;
 		tablature?: Array<Tablature>;
 		textboxpadding?: number;
+		timeBasedLayout?: { minPadding?:number, minWidth?:number, align?: 'left'|'center'};
 		viewportHorizontal?: boolean;
 		viewportVertical?: boolean;
 		visualTranspose?: number;
@@ -361,6 +363,7 @@ declare module 'abcjs' {
 		drum?: string;
 		drumBars?: number;
 		drumIntro?: number;
+		drumOff?: boolean;
 		program?: number;
 		midiTranspose?: number;
 		visualTranspose?: number;
@@ -369,6 +372,13 @@ declare module 'abcjs' {
 		defaultQpm?: number;
 		chordsOff?: boolean;
 		detuneOctave?: boolean;
+
+		swing?: number;
+		bassprog?: number;
+		bassvol?: number;
+		chordprog?: number;
+		chordvol?: number;
+		gchord?: string;
 }
 
 	export interface SynthVisualOptions {
@@ -554,6 +564,7 @@ declare module 'abcjs' {
 		subtitlespace?: number;
 		sysstaffsep?: number;
 		systemsep?: number;
+		stafftopmargin?: number;
 		textspace?: number;
 		titleformat?: string;
 		titleleft?: boolean;
@@ -777,8 +788,10 @@ declare module 'abcjs' {
 		el_type: "note";
 		startChar: number;
 		endChar: number;
+		duration: number;
+		pitches?: Array<any>; // TODO-PER
+		rest?: { type: 'rest' | 'spacer' | 'invisible' | 'invisible-multimeasure' | 'multimeasure', text? : number};
 	}
-
 	export type VoiceItem = VoiceItemClef | VoiceItemBar | VoiceItemGap | VoiceItemKey | VoiceItemMeter | VoiceItemMidi | VoiceItemOverlay | VoiceItemPart | VoiceItemScale | VoiceItemStem | VoiceItemStyle | VoiceItemTempo | VoiceItemTranspose | VoiceItemNote;
 
 	export interface TuneLine {
@@ -805,24 +818,57 @@ declare module 'abcjs' {
 			text: TextFieldProperties;
 		};
 		staff?: Array<{
-					barNumber?: number;
-					brace: BracePosition;
-					bracket: BracePosition;
-					clef?: ClefProperties;
-					connectBarLines: BracePosition;
-					gchordfont: Font;
-					tripletfont: Font;
-					vocalfont: Font;
-					key?: KeySignature;
-					meter?: Meter;
-					spacingAbove?: number;
-					spacingBelow?: number;
-					stafflines?: number;
-					staffscale?: number;
-					title?: Array<string>;
-					voices?: Array<Array<VoiceItem>>;
-			}>
+			clef?: ClefProperties;
+			key?: KeySignature;
+			meter?: Meter;
+			voices?: Array<Array<VoiceItem>>;
+		}>;
+		staffGroup?: {
+			barNumber?: number;
+			brace?: BracePosition;
+			bracket?: BracePosition;
+			connectBarLines?: BracePosition;
+			gchordfont?: Font;
+			tripletfont?: Font;
+			vocalfont?: Font;
+			spacingAbove?: number;
+			spacingBelow?: number;
+			stafflines?: number;
+			staffscale?: number;
+			title?: Array<string>;
+			height?:number;
+			line?: number;
+			startx?:number;
+			w?:number;
+			gridStart?:number;
+			gridEnd?:number;
+		};
 		vskip?: number;
+	}
+
+	export interface Selectable {
+		absEl: AbsoluteElement;
+		isDraggable: boolean;
+		staffPos: {
+			height: number;
+			top: number;
+			zero: number;
+		}
+		svgEl: SVGElement;
+	}
+
+	export interface SelectableReturn {
+		index: number;
+		classes: Array<string>;
+		element: Selectable;
+		analysis: {
+			staffPos: number;
+			name: string;
+			voice: number;
+			line: number;
+			measure: number;
+			selectableElement: HTMLElement;
+		}
 	}
 
 	export interface TuneObject {
@@ -833,6 +879,7 @@ declare module 'abcjs' {
 		metaText: MetaText;
 		metaTextInfo: MetaTextInfo;
 		version: string;
+		warnings?: Array<string>;
 
 		getTotalTime: NumberFunction;
 		getTotalBeats: NumberFunction;
@@ -851,21 +898,13 @@ declare module 'abcjs' {
 		setUpAudio: (options: SynthOptions) => AudioTracks;
 		makeVoicesArray: () => Array<Selectable[]>
 		deline: () => Array<TuneLine>;
+		findSelectableElement: (target: HTMLElement) => SelectableReturn | null;
+		getSelectableArray: () => Array<Selectable>
 		lineBreaks?: Array<number>;
 		visualTranspose?: number;
 	}
 
 	export type TuneObjectArray = [TuneObject]
-
-	export interface Selectable {
-		absEl: AbsoluteElement;
-		isDraggable: boolean;
-		staffPos: {
-			height: number;
-			top: number;
-			zero: number;
-		}
-	}
 
 	export interface AbcElem {
 		el_type: string; //TODO enumerate these
@@ -1123,6 +1162,8 @@ declare module 'abcjs' {
 
 	export function renderAbc(target: Selector, code: string, params?: AbcVisualParams): TuneObjectArray
 
+	export function tuneMetrics(code: string, params?: AbcVisualParams): Array<{sections: Array<{left: number, measureWidths:Array<number>, total: number}>}>
+
 	export function parseOnly(abc: string, params?: AbcVisualParams) : TuneObjectArray
 
 	//
@@ -1227,6 +1268,29 @@ declare module 'abcjs' {
 		embed(parent:Element, noplayer:boolean):void
 	}
 
+	export interface SynthControlOptions {
+		ac?: AudioContext;
+		afterResume?: () => void;
+		loopHandler?: (ev: any) => Promise<void>;
+		restartHandler?: (ev: any) => Promise<void>;
+		playHandler?: (ev: any) => Promise<void>;
+		playPromiseHandler?: (ev: any) => Promise<void>;
+		progressHandler?: (ev: any) => Promise<void>;
+		warpHandler?: (ev: any) => Promise<void>;
+		hasClock?: boolean;
+		repeatTitle?: string;
+		repeatAria?: string;
+		restartTitle?: string;
+		restartAria?: string;
+		playTitle?: string;
+		playAria?: string;
+		randomTitle?: string;
+		randomAria?: string;
+		warpTitle?: string;
+		warpAria?: string;
+		bpm?: string;
+	}
+
 	export namespace synth {
 		let instrumentIndexToName: [string]
 		let pitchToNoteName: [string]
@@ -1237,7 +1301,7 @@ declare module 'abcjs' {
 		export function supportsAudio(): boolean
 		export function registerAudioContext(ac?: AudioContext): boolean
 		export function activeAudioContext(): AudioContext
-		export function CreateSynthControl(element: Selector, options: AbcVisualParams): AudioControl
+		export function CreateSynthControl(element: Selector, options?: SynthControlOptions): AudioControl
 		export function getMidiFile(source: string | TuneObject, options?: MidiFileOptions): MidiFile;
 		export function playEvent(pitches: MidiPitches, graceNotes: MidiGracePitches | undefined, milliSecondsPerMeasure: number, soundFontUrl? : string, debugCallback?: (message: string) => void): Promise<void>;
 		export function sequence(visualObj: TuneObject, options: AbcVisualParams): AudioSequence
@@ -1259,7 +1323,7 @@ declare module 'abcjs' {
 	export function numberOfTunes(abc: string) : number;
 	export function extractMeasures(abc: string) : Array<MeasureList>;
 	
-	export function strTranspose(originalAbc: string, visualObj: TuneObject, steps: number): string;
+	export function strTranspose(originalAbc: string, visualObj: TuneObjectArray, steps: number): string;
 
 	//
 	// Glyph

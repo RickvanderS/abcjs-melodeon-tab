@@ -3,10 +3,10 @@ Bugs:
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
-- Harmonica: Syncronize with changes in Melodeon
+- Harmonica: Merge harmonica into melodeon and call it diatonic tab
 New features:
-- Hide tablature (useful when we only want note heads and/or push pull indicators)
-- Other types/styles of tablature
+- Single line tablature (like harmonica)
+- Line per instrument row tablature
 - Optional push/pull indicators next to chords
 - Export ABC with injected tablature
 - Option to disable chord thirds (so chord is neither minor or major)

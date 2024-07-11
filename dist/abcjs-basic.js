@@ -16580,6 +16580,14 @@ function MelodeonPatterns(plugin) {
   if (this.Row2Marker == null) this.Row2Marker = "'";
   this.Row3Marker = plugin._super.params.Row3Marker;
   if (this.Row3Marker == null) this.Row3Marker = "\"";
+
+  //Tablature style
+  //0 hide
+  //1 push/pull on one tab row
+  //2 push and pull tab row
+  //3 tab row per instrument row
+  this.tabstyle = plugin._super.params.tabstyle;
+  if (this.tabstyle == null) this.tabstyle = 2;
   this.changenoteheads = plugin._super.params.changenoteheads;
   if (this.changenoteheads == null) this.changenoteheads = false;
 
@@ -18097,7 +18105,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var error = null;
   var retNotes = new Array();
   var retGraces = null;
-  if (strPush.length) {
+  if (strPush.length && this.tabstyle == 2) {
     strPush = strPush.replaceAll("'", this.Row2Marker);
     strPush = strPush.replaceAll("\"", this.Row3Marker);
     var note = new TabNote.TabNote("");
@@ -18109,7 +18117,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     };
     retNotes.push(number);
   }
-  if (strPull.length) {
+  if (strPull.length && this.tabstyle == 2) {
     strPull = strPull.replaceAll("'", this.Row2Marker);
     strPull = strPull.replaceAll("\"", this.Row3Marker);
     var note = new TabNote.TabNote("");
@@ -18201,13 +18209,29 @@ MelodeonTablature.prototype.setRelative = function (child, relative, first) {
       relative.height = this.height;
       break;
     case 'symbol':
-      var top = this.bar.pitch2 * 2.5;
       if (child.name == 'dots.dot') {
+        //Change distance between the dots based on the number of tab rows
+        var Div;
+        var Mult1;
+        var Mult2;
+        if (this.numLines == 2) {
+          Div = 4;
+          Mult1 = 1;
+          Mult2 = 3;
+        } else if (this.numLines == 3) {
+          Div = 8;
+          Mult1 = 3;
+          Mult2 = 5;
+        } else {
+          Div = 10;
+          Mult1 = 4;
+          Mult2 = 6;
+        }
         if (first) {
-          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 3;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / Div * Mult1;
           return false;
         } else {
-          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 5;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / Div * Mult2;
           return true;
         }
       }
@@ -18242,13 +18266,29 @@ var RelativeElement = __webpack_require__(/*! ../../../write/creation/elements/r
 * @param {*} params  complementary args provided to Tablature Plugin
 */
 Plugin.prototype.init = function (abcTune, tuneNumber, params) {
+  //Set default tablature style if not specified
+  //0 hide
+  //1 push/pull on one tab row
+  //2 push and pull tab row
+  //3 tab row per instrument row
+  if (typeof params.tabstyle == 'undefined') params.tabstyle = 2;
+
+  //Determine the number of rows in the tab from the style
+  if (params.tabstyle == 0)
+    //No tab
+    this.nbLines = 0;else if (params.tabstyle < 3)
+    //One tab row or two tab rows
+    this.nbLines = params.tabstyle + 1;else
+    //Tab row per instrument row
+    this.nbLines = params.tuning.length + 1;
+
+  //Based on the number of rows, decide if small or large icon needs to be displayed
+  this.isTabBig = false;
+  if (this.nbLines > 3) this.isTabBig = true;
   var _super = new TabCommon(abcTune, tuneNumber, params);
   this._super = _super;
   this.abcTune = abcTune;
   this.linePitch = 5;
-  this.nbLines = 3;
-  this.isTabBig = false;
-  this.chinacc = params.chinacc;
   this.transpose = params.visualTranspose;
   this.tablature = new MelodeonTablature(this.nbLines, this.linePitch);
   var semantics = new MelodeonPatterns(this);
@@ -18259,7 +18299,7 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   var tabYPos = 10;
   if (this.isTabBig) {
     tabIcon = 'tab.big';
-    tabYPos = 10;
+    tabYPos = 12.5;
   }
   var element = {
     el_type: "tab",
@@ -18268,19 +18308,30 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   };
   var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
   tabAbsolute.x = absX;
-  var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
-  tabRelative.x = relX;
-  tabAbsolute.children.push(tabRelative);
-  tabIcon = 'tab.pull';
-  var tabRelative2 = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
-  tabRelative2.x = relX + 20;
-  tabAbsolute.children.push(tabRelative2);
-  tabIcon = 'tab.push';
-  var tabRelative3 = new RelativeElement(tabIcon, 0, 0, 12.5, "tab");
-  tabRelative3.x = relX + 20 + 8.014;
-  tabAbsolute.children.push(tabRelative3);
-  if (tabAbsolute.abcelem.el_type == 'tab') {
-    tabRelative.pitch = tabYPos;
+  if (this._super.params.tabstyle > 0) {
+    //Set the tab icon
+    var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+    tabRelative.x = relX;
+    tabAbsolute.children.push(tabRelative);
+    if (tabAbsolute.abcelem.el_type == 'tab') {
+      tabRelative.pitch = tabYPos;
+    }
+
+    //For push/pull row style, set the push pull icons
+    if (this._super.params.tabstyle == 2) {
+      tabIcon = 'tab.pull';
+      var tabRelative2 = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+      tabRelative2.x = relX + 20;
+      tabAbsolute.children.push(tabRelative2);
+      tabIcon = 'tab.push';
+      var tabRelative3 = new RelativeElement(tabIcon, 0, 0, 12.5, "tab");
+      tabRelative3.x = relX + 20 + 8.014;
+      tabAbsolute.children.push(tabRelative3);
+    }
+    //For tab row per instrument row style, set the row keys
+    else if (this._super.params.tabstyle == 3) {
+      //TODO:
+    }
   }
   return tabAbsolute;
 };
@@ -19276,31 +19327,33 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
         break;
       case 'bar':
         plugin.semantics.strings.measureAccidentals = {};
-        var lastBar = false;
-        if (ii === source.children.length - 1) {
-          // used for final line bar drawing
-          // for multi tabs / multi staves
-          lastBar = true;
-        }
-        var cloned = cloneAbsoluteAndRelatives(absChild, plugin);
-        if (cloned.abcelem.barNumber) {
-          delete cloned.abcelem.barNumber;
-          for (var bn = 0; bn < cloned.children.length; bn++) {
-            if (cloned.children[bn].type === "barNumber") {
-              cloned.children.splice(bn, 1);
-              break;
+        if (plugin.nbLines >= 1) {
+          var lastBar = false;
+          if (ii === source.children.length - 1) {
+            // used for final line bar drawing
+            // for multi tabs / multi staves
+            lastBar = true;
+          }
+          var cloned = cloneAbsoluteAndRelatives(absChild, plugin);
+          if (cloned.abcelem.barNumber) {
+            delete cloned.abcelem.barNumber;
+            for (var bn = 0; bn < cloned.children.length; bn++) {
+              if (cloned.children[bn].type === "barNumber") {
+                cloned.children.splice(bn, 1);
+                break;
+              }
             }
           }
+          cloned.abcelem.lastBar = lastBar;
+          dest.children.push(cloned);
+          tabVoice.push({
+            el_type: absChild.abcelem.el_type,
+            type: absChild.abcelem.type,
+            endChar: absChild.abcelem.endChar,
+            startChar: absChild.abcelem.startChar,
+            abselem: cloned
+          });
         }
-        cloned.abcelem.lastBar = lastBar;
-        dest.children.push(cloned);
-        tabVoice.push({
-          el_type: absChild.abcelem.el_type,
-          type: absChild.abcelem.type,
-          endChar: absChild.abcelem.endChar,
-          startChar: absChild.abcelem.startChar,
-          abselem: cloned
-        });
         if (plugin.semantics.MarkBar) plugin.semantics.MarkBar();
         break;
       case 'rest':
@@ -19731,6 +19784,7 @@ TabRenderer.prototype.doLayout = function () {
   // take lyrics into account if any
   var lyricsHeight = getLyricHeight(firstVoice);
   var padd = 3;
+  if (this.plugin.nbLines < 1) padd = 0;
   var prevIndex = this.staffIndex;
   var previousStaff = staffGroup.staffs[prevIndex];
   var tabTop = this.tabSize + padd - previousStaff.bottom - lyricsHeight;
@@ -25575,6 +25629,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
   var bottomLine;
   var linePitch = 2;
   var bartop = 0;
+  var startswithlines = 0;
   for (var i = 0; i < params.voices.length; i++) {
     var staff = params.voices[i].staff;
     var tabName = params.voices[i].tabNameInfos;
@@ -25587,6 +25642,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
       if (!topLine) topLine = renderer.calcY(10);
       bottomLine = renderer.calcY(linePitch);
       if (staff.lines !== 0) {
+        startswithlines++;
         if (staff.linePitch) {
           linePitch = staff.linePitch;
         }
@@ -25650,7 +25706,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
 
   // connect all the staves together with a vertical line
   var staffSize = params.staffs.length;
-  if (staffSize > 1) {
+  if (staffSize > 1 && startswithlines > 1) {
     topLine = params.staffs[0].topLine;
     bottomLine = params.staffs[staffSize - 1].bottomLine;
     printStem(renderer, params.startx, 0.6, topLine, bottomLine, null);

@@ -333,6 +333,16 @@ function MelodeonPatterns(plugin) {
   this.Row3Marker = plugin._super.params.Row3Marker;
   if (this.Row3Marker == null)
     this.Row3Marker = "\"";
+
+	//Tablature style
+	//0 hide
+	//1 push/pull on one tab row
+	//2 push and pull tab row
+	//3 tab row per instrument row
+	this.tabstyle = plugin._super.params.tabstyle;
+	if (this.tabstyle == null)
+		this.tabstyle = 2;
+
   this.changenoteheads = plugin._super.params.changenoteheads;
   if (this.changenoteheads == null)
     this.changenoteheads = false;
@@ -2111,7 +2121,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	var error     = null; 
 	var retNotes  = new Array;
 	var retGraces = null;
-	if (strPush.length) {
+	if (strPush.length && this.tabstyle == 2) {
 		strPush = strPush.replaceAll("'" , this.Row2Marker);
 		strPush = strPush.replaceAll("\"", this.Row3Marker);
 
@@ -2123,7 +2133,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		};
 		retNotes.push(number);
 	}
-	if (strPull.length) {
+	if (strPull.length && this.tabstyle == 2) {
 		strPull = strPull.replaceAll("'" , this.Row2Marker);
 		strPull = strPull.replaceAll("\"", this.Row3Marker);
 

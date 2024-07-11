@@ -38,13 +38,32 @@ MelodeonTablature.prototype.setRelative = function (child, relative, first) {
       relative.height = this.height;
       break;
     case 'symbol':
-      var top = this.bar.pitch2 * 2.5;
       if (child.name == 'dots.dot') {
+		//Change distance between the dots based on the number of tab rows
+		var Div;
+		var Mult1;
+		var Mult2;
+		if (this.numLines == 2) {
+			Div   = 4;
+			Mult1 = 1;
+			Mult2 = 3;
+		}
+		else if (this.numLines == 3) {
+			Div   = 8;
+			Mult1 = 3;
+			Mult2 = 5;
+		}
+		else {
+			Div   = 10;
+			Mult1 = 4;
+			Mult2 = 6;
+		}
+		
         if (first) {
-          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 3;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / Div * Mult1;
           return false;
         } else {
-          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 8 * 5;
+          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / Div * Mult2;
           return true;
         }
       }

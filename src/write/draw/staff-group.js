@@ -73,6 +73,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
 
 	var linePitch = 2;
 	var bartop = 0;
+	var startswithlines = 0;
 	for (var i = 0; i < params.voices.length; i++) {
 		var staff = params.voices[i].staff;
 		var tabName = params.voices[i].tabNameInfos;
@@ -85,6 +86,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
 			if (!topLine) topLine = renderer.calcY(10);
 			bottomLine = renderer.calcY(linePitch);
 			if (staff.lines !== 0) {
+				startswithlines++;
 				if (staff.linePitch) {
 					linePitch = staff.linePitch;
 				}
@@ -137,7 +139,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
 
 	// connect all the staves together with a vertical line
 	var staffSize = params.staffs.length;
-	if (staffSize > 1) {
+	if (staffSize > 1 && startswithlines > 1) {
 		topLine = params.staffs[0].topLine;
 		bottomLine = params.staffs[staffSize - 1].bottomLine;
 		printStem(renderer, params.startx, 0.6, topLine, bottomLine, null);

@@ -273,6 +273,8 @@ TabRenderer.prototype.doLayout = function () {
   // take lyrics into account if any
   var lyricsHeight = getLyricHeight(firstVoice);
   var padd = 3;
+  if (this.plugin.nbLines < 1)
+	  padd = 0;
   var prevIndex = this.staffIndex;
   var previousStaff = staffGroup.staffs[prevIndex];
   var tabTop = this.tabSize + padd - previousStaff.bottom - lyricsHeight;

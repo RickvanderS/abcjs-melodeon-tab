@@ -49,6 +49,13 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
 	this.semantics = semantics;
 };
 
+function TuningStrip(RowTuning) {
+	RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
+	if (RowTuning.length > 2)
+		RowTuning = "#";
+	return RowTuning;
+}
+
 Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   var tabIcon = 'tab.tiny';
   var tabYPos = 10;
@@ -76,19 +83,56 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
 
 		//For push/pull row style, set the push pull icons
 		if (this._super.params.tabstyle == 2) {
+			var Xadjust = 20;
+			var Y       = 7.5
+			
 			tabIcon = 'tab.pull';
-			var tabRelative2 = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
-			tabRelative2.x = relX + 20;
-			tabAbsolute.children.push(tabRelative2);
+			var tabRelativeRow1 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
+			tabRelativeRow1.x = relX + Xadjust;
+			tabAbsolute.children.push(tabRelativeRow1);
 
 			tabIcon = 'tab.push';
-			var tabRelative3 = new RelativeElement(tabIcon, 0, 0, 12.5, "tab");
-			tabRelative3.x = relX + 20 + 8.014;
-			tabAbsolute.children.push(tabRelative3);
+			Y += this.linePitch;
+			var tabRelativeRow2 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
+			tabRelativeRow2.x = relX + Xadjust + 8.014;
+			tabAbsolute.children.push(tabRelativeRow2);
 		}
 		//For tab row per instrument row style, set the row keys
 		else if (this._super.params.tabstyle == 3) {
+			var Xadjust = 25;
+			if (this.isTabBig)
+				Xadjust += 5;
+			  var opt = {
+				type: 'tabNumber'
+			  };
+			var Y = 10;
+			
 			//TODO:
+			if (this._super.params.tuning.length >= 1) {
+				var str1 = TuningStrip(this._super.params.tuning[0]);
+				var tabRelativeRow1 = new RelativeElement(str1, 0, 0, Y, opt);
+				tabRelativeRow1.x = relX + Xadjust;
+				tabAbsolute.children.push(tabRelativeRow1);
+			}
+			
+			if (this._super.params.tuning.length >= 2) {
+				Y += this.linePitch;
+				var str2 = TuningStrip(this._super.params.tuning[1]);
+				var tabRelativeRow2 = new RelativeElement(str2, 0, 0, Y, opt);
+				tabRelativeRow2.x = relX + Xadjust;
+				tabAbsolute.children.push(tabRelativeRow2);
+			}
+			
+			if (this._super.params.tuning.length >= 3) {
+				Y += this.linePitch;
+				var str3 = TuningStrip(this._super.params.tuning[2]);
+				var tabRelativeRow3 = new RelativeElement(str3, 0, 0, Y, opt);
+				tabRelativeRow3.x = relX + Xadjust;
+				tabAbsolute.children.push(tabRelativeRow3);
+			}
+			
+			
+			
 		}
 	}
 

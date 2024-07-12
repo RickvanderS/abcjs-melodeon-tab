@@ -962,7 +962,7 @@ function MelodeonPatterns(plugin) {
 		for (let Finger = 0; Finger < 4; ++Finger) {
 			if (Row == 1) {
 				let Row1Index = h+Finger;
-				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index).toString());
+				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index).toString() + "$");
 			}
 			else if (Row == 2) {
 				let Row2Index = h+Finger;
@@ -984,7 +984,7 @@ function MelodeonPatterns(plugin) {
 			let Finger = aFinger[i];
 			if (Row == 1) {
 				let Row1Index = h+Finger;
-				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].hard.push((Row1Index).toString());
+				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].hard.push((Row1Index).toString() + "$");
 			}
 			else if (Row == 2) {
 				let Row2Index = h+Finger;
@@ -1072,11 +1072,17 @@ function noteToButton(noteName, LookupArray) {
 
 
 MelodeonPatterns.prototype.noteToPushButtonRow1 = function(noteName) {
-	return noteToButton(noteName, this.push_row1);
+	let ButtonNumber = noteToButton(noteName, this.push_row1);
+	if (ButtonNumber.length > 0)
+		ButtonNumber += "$";
+	return ButtonNumber;
 }
 
 MelodeonPatterns.prototype.noteToPullButtonRow1 = function(noteName) {
-	return noteToButton(noteName, this.pull_row1);
+	let ButtonNumber = noteToButton(noteName, this.pull_row1);
+	if (ButtonNumber.length > 0)
+		ButtonNumber += "$";
+	return ButtonNumber;
 }
 
 MelodeonPatterns.prototype.noteToPushButtonRow2 = function(noteName) {
@@ -1626,6 +1632,41 @@ function ChordMatch(Chord1, Chord2, MaxLength) {
 	return false;
 }
 
+function ButtonStringToArrays(str) {
+	str.replaceAll("\u200A", "");
+	
+	let strRow1 = "";
+	let strRow2 = "";
+	let strRow3 = "";
+	
+	let But = "";
+	for (let i = 0; i < str.length; ++i) {
+		if (str[i] == "$") {
+			strRow1 += But;
+			strRow1 += "\u200A";
+			But = "";
+		}
+		else if (str[i] == "'") {
+			strRow2 += But;
+			strRow2 += "\u200A";
+			But = "";
+		}
+		else if (str[i] == "\"") {
+			strRow3 += But;
+			strRow3 += "\u200A";
+			But = "";
+		}
+		else
+			But += str[i];
+	}
+	
+	return {
+		strRow1: strRow1,
+		strRow2: strRow2,
+		strRow3: strRow3,
+	};
+}
+
 MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	//Update chord push/pull on change
 	if (chord && chord.length > 0) {
@@ -2121,29 +2162,107 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	var error     = null; 
 	var retNotes  = new Array;
 	var retGraces = null;
-	if (strPush.length && this.tabstyle == 2) {
-		strPush = strPush.replaceAll("'" , this.Row2Marker);
-		strPush = strPush.replaceAll("\"", this.Row3Marker);
+	//Single tab line
+	if (this.tabstyle == 1) {
+		strBoth = "";
+		if (strPush.length) {
+			strPush = strPush.replaceAll("$" , "");
+			strPush = strPush.replaceAll("'" , this.Row2Marker);
+			strPush = strPush.replaceAll("\"", this.Row3Marker);
+			strBoth = strPush;
+		}
+		if (strPull.length) {
+			strPull = "-" + strPull;
+			strPull = strPull.replaceAll("$" , "");
+			strPull = strPull.replaceAll("'" , this.Row2Marker);
+			strPull = strPull.replaceAll("\"", this.Row3Marker);
+			strBoth += strPull;
+		}
 
 		var note = new TabNote.TabNote("");
 		var number = {
-			num : strPush,
-			str : -1, //Push row (top)
+			num : strBoth,
+			str : 1,
 			note: note
 		};
 		retNotes.push(number);
 	}
-	if (strPull.length && this.tabstyle == 2) {
-		strPull = strPull.replaceAll("'" , this.Row2Marker);
-		strPull = strPull.replaceAll("\"", this.Row3Marker);
+	//Tab line for push and pull
+	else if (this.tabstyle == 2) {
+		if (strPush.length) {
+			strPush = strPush.replaceAll("$" , "");
+			strPush = strPush.replaceAll("'" , this.Row2Marker);
+			strPush = strPush.replaceAll("\"", this.Row3Marker);
 
+			var note = new TabNote.TabNote("");
+			var number = {
+				num : strPush,
+				str : 2, //Push line (top)
+				note: note
+			};
+			retNotes.push(number);
+		}
+		if (strPull.length) {
+			strPull = strPull.replaceAll("$" , "");
+			strPull = strPull.replaceAll("'" , this.Row2Marker);
+			strPull = strPull.replaceAll("\"", this.Row3Marker);
+
+			var note = new TabNote.TabNote("");
+			var number = {
+				num : strPull,
+				str : 1, //Pull line (bottom)
+				note: note
+			};
+			retNotes.push(number);
+		}
+	}
+	//Tab line per instrument row
+	else if (this.tabstyle == 3) {
+		var Strings = ButtonStringToArrays("");
+		if (strPush.length) {
+			var PushStrings = ButtonStringToArrays(strPush);
+			Strings.strRow1 = PushStrings.strRow1;
+			Strings.strRow2 = PushStrings.strRow2;
+			Strings.strRow3 = PushStrings.strRow3;
+		}
+		
+		if (strPull.length) {
+			var PullStrings = ButtonStringToArrays(strPull);
+			if (PullStrings.strRow1.length)
+				Strings.strRow1 = "-" + PullStrings.strRow1;
+			if (PullStrings.strRow2.length)
+				Strings.strRow2 = "-" + PullStrings.strRow2;
+			if (PullStrings.strRow3.length)
+				Strings.strRow3 = "-" + PullStrings.strRow3;
+			
+			
+		}
+		
 		var note = new TabNote.TabNote("");
-		var number = {
-			num : strPull,
-			str : 1, //Pull row (bottom
-			note: note
-		};
-		retNotes.push(number);
+		if (Strings.strRow1.length) {
+			var number = {
+				num : Strings.strRow1,
+				str : 1,
+				note: note
+			};
+			retNotes.push(number);
+		}
+		if (Strings.strRow2.length) {
+			var number = {
+				num : Strings.strRow2,
+				str : 2,
+				note: note
+			};
+			retNotes.push(number);
+		}
+		if (Strings.strRow3.length) {
+			var number = {
+				num : Strings.strRow3,
+				str : 3,
+				note: note
+			};
+			retNotes.push(number);
+		}
 	}
 
 	//Create returns values for note head changes
@@ -2176,7 +2295,9 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 };
 
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
-  if (stringNumber < 1)
+  if (stringNumber == 3)
+    return 19.7;
+  else if (stringNumber == 2)
     return 14.7;
   else
     return 9.7;

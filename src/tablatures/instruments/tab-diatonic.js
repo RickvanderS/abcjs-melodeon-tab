@@ -1,12 +1,12 @@
 /*
-Emit tab for Melodeon staff
+Emit tab for Diatonic staff
 */
-var MelodeonTablature = require('./melodeon-tablature');
-var TabCommon = require('../../tab-common');
-var TabRenderer = require('../../tab-renderer');
-var MelodeonPatterns = require('./melodeon-patterns');
-var AbsoluteElement = require('../../../write/creation/elements/absolute-element');
-var RelativeElement = require('../../../write/creation/elements/relative-element');
+var DiatonicTablature = require('./diatonic-tablature');
+var TabCommon = require('../tab-common');
+var TabRenderer = require('../tab-renderer');
+var DiatonicPatterns = require('./diatonic-patterns');
+var AbsoluteElement = require('../../write/creation/elements/absolute-element');
+var RelativeElement = require('../../write/creation/elements/relative-element');
 
 /**
 * upon init mainly store provided instances for later usage
@@ -43,9 +43,9 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
 	this.linePitch = 5;
 
 	this.transpose = params.visualTranspose;
-	this.tablature = new MelodeonTablature(this.nbLines, this.linePitch);
+	this.tablature = new DiatonicTablature(this.nbLines, this.linePitch);
 
-	var semantics = new MelodeonPatterns(this);
+	var semantics = new DiatonicPatterns(this);
 	this.semantics = semantics;
 };
 
@@ -158,9 +158,9 @@ function Plugin() {}
 //
 // Tablature plugin definition
 //
-var AbcMelodeonTab = function () {
-  return { name: 'MelodeonTab', tablature: Plugin };
+var AbcDiatonicTab = function () {
+  return { name: 'DiatonicTab', tablature: Plugin };
 };
 
 
-module.exports = AbcMelodeonTab;
+module.exports = AbcDiatonicTab;

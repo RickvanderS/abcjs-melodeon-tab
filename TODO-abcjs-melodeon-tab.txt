@@ -3,7 +3,7 @@ Bugs:
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
-- Harmonica: Merge harmonica into melodeon and call it diatonic tab
+- Support 4th row (one harminica bend is currently missing)
 New features:
 - Optional push/pull indicators next to chords
 - Export ABC with injected tablature

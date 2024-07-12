@@ -6,8 +6,7 @@
  * 
  */
 var StringTablature = require('../tablatures/instruments/tab-string');
-var HarmonicaTablature = require('../tablatures/instruments/harmonica/tab-harmonica');
-var MelodeonTablature = require('../tablatures/instruments/melodeon/tab-melodeon');
+var DiatonicTablature = require('../tablatures/instruments/tab-diatonic');
 
 /* extend the table below when adding a new instrument plugin */
 
@@ -18,8 +17,7 @@ var pluginTab = {
   'mandolin': { name: 'StringTab', defaultTuning: ['G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: 0},
   'guitar': { name: 'StringTab', defaultTuning: ['E,', 'A,', 'D', 'G' , 'B' , 'e'], isTabBig: true, tabSymbolOffset: 0},
   'fiveString': { name: 'StringTab', defaultTuning: ['C,', 'G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: -.95},
-  'harmonica': {name : 'HarmonicaTab', defaultTuning: ['C'], isTabBig: false, tabSymbolOffset: -.95},
-  'melodeon': {name : 'MelodeonTab', defaultTuning: ['G', 'C'], isTabBig: false, tabSymbolOffset: -.95}
+  'diatonic': {name : 'DiatonicTab', defaultTuning: ['G', 'C'], isTabBig: false, tabSymbolOffset: -.95}
 };
 
 var abcTablatures = {
@@ -108,10 +106,10 @@ var abcTablatures = {
    * @param {*} renderer 
    * @param {*} abcTune 
    */
-  layoutTablatures: function layoutTablatures(renderer, abcTune, MelodeonScan) {
+  layoutTablatures: function layoutTablatures(renderer, abcTune, DiatonicScan) {
     //Normal call from abcjs trigger pre-scan
-    if (typeof(MelodeonScan) == "undefined")
-      MelodeonScan = true;
+    if (typeof(DiatonicScan) == "undefined")
+      DiatonicScan = true;
     
     var tabs = abcTune.tablatures;
 
@@ -169,7 +167,7 @@ var abcTablatures = {
               );
             }
             
-            if (MelodeonScan) {
+            if (DiatonicScan) {
               //Scan if function exists
               if (tabPlugin.instance.scan)
                 tabPlugin.instance.scan(renderer, line, jj);
@@ -184,7 +182,7 @@ var abcTablatures = {
     }
     
     //Call again but now render instead of pre-scan
-    if (MelodeonScan)
+    if (DiatonicScan)
       layoutTablatures(renderer, abcTune, false);
   },
 
@@ -195,8 +193,7 @@ var abcTablatures = {
     // just register plugin hosted by abcjs 
     if (!this.inited) {
       this.register(new StringTablature());
-      this.register(new HarmonicaTablature());
-      this.register(new MelodeonTablature());
+      this.register(new DiatonicTablature());
       this.inited = true;
     }
   }

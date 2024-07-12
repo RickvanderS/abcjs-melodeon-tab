@@ -1,7 +1,7 @@
-var StringPatterns = require('../string-patterns');
-var TabNote = require('../tab-note');
-var transposeChordName = require("../../../parse/transpose-chord")
-var allNotes = require('../../../parse/all-notes');
+var StringPatterns = require('./string-patterns');
+var TabNote = require('./tab-note');
+var transposeChordName = require("../../parse/transpose-chord")
+var allNotes = require('../../parse/all-notes');
 
 function TransposeChordArray(aBassChords, TransposeHalfSteps) {
 	for (let i = 0; i < aBassChords.length; ++i) {
@@ -322,7 +322,7 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
 	}
 }
 
-function MelodeonPatterns(plugin) {
+function DiatonicPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
   if (this.showall == null)
@@ -1179,49 +1179,49 @@ function noteToButton(noteName, LookupArray) {
 }
 
 
-MelodeonPatterns.prototype.noteToPushButtonRow1 = function(noteName) {
+DiatonicPatterns.prototype.noteToPushButtonRow1 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.push_row1);
 	if (ButtonNumber.length > 0)
 		ButtonNumber += "$";
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.noteToPullButtonRow1 = function(noteName) {
+DiatonicPatterns.prototype.noteToPullButtonRow1 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.pull_row1);
 	if (ButtonNumber.length > 0)
 		ButtonNumber += "$";
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.noteToPushButtonRow2 = function(noteName) {
+DiatonicPatterns.prototype.noteToPushButtonRow2 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.push_row2);
 	if (ButtonNumber.length > 0)
 		ButtonNumber += "'";
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.noteToPullButtonRow2 = function(noteName) {
+DiatonicPatterns.prototype.noteToPullButtonRow2 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.pull_row2);
 	if (ButtonNumber.length > 0)
 		ButtonNumber += "'";
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.noteToPushButtonRow3 = function(noteName) {
+DiatonicPatterns.prototype.noteToPushButtonRow3 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.push_row3);
 	if (ButtonNumber.length > 0)
 		ButtonNumber += "\"";
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.noteToPullButtonRow3 = function(noteName) {
+DiatonicPatterns.prototype.noteToPullButtonRow3 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.pull_row3);
 	if (ButtonNumber.length > 0)
 		ButtonNumber += "\"";
 	return ButtonNumber;
 }
 
-MelodeonPatterns.prototype.StartScan = function () {
+DiatonicPatterns.prototype.StartScan = function () {
 	if (!this.Scan) {
 		//Clear
 		this.aBars = new Array;
@@ -1501,7 +1501,7 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 	}*/
 }
 
-MelodeonPatterns.prototype.StartBuild = function () {
+DiatonicPatterns.prototype.StartBuild = function () {
 	this.strings.accidentals        = {};
 	this.strings.measureAccidentals = {};
 	
@@ -1683,7 +1683,7 @@ MelodeonPatterns.prototype.StartBuild = function () {
 	this.Scan = false;
 }
 
-MelodeonPatterns.prototype.MarkBar = function () {
+DiatonicPatterns.prototype.MarkBar = function () {
 //	this.PrevBar = true;
 	
 	if (this.Scan) {
@@ -1778,7 +1778,7 @@ function ButtonStringToArrays(str) {
 	};
 }
 
-MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
+DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	//Update chord push/pull on change
 	if (chord && chord.length > 0) {
 		let Chord = chord[0].name.trim();
@@ -2405,7 +2405,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	};
 };
 
-MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
+DiatonicPatterns.prototype.stringToPitch = function (stringNumber) {
   if (stringNumber == 3)
     return 19.7;
   else if (stringNumber == 2)
@@ -2414,4 +2414,4 @@ MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
     return 9.7;
 };
 
-module.exports = MelodeonPatterns;
+module.exports = DiatonicPatterns;

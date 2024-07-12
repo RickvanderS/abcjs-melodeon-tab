@@ -207,8 +207,7 @@ module.exports = animation;
  * 
  */
 var StringTablature = __webpack_require__(/*! ../tablatures/instruments/tab-string */ "./src/tablatures/instruments/tab-string.js");
-var HarmonicaTablature = __webpack_require__(/*! ../tablatures/instruments/harmonica/tab-harmonica */ "./src/tablatures/instruments/harmonica/tab-harmonica.js");
-var MelodeonTablature = __webpack_require__(/*! ../tablatures/instruments/melodeon/tab-melodeon */ "./src/tablatures/instruments/melodeon/tab-melodeon.js");
+var DiatonicTablature = __webpack_require__(/*! ../tablatures/instruments/tab-diatonic */ "./src/tablatures/instruments/tab-diatonic.js");
 
 /* extend the table below when adding a new instrument plugin */
 
@@ -244,14 +243,8 @@ var pluginTab = {
     isTabBig: false,
     tabSymbolOffset: -.95
   },
-  'harmonica': {
-    name: 'HarmonicaTab',
-    defaultTuning: ['C'],
-    isTabBig: false,
-    tabSymbolOffset: -.95
-  },
-  'melodeon': {
-    name: 'MelodeonTab',
+  'diatonic': {
+    name: 'DiatonicTab',
     defaultTuning: ['G', 'C'],
     isTabBig: false,
     tabSymbolOffset: -.95
@@ -337,9 +330,9 @@ var abcTablatures = {
    * @param {*} renderer 
    * @param {*} abcTune 
    */
-  layoutTablatures: function layoutTablatures(renderer, abcTune, MelodeonScan) {
+  layoutTablatures: function layoutTablatures(renderer, abcTune, DiatonicScan) {
     //Normal call from abcjs trigger pre-scan
-    if (typeof MelodeonScan == "undefined") MelodeonScan = true;
+    if (typeof DiatonicScan == "undefined") DiatonicScan = true;
     var tabs = abcTune.tablatures;
 
     // chack tabs request for each staffs
@@ -386,7 +379,7 @@ var abcTablatures = {
               // call initer first
               tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, jj, tabPlugin.tabType);
             }
-            if (MelodeonScan) {
+            if (DiatonicScan) {
               //Scan if function exists
               if (tabPlugin.instance.scan) tabPlugin.instance.scan(renderer, line, jj);
             } else {
@@ -399,7 +392,7 @@ var abcTablatures = {
     }
 
     //Call again but now render instead of pre-scan
-    if (MelodeonScan) layoutTablatures(renderer, abcTune, false);
+    if (DiatonicScan) layoutTablatures(renderer, abcTune, false);
   },
   /**
    * called once internally to register internal plugins
@@ -408,8 +401,7 @@ var abcTablatures = {
     // just register plugin hosted by abcjs 
     if (!this.inited) {
       this.register(new StringTablature());
-      this.register(new HarmonicaTablature());
-      this.register(new MelodeonTablature());
+      this.register(new DiatonicTablature());
       this.inited = true;
     }
   }
@@ -16009,284 +16001,10 @@ module.exports = SynthSequence;
 
 /***/ }),
 
-/***/ "./src/tablatures/instruments/harmonica/harmonica-patterns.js":
-/*!********************************************************************!*\
-  !*** ./src/tablatures/instruments/harmonica/harmonica-patterns.js ***!
-  \********************************************************************/
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-var StringPatterns = __webpack_require__(/*! ../string-patterns */ "./src/tablatures/instruments/string-patterns.js");
-var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instruments/tab-note.js");
-function HarmonicaPatterns(plugin) {
-  this.tuning = plugin._super.params.tuning;
-  if (!this.tuning) {
-    this.tuning = ['C'];
-  }
-  plugin.tuning = this.tuning;
-  this.strings = {
-    tabInfos: function tabInfos(plugin) {
-      return "";
-    },
-    suppress: function suppress(plugin) {
-      return false;
-    },
-    accidentals: {},
-    measureAccidentals: {}
-  };
-}
-
-//Lookup individual notes
-function noteToHole(noteName, tuning) {
-  if (tuning == "C") {
-    //Octave 4
-    if (noteName == 'C') return '1';
-    if (noteName == '^C' || noteName == '_D') return '-1\'';
-    if (noteName == 'D') return '-1';
-    if (noteName == '^D' || noteName == '_E') return '';
-    if (noteName == 'E') return '2';
-    if (noteName == 'F') return '-2\'\'';
-    if (noteName == '^F' || noteName == '_G') return '-2\'';
-    if (noteName == 'G') return '3'; //Or '-2'
-    if (noteName == '^G' || noteName == '_A') return '-3\'\'\'';
-    if (noteName == 'A') return '-3\'\'';
-    if (noteName == '^A' || noteName == '_B') return '-3\'';
-    if (noteName == 'B') return '-3';
-
-    //Octave 5
-    if (noteName == 'c') return '4';
-    if (noteName == '^c' || noteName == '_d') return '-4\'';
-    if (noteName == 'd') return '-4';
-    if (noteName == '^d' || noteName == '_e') return '';
-    if (noteName == 'e') return '5';
-    if (noteName == 'f') return '-5';
-    if (noteName == '^f' || noteName == '_g') return '';
-    if (noteName == 'g') return '6';
-    if (noteName == '^g' || noteName == '_a') return '';
-    if (noteName == 'a') return '-6';
-    if (noteName == '^a' || noteName == '_b') return '-6\'';
-    if (noteName == 'b') return '-7';
-
-    //Octave 6
-    if (noteName == 'c\'') return '7';
-    if (noteName == '^c\'' || noteName == '_d\'') return '';
-    if (noteName == 'd\'') return '-8';
-    if (noteName == '^d\'' || noteName == '_e\'') return '8\'';
-    if (noteName == 'e\'') return '8';
-    if (noteName == 'f\'') return '-9';
-    if (noteName == '^f\'' || noteName == '_g\'') return '9\'';
-    if (noteName == 'g\'') return '9';
-    if (noteName == '^g\'' || noteName == '_a\'') return '';
-    if (noteName == 'a\'') return '-10';
-    if (noteName == '^a\'' || noteName == '_b\'') return '10\'\'';
-    if (noteName == 'b\'') return '10\'';
-
-    //Octave 7
-    if (noteName == 'c\'\'') return '10';
-  } else {
-    //TODO: Different tunings
-  }
-  return '';
-}
-HarmonicaPatterns.prototype.notesToNumber = function (notes, graces) {
-  var error = null;
-  var retNotes = new Array();
-  var retGraces = null;
-  var tuning = this.tuning;
-
-  //For all notes at this count
-  for (var i = 0; notes && i < notes.length; ++i) {
-    var TNote = new TabNote.TabNote(notes[i].name);
-    TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
-    if (TNote.isAltered || TNote.natural) {
-      var acc;
-      if (TNote.isFlat) {
-        if (TNote.isDouble) acc = "__";else acc = "_";
-      } else if (TNote.isSharp) {
-        if (TNote.isDouble) acc = "^^";else acc = "^";
-      } else if (TNote.natural) acc = "=";
-      this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
-    }
-
-    //Ignore end of tie
-    //TODO: Only if tie from same hole
-    if (notes[i].endTie) continue;
-
-    //Get the note name
-    var noteName = TNote.emitNoAccidentals();
-    if (TNote.acc > 0) noteName = "^" + noteName;else if (TNote.acc < 0) noteName = "_" + noteName;
-    var hole = noteToHole(noteName, tuning);
-    if (hole != '') {
-      var stringNumber = -0.7;
-      var note = new TabNote.TabNote(notes[0].name);
-      var number = {
-        num: hole,
-        str: stringNumber,
-        note: note
-      };
-      retNotes.push(number);
-
-      //Only one note at a time supported
-      break;
-    }
-  }
-  return {
-    notes: retNotes,
-    graces: retGraces,
-    error: error
-  };
-};
-HarmonicaPatterns.prototype.stringToPitch = function (stringNumber) {
-  return 9.7;
-  //var converter = this.strings;
-  //return converter.stringToPitch(stringNumber);
-};
-
-module.exports = HarmonicaPatterns;
-
-/***/ }),
-
-/***/ "./src/tablatures/instruments/harmonica/harmonica-tablature.js":
-/*!*********************************************************************!*\
-  !*** ./src/tablatures/instruments/harmonica/harmonica-tablature.js ***!
-  \*********************************************************************/
-/***/ (function(module) {
-
-/**
- * Layout tablature informations for draw
- * @param {*} numLines 
- * @param {*} lineSpace 
- */
-
-function HarmonicaTablature(numLines, lineSpace) {
-  this.numLines = numLines;
-  this.lineSpace = lineSpace;
-  this.verticalSize = this.numLines * this.lineSpace;
-  var pitch = 5;
-  this.bar = {
-    pitch: pitch,
-    pitch2: lineSpace * numLines,
-    height: 5
-  };
-}
-
-/**
- * return true if current line should not produce a tab
- * @param {} line 
- */
-HarmonicaTablature.prototype.bypass = function (line) {
-  var voices = line.staffGroup.voices;
-  if (voices.length > 0) {
-    if (voices[0].isPercussion) return true;
-  }
-  return false;
-};
-HarmonicaTablature.prototype.setRelative = function (child, relative, first) {
-  switch (child.type) {
-    case 'bar':
-      relative.pitch = this.bar.pitch;
-      relative.pitch2 = this.bar.pitch2;
-      relative.height = this.height;
-      break;
-    case 'symbol':
-      if (child.name == 'dots.dot') {
-        if (first) {
-          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 4 * 1;
-          return false;
-        } else {
-          relative.pitch = this.bar.pitch + (this.bar.pitch2 - this.bar.pitch) / 4 * 3;
-          return true;
-        }
-      }
-      break;
-  }
-  return first;
-};
-module.exports = HarmonicaTablature;
-
-/***/ }),
-
-/***/ "./src/tablatures/instruments/harmonica/tab-harmonica.js":
-/*!***************************************************************!*\
-  !*** ./src/tablatures/instruments/harmonica/tab-harmonica.js ***!
-  \***************************************************************/
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-/*
-Emit tab for Harmonica staff
-*/
-var HarmonicaTablature = __webpack_require__(/*! ./harmonica-tablature */ "./src/tablatures/instruments/harmonica/harmonica-tablature.js");
-var TabCommon = __webpack_require__(/*! ../../tab-common */ "./src/tablatures/tab-common.js");
-var TabRenderer = __webpack_require__(/*! ../../tab-renderer */ "./src/tablatures/tab-renderer.js");
-var HarmonicaPatterns = __webpack_require__(/*! ./harmonica-patterns */ "./src/tablatures/instruments/harmonica/harmonica-patterns.js");
-var AbsoluteElement = __webpack_require__(/*! ../../../write/creation/elements/absolute-element */ "./src/write/creation/elements/absolute-element.js");
-var RelativeElement = __webpack_require__(/*! ../../../write/creation/elements/relative-element */ "./src/write/creation/elements/relative-element.js");
-
-/**
-* upon init mainly store provided instances for later usage
-* @param {*} abcTune  the parsed tune AST tree
-*  @param {*} tuneNumber  the parsed tune AST tree
-* @param {*} params  complementary args provided to Tablature Plugin
-*/
-Plugin.prototype.init = function (abcTune, tuneNumber, params) {
-  var _super = new TabCommon(abcTune, tuneNumber, params);
-  this._super = _super;
-  this.abcTune = abcTune;
-  this.linePitch = 5;
-  this.nbLines = 2;
-  this.isTabBig = false;
-  this.capo = params.capo;
-  this.transpose = params.visualTranspose;
-  this.tablature = new HarmonicaTablature(this.nbLines, this.linePitch);
-  var semantics = new HarmonicaPatterns(this);
-  this.semantics = semantics;
-};
-Plugin.prototype.buildTabAbsolute = function (absX, relX) {
-  var tabIcon = 'tab.tiny';
-  var tabYPos = 10;
-  if (this.isTabBig) {
-    tabIcon = 'tab.big';
-    tabYPos = 10;
-  }
-  var element = {
-    el_type: "tab",
-    icon: tabIcon,
-    Ypos: tabYPos
-  };
-  var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
-  tabAbsolute.x = absX;
-  var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
-  tabRelative.x = relX;
-  tabAbsolute.children.push(tabRelative);
-  if (tabAbsolute.abcelem.el_type == 'tab') {
-    tabRelative.pitch = tabYPos;
-  }
-  return tabAbsolute;
-};
-Plugin.prototype.render = function (renderer, line, staffIndex) {
-  if (this._super.inError) return;
-  if (this.tablature.bypass(line)) return;
-  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
-  rndrer.doLayout();
-};
-function Plugin() {}
-
-//
-// Tablature plugin definition
-//
-var AbcHarmonicaTab = function AbcHarmonicaTab() {
-  return {
-    name: 'HarmonicaTab',
-    tablature: Plugin
-  };
-};
-module.exports = AbcHarmonicaTab;
-
-/***/ }),
-
-/***/ "./src/tablatures/instruments/melodeon/melodeon-patterns.js":
-/*!******************************************************************!*\
-  !*** ./src/tablatures/instruments/melodeon/melodeon-patterns.js ***!
-  \******************************************************************/
+/***/ "./src/tablatures/instruments/diatonic-patterns.js":
+/*!*********************************************************!*\
+  !*** ./src/tablatures/instruments/diatonic-patterns.js ***!
+  \*********************************************************/
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
@@ -16295,10 +16013,10 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-var StringPatterns = __webpack_require__(/*! ../string-patterns */ "./src/tablatures/instruments/string-patterns.js");
-var TabNote = __webpack_require__(/*! ../tab-note */ "./src/tablatures/instruments/tab-note.js");
-var transposeChordName = __webpack_require__(/*! ../../../parse/transpose-chord */ "./src/parse/transpose-chord.js");
-var allNotes = __webpack_require__(/*! ../../../parse/all-notes */ "./src/parse/all-notes.js");
+var StringPatterns = __webpack_require__(/*! ./string-patterns */ "./src/tablatures/instruments/string-patterns.js");
+var TabNote = __webpack_require__(/*! ./tab-note */ "./src/tablatures/instruments/tab-note.js");
+var transposeChordName = __webpack_require__(/*! ../../parse/transpose-chord */ "./src/parse/transpose-chord.js");
+var allNotes = __webpack_require__(/*! ../../parse/all-notes */ "./src/parse/all-notes.js");
 function TransposeChordArray(aBassChords, TransposeHalfSteps) {
   for (var i = 0; i < aBassChords.length; ++i) {
     aBassChords[i] = transposeChordName(aBassChords[i], TransposeHalfSteps, true, true);
@@ -16431,8 +16149,10 @@ function DecodeRowInfo(TuningString) {
   var Key = TuningString.replace(/[0-9]/g, '');
   Key = Key.replaceAll("^", "");
   Key = Key.replaceAll(">", "");
+  Key = Key.replaceAll("~", "");
   var Acc = TuningString.includes("^");
   var Start = TuningString.includes(">") ? 4 : 3;
+  var Harmonica = TuningString.includes("~");
   aInvert = new Array();
   for (var i = TuningString.length - 1; i >= 0; --i) {
     if ('0' <= TuningString[i] && TuningString[i] <= '9') aInvert.push(TuningString[i]);else break;
@@ -16442,6 +16162,7 @@ function DecodeRowInfo(TuningString) {
     Key: Key,
     Acc: Acc,
     Start: Start,
+    Harmonica: Harmonica,
     aInvert: aInvert
   };
 }
@@ -16570,7 +16291,7 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
     aOutPull[0] = "^G";
   }
 }
-function MelodeonPatterns(plugin) {
+function DiatonicPatterns(plugin) {
   //Get tablature options
   this.showall = plugin._super.params.showall;
   if (this.showall == null) this.showall = false;
@@ -16603,7 +16324,7 @@ function MelodeonPatterns(plugin) {
   //Set default chin accidentals of not specified
   this.startzero = plugin._super.params.startzero;
   if (this.startzero == null) {
-    this.startzero = true;
+    this.startzero = false;
     plugin.startzero = this.startzero;
   }
 
@@ -16631,62 +16352,142 @@ function MelodeonPatterns(plugin) {
   var push_row3 = new Array();
   var pull_row3 = new Array();
   if (this.tuning.length == 1) {
-    //For non-G figure out how to transpose
-    var Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
-    if (Row1Tuning == "Bb" || Row1Tuning == "A#") TransposeHalfSteps = -9;else if (Row1Tuning == "B") TransposeHalfSteps = -8;else if (Row1Tuning == "C") TransposeHalfSteps = -7;else if (Row1Tuning == "Db" || Row1Tuning == "C#") TransposeHalfSteps = -6;else if (Row1Tuning == "D") TransposeHalfSteps = -5;else if (Row1Tuning == "Eb" || Row1Tuning == "D#") TransposeHalfSteps = -4;else if (Row1Tuning == "E") TransposeHalfSteps = -3;else if (Row1Tuning == "F") TransposeHalfSteps = -2;else if (Row1Tuning == "Gb" || Row1Tuning == "F#") TransposeHalfSteps = -1;else if (Row1Tuning == "G") TransposeHalfSteps = 0;else if (Row1Tuning == "Ab" || Row1Tuning == "G#") TransposeHalfSteps = 1;else if (Row1Tuning == "A") TransposeHalfSteps = 2;else {
-      console.error('1 row melodeon with tuning \'' + Row1Tuning + '\' is not supported');
-      return;
-    }
+    Row1Info = DecodeRowInfo(this.tuning[0]);
 
-    //Figure out the number of buttons
-    var Row1Count = this.tuning[0].substring(Row1Tuning.length);
-    var Mini = false;
-    if (Row1Count != "") {
-      var ButtonCount = Number(Row1Count);
-      if (Row1Count == 10) {} else if (Row1Count == 7) {
-        Mini = true;
+    //1 row melodeon
+    if (!Row1Info.Harmonica) {
+      //For non-G figure out how to transpose
+      if (Row1Info.Key == "Bb" || Row1Info.Key == "A#") TransposeHalfSteps = -9;else if (Row1Info.Key == "B") TransposeHalfSteps = -8;else if (Row1Info.Key == "C") TransposeHalfSteps = -7;else if (Row1Info.Key == "Db" || Row1Info.Key == "C#") TransposeHalfSteps = -6;else if (Row1Info.Key == "D") TransposeHalfSteps = -5;else if (Row1Info.Key == "Eb" || Row1Info.Key == "D#") TransposeHalfSteps = -4;else if (Row1Info.Key == "E") TransposeHalfSteps = -3;else if (Row1Info.Key == "F") TransposeHalfSteps = -2;else if (Row1Info.Key == "Gb" || Row1Info.Key == "F#") TransposeHalfSteps = -1;else if (Row1Info.Key == "G") TransposeHalfSteps = 0;else if (Row1Info.Key == "Ab" || Row1Info.Key == "G#") TransposeHalfSteps = 1;else if (Row1Info.Key == "A") TransposeHalfSteps = 2;else {
+        console.error('1 row melodeon in key \'' + Row1Info.Key + '\' is not supported');
+        return;
+      }
+
+      //Figure out the number of buttons
+      var Row1Count = Row1Info.Buttons;
+      if (isNaN(Row1Count)) Row1Count = 10;
+      var Mini = false;
+      if (Row1Count != "") {
+        var ButtonCount = Number(Row1Count);
+        if (Row1Count == 10) {} else if (Row1Count == 7) {
+          Mini = true;
+        } else {
+          console.error('1 row melodeon with tuning \'' + Row1Count + '\' buttons is not supported');
+        }
+      }
+
+      //Define left hand chords for G melodeon with 4 base buttons
+      this.BassRow1Push = new Array("G");
+      this.BassRow1Pull = new Array("D");
+      if (!Mini) {
+        this.BassRow1Push.push("C");
+        this.BassRow1Pull.push("C");
+      }
+
+      //Define right hand buttons for G melodeon
+      if (!Mini) {
+        push_row1.push("B,,"); // 1
+        pull_row1.push("D,");
+        push_row1.push("D,"); // 2
+        pull_row1.push("^F,");
+      }
+      push_row1.push("G,"); // 3 (mini 1)
+      pull_row1.push("A,");
+      push_row1.push("B,"); // 4 (mini 2)
+      pull_row1.push("C");
+      push_row1.push("D"); // 5 (mini 3)
+      pull_row1.push("E");
+      push_row1.push("G"); // 6 (mini 4)
+      pull_row1.push("^F");
+      push_row1.push("B"); // 7 (mini 5)
+      pull_row1.push("A");
+      push_row1.push("d"); // 8 (mini 6)
+      pull_row1.push("c");
+      if (!Mini) {
+        push_row1.push("g"); // 9
+        pull_row1.push("e");
+        push_row1.push("b"); // 10
+        pull_row1.push("^f");
       } else {
-        console.error('1 row melodeon with tuning \'' + Row1Count + '\' buttons is not supported');
+        push_row1.push("^f"); // (mini 7)
+        pull_row1.push("e");
       }
     }
+    //1 row harmonica
+    else {
+      //For non-C figure out how to transpose
+      if (Row1Info.Key == "G") TransposeHalfSteps = -5;else if (Row1Info.Key == "Ab" || Row1Info.Key == "G#") TransposeHalfSteps = -4;else if (Row1Info.Key == "A") TransposeHalfSteps = -3;else if (Row1Info.Key == "Bb" || Row1Info.Key == "A#") TransposeHalfSteps = -2;else if (Row1Info.Key == "B") TransposeHalfSteps = -1;else if (Row1Info.Key == "C") TransposeHalfSteps = 0;else if (Row1Info.Key == "Db" || Row1Info.Key == "C#") TransposeHalfSteps = 1;else if (Row1Info.Key == "D") TransposeHalfSteps = 2;else if (Row1Info.Key == "Eb" || Row1Info.Key == "D#") TransposeHalfSteps = 3;else if (Row1Info.Key == "E") TransposeHalfSteps = 4;else if (Row1Info.Key == "F") TransposeHalfSteps = 5;else if (Row1Info.Key == "Gb" || Row1Info.Key == "F#") TransposeHalfSteps = 6;else {
+        console.error('harmonica in key \'' + Row1Info.Key + '\' is not supported');
+        return;
+      }
 
-    //Define left hand chords for G melodeon with 4 base buttons
-    this.BassRow1Push = new Array("G");
-    this.BassRow1Pull = new Array("D");
-    if (!Mini) {
-      this.BassRow1Push.push("C");
-      this.BassRow1Pull.push("C");
-    }
+      //C row
+      push_row1.push("C"); // 1
+      pull_row1.push("D");
+      push_row1.push("E"); // 2
+      pull_row1.push("G");
+      push_row1.push("G"); // 3
+      pull_row1.push("B");
+      push_row1.push("c"); // 4
+      pull_row1.push("d");
+      push_row1.push("e"); // 5
+      pull_row1.push("f");
+      push_row1.push("g"); // 6
+      pull_row1.push("a");
+      push_row1.push("c'"); // 7
+      pull_row1.push("b");
+      push_row1.push("e'"); // 8
+      pull_row1.push("d'");
+      push_row1.push("g'"); // 9
+      pull_row1.push("f'");
+      push_row1.push("c''"); // 10
+      pull_row1.push("a'");
 
-    //Define right hand buttons for G melodeon
-    push_row1.push(""); // 0
-    pull_row1.push("");
-    if (!Mini) {
-      push_row1.push("B,,"); // 1
-      pull_row1.push("D,");
-      push_row1.push("D,"); // 2
-      pull_row1.push("^F,");
-    }
-    push_row1.push("G,"); // 3 (mini 1)
-    pull_row1.push("A,");
-    push_row1.push("B,"); // 4 (mini 2)
-    pull_row1.push("C");
-    push_row1.push("D"); // 5 (mini 3)
-    pull_row1.push("E");
-    push_row1.push("G"); // 6 (mini 4)
-    pull_row1.push("^F");
-    push_row1.push("B"); // 7 (mini 5)
-    pull_row1.push("A");
-    push_row1.push("d"); // 8 (mini 6)
-    pull_row1.push("c");
-    if (!Mini) {
-      push_row1.push("g"); // 9
-      pull_row1.push("e");
-      push_row1.push("b"); // 10
-      pull_row1.push("^f");
-    } else {
-      push_row1.push("^f"); // (mini 7)
-      pull_row1.push("e");
+      //C row half step bend
+      push_row2.push(""); // 1'
+      pull_row2.push("_D");
+      push_row2.push(""); // 2'
+      pull_row2.push("_G");
+      push_row2.push(""); // 3'
+      pull_row2.push("_B");
+      push_row2.push(""); // 4'
+      pull_row2.push("_d");
+      push_row2.push(""); // 5'
+      pull_row2.push("");
+      push_row2.push(""); // 6'
+      pull_row2.push("^a");
+      push_row2.push(""); // 7'
+      pull_row2.push("");
+      push_row2.push("_e'"); // 8'
+      pull_row2.push("");
+      push_row2.push("_g'"); // 9'
+      pull_row2.push("");
+      push_row2.push("b'"); // 10'
+      pull_row2.push("");
+
+      //C row whole step bend
+      push_row3.push(""); // 1"
+      pull_row3.push("");
+      push_row3.push(""); // 2"
+      pull_row3.push("F");
+      push_row3.push(""); // 3"
+      pull_row3.push("A");
+      push_row3.push(""); // 4"
+      pull_row3.push("");
+      push_row3.push(""); // 5"
+      pull_row3.push("");
+      push_row3.push(""); // 6"
+      pull_row3.push("");
+      push_row3.push(""); // 7"
+      pull_row3.push("");
+      push_row3.push(""); // 8"
+      pull_row3.push("");
+      push_row3.push(""); // 9"
+      pull_row3.push("");
+      push_row3.push("_b'"); // 10"
+      pull_row3.push("");
+
+      //C row 1.5 step bend
+      //TODO: _A -> -3'''
     }
   } else if (this.tuning.length == 2 || this.tuning.length == 3) {
     //Decode row info strings
@@ -16716,7 +16517,7 @@ function MelodeonPatterns(plugin) {
       TransposeHalfSteps = 6;else if (Row1Info.Key == "D" && Row2Info.Key == "G")
       //England
       TransposeHalfSteps = 7;else {
-      if (this.tuning.length == 2) console.error('2 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' is not supported');else if (this.tuning.length == 3) console.error('3 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
+      if (this.tuning.length == 2) console.error('2 row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' is not supported');else if (this.tuning.length == 3) console.error('3 row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' and row3 key \'' + Row3Info.Key + '\' is not supported');
       return;
     }
 
@@ -16979,7 +16780,7 @@ function MelodeonPatterns(plugin) {
           TransposeHalfSteps = 6;else if (Row2Info.Key == "D" && Row3Info.Key == "G")
           //ADG
           TransposeHalfSteps = 7;else {
-          console.error(this.tuning.length + ' row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
+          console.error(this.tuning.length + ' row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' and row3 key \'' + Row3Info.Key + '\' is not supported');
           return;
         }
 
@@ -17245,37 +17046,37 @@ function noteToButton(noteName, LookupArray) {
   }
   return "";
 }
-MelodeonPatterns.prototype.noteToPushButtonRow1 = function (noteName) {
+DiatonicPatterns.prototype.noteToPushButtonRow1 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.push_row1);
   if (ButtonNumber.length > 0) ButtonNumber += "$";
   return ButtonNumber;
 };
-MelodeonPatterns.prototype.noteToPullButtonRow1 = function (noteName) {
+DiatonicPatterns.prototype.noteToPullButtonRow1 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.pull_row1);
   if (ButtonNumber.length > 0) ButtonNumber += "$";
   return ButtonNumber;
 };
-MelodeonPatterns.prototype.noteToPushButtonRow2 = function (noteName) {
+DiatonicPatterns.prototype.noteToPushButtonRow2 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.push_row2);
   if (ButtonNumber.length > 0) ButtonNumber += "'";
   return ButtonNumber;
 };
-MelodeonPatterns.prototype.noteToPullButtonRow2 = function (noteName) {
+DiatonicPatterns.prototype.noteToPullButtonRow2 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.pull_row2);
   if (ButtonNumber.length > 0) ButtonNumber += "'";
   return ButtonNumber;
 };
-MelodeonPatterns.prototype.noteToPushButtonRow3 = function (noteName) {
+DiatonicPatterns.prototype.noteToPushButtonRow3 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.push_row3);
   if (ButtonNumber.length > 0) ButtonNumber += "\"";
   return ButtonNumber;
 };
-MelodeonPatterns.prototype.noteToPullButtonRow3 = function (noteName) {
+DiatonicPatterns.prototype.noteToPullButtonRow3 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.pull_row3);
   if (ButtonNumber.length > 0) ButtonNumber += "\"";
   return ButtonNumber;
 };
-MelodeonPatterns.prototype.StartScan = function () {
+DiatonicPatterns.prototype.StartScan = function () {
   if (!this.Scan) {
     //Clear
     this.aBars = new Array();
@@ -17490,7 +17291,7 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
   }*/
 }
 
-MelodeonPatterns.prototype.StartBuild = function () {
+DiatonicPatterns.prototype.StartBuild = function () {
   this.strings.accidentals = {};
   this.strings.measureAccidentals = {};
   if (this.Scan) {
@@ -17651,7 +17452,7 @@ MelodeonPatterns.prototype.StartBuild = function () {
   }
   this.Scan = false;
 };
-MelodeonPatterns.prototype.MarkBar = function () {
+DiatonicPatterns.prototype.MarkBar = function () {
   //	this.PrevBar = true;
 
   if (this.Scan) {
@@ -17701,16 +17502,16 @@ function ButtonStringToArrays(str) {
   var But = "";
   for (var i = 0; i < str.length; ++i) {
     if (str[i] == "$") {
+      if (strRow1.length) strRow1 += "\u200A";
       strRow1 += But;
-      strRow1 += "\u200A";
       But = "";
     } else if (str[i] == "'") {
+      if (strRow2.length) strRow2 += "\u200A";
       strRow2 += But;
-      strRow2 += "\u200A";
       But = "";
     } else if (str[i] == "\"") {
+      if (strRow3.length) strRow3 += "\u200A";
       strRow3 += But;
-      strRow3 += "\u200A";
       But = "";
     } else But += str[i];
   }
@@ -17720,7 +17521,7 @@ function ButtonStringToArrays(str) {
     strRow3: strRow3
   };
 }
-MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
+DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   //Update chord push/pull on change
   if (chord && chord.length > 0) {
     var Chord = chord[0].name.trim();
@@ -18260,17 +18061,17 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     error: error
   };
 };
-MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
+DiatonicPatterns.prototype.stringToPitch = function (stringNumber) {
   if (stringNumber == 3) return 19.7;else if (stringNumber == 2) return 14.7;else return 9.7;
 };
-module.exports = MelodeonPatterns;
+module.exports = DiatonicPatterns;
 
 /***/ }),
 
-/***/ "./src/tablatures/instruments/melodeon/melodeon-tablature.js":
-/*!*******************************************************************!*\
-  !*** ./src/tablatures/instruments/melodeon/melodeon-tablature.js ***!
-  \*******************************************************************/
+/***/ "./src/tablatures/instruments/diatonic-tablature.js":
+/*!**********************************************************!*\
+  !*** ./src/tablatures/instruments/diatonic-tablature.js ***!
+  \**********************************************************/
 /***/ (function(module) {
 
 /**
@@ -18279,7 +18080,7 @@ module.exports = MelodeonPatterns;
  * @param {*} lineSpace 
  */
 
-function MelodeonTablature(numLines, lineSpace) {
+function DiatonicTablature(numLines, lineSpace) {
   this.numLines = numLines;
   this.lineSpace = lineSpace;
   this.verticalSize = this.numLines * this.lineSpace;
@@ -18295,14 +18096,14 @@ function MelodeonTablature(numLines, lineSpace) {
  * return true if current line should not produce a tab
  * @param {} line 
  */
-MelodeonTablature.prototype.bypass = function (line) {
+DiatonicTablature.prototype.bypass = function (line) {
   var voices = line.staffGroup.voices;
   if (voices.length > 0) {
     if (voices[0].isPercussion) return true;
   }
   return false;
 };
-MelodeonTablature.prototype.setRelative = function (child, relative, first) {
+DiatonicTablature.prototype.setRelative = function (child, relative, first) {
   switch (child.type) {
     case 'bar':
       relative.pitch = this.bar.pitch;
@@ -18340,161 +18141,7 @@ MelodeonTablature.prototype.setRelative = function (child, relative, first) {
   }
   return first;
 };
-module.exports = MelodeonTablature;
-
-/***/ }),
-
-/***/ "./src/tablatures/instruments/melodeon/tab-melodeon.js":
-/*!*************************************************************!*\
-  !*** ./src/tablatures/instruments/melodeon/tab-melodeon.js ***!
-  \*************************************************************/
-/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
-
-/*
-Emit tab for Melodeon staff
-*/
-var MelodeonTablature = __webpack_require__(/*! ./melodeon-tablature */ "./src/tablatures/instruments/melodeon/melodeon-tablature.js");
-var TabCommon = __webpack_require__(/*! ../../tab-common */ "./src/tablatures/tab-common.js");
-var TabRenderer = __webpack_require__(/*! ../../tab-renderer */ "./src/tablatures/tab-renderer.js");
-var MelodeonPatterns = __webpack_require__(/*! ./melodeon-patterns */ "./src/tablatures/instruments/melodeon/melodeon-patterns.js");
-var AbsoluteElement = __webpack_require__(/*! ../../../write/creation/elements/absolute-element */ "./src/write/creation/elements/absolute-element.js");
-var RelativeElement = __webpack_require__(/*! ../../../write/creation/elements/relative-element */ "./src/write/creation/elements/relative-element.js");
-
-/**
-* upon init mainly store provided instances for later usage
-* @param {*} abcTune  the parsed tune AST tree
-*  @param {*} tuneNumber  the parsed tune AST tree
-* @param {*} params  complementary args provided to Tablature Plugin
-*/
-Plugin.prototype.init = function (abcTune, tuneNumber, params) {
-  //Set default tablature style if not specified
-  //0 hide
-  //1 push/pull on one tab row
-  //2 push and pull tab row
-  //3 tab row per instrument row
-  if (typeof params.tabstyle == 'undefined') params.tabstyle = 2;
-
-  //Determine the number of rows in the tab from the style
-  if (params.tabstyle == 0)
-    //No tab
-    this.nbLines = 0;else if (params.tabstyle < 3)
-    //One tab row or two tab rows
-    this.nbLines = params.tabstyle + 1;else
-    //Tab row per instrument row
-    this.nbLines = params.tuning.length + 1;
-
-  //Based on the number of rows, decide if small or large icon needs to be displayed
-  this.isTabBig = false;
-  if (this.nbLines > 3) this.isTabBig = true;
-  var _super = new TabCommon(abcTune, tuneNumber, params);
-  this._super = _super;
-  this.abcTune = abcTune;
-  this.linePitch = 5;
-  this.transpose = params.visualTranspose;
-  this.tablature = new MelodeonTablature(this.nbLines, this.linePitch);
-  var semantics = new MelodeonPatterns(this);
-  this.semantics = semantics;
-};
-function TuningStrip(RowTuning) {
-  RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
-  if (RowTuning.length > 2) RowTuning = "#";
-  return RowTuning;
-}
-Plugin.prototype.buildTabAbsolute = function (absX, relX) {
-  var tabIcon = 'tab.tiny';
-  var tabYPos = 10;
-  if (this.isTabBig) {
-    tabIcon = 'tab.big';
-    tabYPos = 12.5;
-  }
-  var element = {
-    el_type: "tab",
-    icon: tabIcon,
-    Ypos: tabYPos
-  };
-  var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
-  tabAbsolute.x = absX;
-  if (this._super.params.tabstyle > 0) {
-    //Set the tab icon
-    var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
-    tabRelative.x = relX;
-    tabAbsolute.children.push(tabRelative);
-    if (tabAbsolute.abcelem.el_type == 'tab') {
-      tabRelative.pitch = tabYPos;
-    }
-
-    //For push/pull row style, set the push pull icons
-    if (this._super.params.tabstyle == 2) {
-      var Xadjust = 20;
-      var Y = 7.5;
-      tabIcon = 'tab.pull';
-      var tabRelativeRow1 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
-      tabRelativeRow1.x = relX + Xadjust;
-      tabAbsolute.children.push(tabRelativeRow1);
-      tabIcon = 'tab.push';
-      Y += this.linePitch;
-      var tabRelativeRow2 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
-      tabRelativeRow2.x = relX + Xadjust + 8.014;
-      tabAbsolute.children.push(tabRelativeRow2);
-    }
-    //For tab row per instrument row style, set the row keys
-    else if (this._super.params.tabstyle == 3) {
-      var Xadjust = 25;
-      if (this.isTabBig) Xadjust += 5;
-      var opt = {
-        type: 'tabNumber'
-      };
-      var Y = 10;
-
-      //TODO:
-      if (this._super.params.tuning.length >= 1) {
-        var str1 = TuningStrip(this._super.params.tuning[0]);
-        var tabRelativeRow1 = new RelativeElement(str1, 0, 0, Y, opt);
-        tabRelativeRow1.x = relX + Xadjust;
-        tabAbsolute.children.push(tabRelativeRow1);
-      }
-      if (this._super.params.tuning.length >= 2) {
-        Y += this.linePitch;
-        var str2 = TuningStrip(this._super.params.tuning[1]);
-        var tabRelativeRow2 = new RelativeElement(str2, 0, 0, Y, opt);
-        tabRelativeRow2.x = relX + Xadjust;
-        tabAbsolute.children.push(tabRelativeRow2);
-      }
-      if (this._super.params.tuning.length >= 3) {
-        Y += this.linePitch;
-        var str3 = TuningStrip(this._super.params.tuning[2]);
-        var tabRelativeRow3 = new RelativeElement(str3, 0, 0, Y, opt);
-        tabRelativeRow3.x = relX + Xadjust;
-        tabAbsolute.children.push(tabRelativeRow3);
-      }
-    }
-  }
-  return tabAbsolute;
-};
-Plugin.prototype.scan = function (renderer, line, staffIndex) {
-  if (this._super.inError) return;
-  if (this.tablature.bypass(line)) return;
-  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
-  rndrer.doScan();
-};
-Plugin.prototype.render = function (renderer, line, staffIndex) {
-  if (this._super.inError) return;
-  if (this.tablature.bypass(line)) return;
-  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
-  rndrer.doLayout();
-};
-function Plugin() {}
-
-//
-// Tablature plugin definition
-//
-var AbcMelodeonTab = function AbcMelodeonTab() {
-  return {
-    name: 'MelodeonTab',
-    tablature: Plugin
-  };
-};
-module.exports = AbcMelodeonTab;
+module.exports = DiatonicTablature;
 
 /***/ }),
 
@@ -18852,6 +18499,160 @@ StringTablature.prototype.setRelative = function (child, relative, first) {
   return first;
 };
 module.exports = StringTablature;
+
+/***/ }),
+
+/***/ "./src/tablatures/instruments/tab-diatonic.js":
+/*!****************************************************!*\
+  !*** ./src/tablatures/instruments/tab-diatonic.js ***!
+  \****************************************************/
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
+
+/*
+Emit tab for Diatonic staff
+*/
+var DiatonicTablature = __webpack_require__(/*! ./diatonic-tablature */ "./src/tablatures/instruments/diatonic-tablature.js");
+var TabCommon = __webpack_require__(/*! ../tab-common */ "./src/tablatures/tab-common.js");
+var TabRenderer = __webpack_require__(/*! ../tab-renderer */ "./src/tablatures/tab-renderer.js");
+var DiatonicPatterns = __webpack_require__(/*! ./diatonic-patterns */ "./src/tablatures/instruments/diatonic-patterns.js");
+var AbsoluteElement = __webpack_require__(/*! ../../write/creation/elements/absolute-element */ "./src/write/creation/elements/absolute-element.js");
+var RelativeElement = __webpack_require__(/*! ../../write/creation/elements/relative-element */ "./src/write/creation/elements/relative-element.js");
+
+/**
+* upon init mainly store provided instances for later usage
+* @param {*} abcTune  the parsed tune AST tree
+*  @param {*} tuneNumber  the parsed tune AST tree
+* @param {*} params  complementary args provided to Tablature Plugin
+*/
+Plugin.prototype.init = function (abcTune, tuneNumber, params) {
+  //Set default tablature style if not specified
+  //0 hide
+  //1 push/pull on one tab row
+  //2 push and pull tab row
+  //3 tab row per instrument row
+  if (typeof params.tabstyle == 'undefined') params.tabstyle = 2;
+
+  //Determine the number of rows in the tab from the style
+  if (params.tabstyle == 0)
+    //No tab
+    this.nbLines = 0;else if (params.tabstyle < 3)
+    //One tab row or two tab rows
+    this.nbLines = params.tabstyle + 1;else
+    //Tab row per instrument row
+    this.nbLines = params.tuning.length + 1;
+
+  //Based on the number of rows, decide if small or large icon needs to be displayed
+  this.isTabBig = false;
+  if (this.nbLines > 3) this.isTabBig = true;
+  var _super = new TabCommon(abcTune, tuneNumber, params);
+  this._super = _super;
+  this.abcTune = abcTune;
+  this.linePitch = 5;
+  this.transpose = params.visualTranspose;
+  this.tablature = new DiatonicTablature(this.nbLines, this.linePitch);
+  var semantics = new DiatonicPatterns(this);
+  this.semantics = semantics;
+};
+function TuningStrip(RowTuning) {
+  RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
+  if (RowTuning.length > 2) RowTuning = "#";
+  return RowTuning;
+}
+Plugin.prototype.buildTabAbsolute = function (absX, relX) {
+  var tabIcon = 'tab.tiny';
+  var tabYPos = 10;
+  if (this.isTabBig) {
+    tabIcon = 'tab.big';
+    tabYPos = 12.5;
+  }
+  var element = {
+    el_type: "tab",
+    icon: tabIcon,
+    Ypos: tabYPos
+  };
+  var tabAbsolute = new AbsoluteElement(element, 0, 0, "symbol", 0);
+  tabAbsolute.x = absX;
+  if (this._super.params.tabstyle > 0) {
+    //Set the tab icon
+    var tabRelative = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
+    tabRelative.x = relX;
+    tabAbsolute.children.push(tabRelative);
+    if (tabAbsolute.abcelem.el_type == 'tab') {
+      tabRelative.pitch = tabYPos;
+    }
+
+    //For push/pull row style, set the push pull icons
+    if (this._super.params.tabstyle == 2) {
+      var Xadjust = 20;
+      var Y = 7.5;
+      tabIcon = 'tab.pull';
+      var tabRelativeRow1 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
+      tabRelativeRow1.x = relX + Xadjust;
+      tabAbsolute.children.push(tabRelativeRow1);
+      tabIcon = 'tab.push';
+      Y += this.linePitch;
+      var tabRelativeRow2 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
+      tabRelativeRow2.x = relX + Xadjust + 8.014;
+      tabAbsolute.children.push(tabRelativeRow2);
+    }
+    //For tab row per instrument row style, set the row keys
+    else if (this._super.params.tabstyle == 3) {
+      var Xadjust = 25;
+      if (this.isTabBig) Xadjust += 5;
+      var opt = {
+        type: 'tabNumber'
+      };
+      var Y = 10;
+
+      //TODO:
+      if (this._super.params.tuning.length >= 1) {
+        var str1 = TuningStrip(this._super.params.tuning[0]);
+        var tabRelativeRow1 = new RelativeElement(str1, 0, 0, Y, opt);
+        tabRelativeRow1.x = relX + Xadjust;
+        tabAbsolute.children.push(tabRelativeRow1);
+      }
+      if (this._super.params.tuning.length >= 2) {
+        Y += this.linePitch;
+        var str2 = TuningStrip(this._super.params.tuning[1]);
+        var tabRelativeRow2 = new RelativeElement(str2, 0, 0, Y, opt);
+        tabRelativeRow2.x = relX + Xadjust;
+        tabAbsolute.children.push(tabRelativeRow2);
+      }
+      if (this._super.params.tuning.length >= 3) {
+        Y += this.linePitch;
+        var str3 = TuningStrip(this._super.params.tuning[2]);
+        var tabRelativeRow3 = new RelativeElement(str3, 0, 0, Y, opt);
+        tabRelativeRow3.x = relX + Xadjust;
+        tabAbsolute.children.push(tabRelativeRow3);
+      }
+    }
+  }
+  return tabAbsolute;
+};
+Plugin.prototype.scan = function (renderer, line, staffIndex) {
+  if (this._super.inError) return;
+  if (this.tablature.bypass(line)) return;
+  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doScan();
+};
+Plugin.prototype.render = function (renderer, line, staffIndex) {
+  if (this._super.inError) return;
+  if (this.tablature.bypass(line)) return;
+  var rndrer = new TabRenderer(this, renderer, line, staffIndex);
+  rndrer.doLayout();
+};
+function Plugin() {}
+
+//
+// Tablature plugin definition
+//
+var AbcDiatonicTab = function AbcDiatonicTab() {
+  return {
+    name: 'DiatonicTab',
+    tablature: Plugin
+  };
+};
+module.exports = AbcDiatonicTab;
 
 /***/ }),
 

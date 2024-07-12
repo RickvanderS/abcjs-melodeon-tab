@@ -168,8 +168,10 @@ function DecodeRowInfo(TuningString) {
 	let Key     = TuningString.replace(/[0-9]/g, '');
 	Key = Key.replaceAll("^", "");
 	Key = Key.replaceAll(">", "");
-	let Acc     = TuningString.includes("^");
-	let Start   = TuningString.includes(">") ? 4 : 3;
+	Key = Key.replaceAll("~", "");
+	let Acc       = TuningString.includes("^");
+	let Start     = TuningString.includes(">") ? 4 : 3;
+	let Harmonica = TuningString.includes("~");
 	
 	aInvert = new Array();
 	for (let i = TuningString.length - 1; i >= 0; --i) {
@@ -180,11 +182,12 @@ function DecodeRowInfo(TuningString) {
 	}
 	
 	return {
-		Buttons: Buttons,
-		Key    : Key    ,
-		Acc    : Acc    ,
-		Start  : Start  ,
-		aInvert: aInvert
+		Buttons   : Buttons,
+		Key       : Key    ,
+		Acc       : Acc    ,
+		Start     : Start  ,
+		Harmonica : Harmonica,
+		aInvert   : aInvert
 	}
 }
 
@@ -359,7 +362,7 @@ function MelodeonPatterns(plugin) {
   //Set default chin accidentals of not specified
   this.startzero = plugin._super.params.startzero;
   if (this.startzero == null) {
-    this.startzero = true;
+    this.startzero = false;
     plugin.startzero = this.startzero;
   }
   
@@ -386,93 +389,198 @@ function MelodeonPatterns(plugin) {
   let pull_row2 = new Array;
   let push_row3 = new Array;
   let pull_row3 = new Array;
-  if (this.tuning.length == 1) {
-    //For non-G figure out how to transpose
-    let Row1Tuning = this.tuning[0].replace(/[0-9]/g, '');
-    if      (Row1Tuning == "Bb" || Row1Tuning == "A#")
-      TransposeHalfSteps = -9;
-    else if (Row1Tuning == "B"                       )
-      TransposeHalfSteps = -8;
-    else if (Row1Tuning == "C"                       )
-      TransposeHalfSteps = -7;
-    else if (Row1Tuning == "Db" || Row1Tuning == "C#")
-      TransposeHalfSteps = -6;
-    else if (Row1Tuning == "D"                       )
-      TransposeHalfSteps = -5;
-    else if (Row1Tuning == "Eb" || Row1Tuning == "D#")
-      TransposeHalfSteps = -4;
-    else if (Row1Tuning == "E"                       )
-      TransposeHalfSteps = -3;
-    else if (Row1Tuning == "F"                       )
-      TransposeHalfSteps = -2;
-    else if (Row1Tuning == "Gb" || Row1Tuning == "F#")
-      TransposeHalfSteps = -1;
-    else if (Row1Tuning == "G"                       )
-      TransposeHalfSteps =  0;
-    else if (Row1Tuning == "Ab" || Row1Tuning == "G#")
-      TransposeHalfSteps =  1;
-    else if (Row1Tuning == "A"                       )
-      TransposeHalfSteps =  2;
-    else {
-      console.error('1 row melodeon with tuning \'' + Row1Tuning + '\' is not supported');
-      return;
-    }
-    
-    //Figure out the number of buttons
-    let Row1Count = this.tuning[0].substring(Row1Tuning.length);
-    let Mini = false;
-    if (Row1Count != "") {
-      var ButtonCount = Number(Row1Count);
-      if (Row1Count == 10) {
-      }
-      else if (Row1Count == 7) {
-        Mini = true;
-      }
-      else {
-        console.error('1 row melodeon with tuning \'' + Row1Count + '\' buttons is not supported');
-      }
-    }
-    
-    //Define left hand chords for G melodeon with 4 base buttons
-	this.BassRow1Push = new Array("G");
-	this.BassRow1Pull = new Array("D");
-	if (!Mini) {
-		this.BassRow1Push.push("C");
-		this.BassRow1Pull.push("C");
+	if (this.tuning.length == 1) {
+		Row1Info = DecodeRowInfo(this.tuning[0]);
+		
+		//1 row melodeon
+		if (!Row1Info.Harmonica) {
+			//For non-G figure out how to transpose
+			if      (Row1Info.Key == "Bb" || Row1Info.Key == "A#")
+				TransposeHalfSteps = -9;
+			else if (Row1Info.Key == "B"                         )
+				TransposeHalfSteps = -8;
+			else if (Row1Info.Key == "C"                         )
+				TransposeHalfSteps = -7;
+			else if (Row1Info.Key == "Db" || Row1Info.Key == "C#")
+				TransposeHalfSteps = -6;
+			else if (Row1Info.Key == "D"                         )
+				TransposeHalfSteps = -5;
+			else if (Row1Info.Key == "Eb" || Row1Info.Key == "D#")
+				TransposeHalfSteps = -4;
+			else if (Row1Info.Key == "E"                         )
+				TransposeHalfSteps = -3;
+			else if (Row1Info.Key == "F"                         )
+				TransposeHalfSteps = -2;
+			else if (Row1Info.Key == "Gb" || Row1Info.Key == "F#")
+				TransposeHalfSteps = -1;
+			else if (Row1Info.Key == "G"                         )
+				TransposeHalfSteps =  0;
+			else if (Row1Info.Key == "Ab" || Row1Info.Key == "G#")
+				TransposeHalfSteps =  1;
+			else if (Row1Info.Key == "A"                         )
+				TransposeHalfSteps =  2;
+			else {
+				console.error('1 row melodeon in key \'' + Row1Info.Key + '\' is not supported');
+				return;
+			}
+			
+			//Figure out the number of buttons
+			let Row1Count = Row1Info.Buttons;
+			if (isNaN(Row1Count))
+				Row1Count = 10;
+			let Mini = false;
+			if (Row1Count != "") {
+				var ButtonCount = Number(Row1Count);
+				if (Row1Count == 10) {
+				}
+				else if (Row1Count == 7) {
+					Mini = true;
+				}
+				else {
+					console.error('1 row melodeon with tuning \'' + Row1Count + '\' buttons is not supported');
+				}
+			}
+			
+			//Define left hand chords for G melodeon with 4 base buttons
+			this.BassRow1Push = new Array("G");
+			this.BassRow1Pull = new Array("D");
+			if (!Mini) {
+				this.BassRow1Push.push("C");
+				this.BassRow1Pull.push("C");
+			}
+			
+			//Define right hand buttons for G melodeon
+			if (!Mini) {
+				push_row1.push("B,,"); // 1
+				pull_row1.push("D," );
+				push_row1.push("D," ); // 2
+				pull_row1.push("^F,");
+			}
+			push_row1.push("G," ); // 3 (mini 1)
+			pull_row1.push("A," );
+			push_row1.push("B," ); // 4 (mini 2)
+			pull_row1.push("C"  );
+			push_row1.push("D"  ); // 5 (mini 3)
+			pull_row1.push("E"  );
+			push_row1.push("G"  ); // 6 (mini 4)
+			pull_row1.push("^F" );
+			push_row1.push("B"  ); // 7 (mini 5)
+			pull_row1.push("A"  );
+			push_row1.push("d"  ); // 8 (mini 6)
+			pull_row1.push("c"  );
+			if (!Mini) {
+				push_row1.push("g"  ); // 9
+				pull_row1.push("e"  );
+				push_row1.push("b"  ); // 10
+				pull_row1.push("^f" );
+			}
+			else {
+				push_row1.push("^f"  ); // (mini 7)
+				pull_row1.push("e"  );
+			}
+		}
+		//1 row harmonica
+		else {
+			//For non-C figure out how to transpose
+			if (Row1Info.Key == "G"                              )
+				TransposeHalfSteps = -5;
+			else if (Row1Info.Key == "Ab" || Row1Info.Key == "G#")
+				TransposeHalfSteps = -4;
+			else if (Row1Info.Key == "A"                         )
+				TransposeHalfSteps = -3;
+			else if (Row1Info.Key == "Bb" || Row1Info.Key == "A#")
+				TransposeHalfSteps = -2;
+			else if (Row1Info.Key == "B"                         )
+				TransposeHalfSteps = -1;
+			else if (Row1Info.Key == "C"                         )
+				TransposeHalfSteps = 0;
+			else if (Row1Info.Key == "Db" || Row1Info.Key == "C#")
+				TransposeHalfSteps = 1;
+			else if (Row1Info.Key == "D"                         )
+				TransposeHalfSteps = 2;
+			else if (Row1Info.Key == "Eb" || Row1Info.Key == "D#")
+				TransposeHalfSteps = 3;
+			else if (Row1Info.Key == "E"                         )
+				TransposeHalfSteps = 4;
+			else if (Row1Info.Key == "F"                         )
+				TransposeHalfSteps = 5;
+			else if (Row1Info.Key == "Gb" || Row1Info.Key == "F#")
+				TransposeHalfSteps = 6;
+			else {
+				console.error('harmonica in key \'' + Row1Info.Key + '\' is not supported');
+				return;
+			}
+			
+			//C row
+			push_row1.push("C"); // 1
+			pull_row1.push("D");
+			push_row1.push("E"); // 2
+			pull_row1.push("G");
+			push_row1.push("G"); // 3
+			pull_row1.push("B");
+			push_row1.push("c"); // 4
+			pull_row1.push("d");
+			push_row1.push("e"); // 5
+			pull_row1.push("f");
+			push_row1.push("g"); // 6
+			pull_row1.push("a");
+			push_row1.push("c'"); // 7
+			pull_row1.push("b");
+			push_row1.push("e'"); // 8
+			pull_row1.push("d'");
+			push_row1.push("g'"); // 9
+			pull_row1.push("f'");
+			push_row1.push("c''"); // 10
+			pull_row1.push("a'");
+			
+			//C row half step bend
+			push_row2.push(""); // 1'
+			pull_row2.push("_D");
+			push_row2.push(""); // 2'
+			pull_row2.push("_G");
+			push_row2.push(""); // 3'
+			pull_row2.push("_B");
+			push_row2.push(""); // 4'
+			pull_row2.push("_d");
+			push_row2.push(""); // 5'
+			pull_row2.push("");
+			push_row2.push(""); // 6'
+			pull_row2.push("^a");
+			push_row2.push(""); // 7'
+			pull_row2.push("");
+			push_row2.push("_e'"); // 8'
+			pull_row2.push("");
+			push_row2.push("_g'"); // 9'
+			pull_row2.push("");
+			push_row2.push("b'"); // 10'
+			pull_row2.push("");
+			
+			//C row whole step bend
+			push_row3.push(""); // 1"
+			pull_row3.push("");
+			push_row3.push(""); // 2"
+			pull_row3.push("F");
+			push_row3.push(""); // 3"
+			pull_row3.push("A");
+			push_row3.push(""); // 4"
+			pull_row3.push("");
+			push_row3.push(""); // 5"
+			pull_row3.push("");
+			push_row3.push(""); // 6"
+			pull_row3.push("");
+			push_row3.push(""); // 7"
+			pull_row3.push("");
+			push_row3.push(""); // 8"
+			pull_row3.push("");
+			push_row3.push(""); // 9"
+			pull_row3.push("");
+			push_row3.push("_b'"); // 10"
+			pull_row3.push("");
+			
+			//C row 1.5 step bend
+			//TODO: _A -> -3'''
+		}
 	}
-    
-    //Define right hand buttons for G melodeon
-    push_row1.push(""); // 0
-    pull_row1.push("");
-    if (!Mini) {
-      push_row1.push("B,,"); // 1
-      pull_row1.push("D," );
-      push_row1.push("D," ); // 2
-      pull_row1.push("^F,");
-    }
-    push_row1.push("G," ); // 3 (mini 1)
-    pull_row1.push("A," );
-    push_row1.push("B," ); // 4 (mini 2)
-    pull_row1.push("C"  );
-    push_row1.push("D"  ); // 5 (mini 3)
-    pull_row1.push("E"  );
-    push_row1.push("G"  ); // 6 (mini 4)
-    pull_row1.push("^F" );
-    push_row1.push("B"  ); // 7 (mini 5)
-    pull_row1.push("A"  );
-    push_row1.push("d"  ); // 8 (mini 6)
-    pull_row1.push("c"  );
-    if (!Mini) {
-      push_row1.push("g"  ); // 9
-      pull_row1.push("e"  );
-      push_row1.push("b"  ); // 10
-      pull_row1.push("^f" );
-    }
-    else {
-      push_row1.push("^f"  ); // (mini 7)
-      pull_row1.push("e"  );
-    }
-  }
 	else if (this.tuning.length == 2 || this.tuning.length == 3) {
 		//Decode row info strings
 		Row1Info = DecodeRowInfo(this.tuning[0]);
@@ -507,9 +615,9 @@ function MelodeonPatterns(plugin) {
 			TransposeHalfSteps =  7;
 		else {
 			if (this.tuning.length == 2)
-				console.error('2 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' is not supported');
+				console.error('2 row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' is not supported');
 			else if (this.tuning.length == 3)
-				console.error('3 row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
+				console.error('3 row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' and row3 key \'' + Row3Info.Key + '\' is not supported');
 			return;
 		}
 		
@@ -793,7 +901,7 @@ function MelodeonPatterns(plugin) {
 				else if ((Row2Info.Key == "D"                         ) && (Row3Info.Key == "G"                         )) //ADG
 				  TransposeHalfSteps =  7;
 				else {
-				  console.error(this.tuning.length + ' row melodeon with row1 tuning \'' + Row1Info.Key + '\' and row2 tuning \'' + Row2Info.Key + '\' and row3 tuning \'' + Row3Info.Key + '\' is not supported');
+				  console.error(this.tuning.length + ' row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' and row3 key \'' + Row3Info.Key + '\' is not supported');
 				  return;
 				}
 				
@@ -1642,18 +1750,21 @@ function ButtonStringToArrays(str) {
 	let But = "";
 	for (let i = 0; i < str.length; ++i) {
 		if (str[i] == "$") {
+			if (strRow1.length)
+				strRow1 += "\u200A";
 			strRow1 += But;
-			strRow1 += "\u200A";
 			But = "";
 		}
 		else if (str[i] == "'") {
+			if (strRow2.length)
+				strRow2 += "\u200A";
 			strRow2 += But;
-			strRow2 += "\u200A";
 			But = "";
 		}
 		else if (str[i] == "\"") {
+			if (strRow3.length)
+				strRow3 += "\u200A";
 			strRow3 += But;
-			strRow3 += "\u200A";
 			But = "";
 		}
 		else

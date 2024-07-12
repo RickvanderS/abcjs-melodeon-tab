@@ -5,8 +5,6 @@ Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Harmonica: Merge harmonica into melodeon and call it diatonic tab
 New features:
-- Single line tablature (like harmonica)
-- Line per instrument row tablature
 - Optional push/pull indicators next to chords
 - Export ABC with injected tablature
 - Option to disable chord thirds (so chord is neither minor or major)

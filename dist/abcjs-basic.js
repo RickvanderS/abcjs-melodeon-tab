@@ -17144,7 +17144,7 @@ function MelodeonPatterns(plugin) {
       for (var Finger = 0; Finger < 4; ++Finger) {
         if (Row == 1) {
           var Row1Index = h + Finger;
-          if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push(Row1Index.toString());
+          if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push(Row1Index.toString() + "$");
         } else if (Row == 2) {
           var Row2Index = h + Finger;
           if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push(Row2Index.toString() + "'");
@@ -17163,7 +17163,7 @@ function MelodeonPatterns(plugin) {
         var _Finger = aFinger[_i11];
         if (_Row == 1) {
           var _Row1Index = h + _Finger;
-          if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString());
+          if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString() + "$");
         } else if (_Row == 2) {
           var _Row2Index = h + _Finger;
           if (0 <= _Row2Index && _Row2Index < this.push_row2.length) this.HandPos[h].hard.push(_Row2Index.toString() + "'");
@@ -17246,10 +17246,14 @@ function noteToButton(noteName, LookupArray) {
   return "";
 }
 MelodeonPatterns.prototype.noteToPushButtonRow1 = function (noteName) {
-  return noteToButton(noteName, this.push_row1);
+  var ButtonNumber = noteToButton(noteName, this.push_row1);
+  if (ButtonNumber.length > 0) ButtonNumber += "$";
+  return ButtonNumber;
 };
 MelodeonPatterns.prototype.noteToPullButtonRow1 = function (noteName) {
-  return noteToButton(noteName, this.pull_row1);
+  var ButtonNumber = noteToButton(noteName, this.pull_row1);
+  if (ButtonNumber.length > 0) ButtonNumber += "$";
+  return ButtonNumber;
 };
 MelodeonPatterns.prototype.noteToPushButtonRow2 = function (noteName) {
   var ButtonNumber = noteToButton(noteName, this.push_row2);
@@ -17689,6 +17693,33 @@ function ChordMatch(Chord1, Chord2, MaxLength) {
   if (Chord1 == Chord2) return true;
   return false;
 }
+function ButtonStringToArrays(str) {
+  str.replaceAll("\u200A", "");
+  var strRow1 = "";
+  var strRow2 = "";
+  var strRow3 = "";
+  var But = "";
+  for (var i = 0; i < str.length; ++i) {
+    if (str[i] == "$") {
+      strRow1 += But;
+      strRow1 += "\u200A";
+      But = "";
+    } else if (str[i] == "'") {
+      strRow2 += But;
+      strRow2 += "\u200A";
+      But = "";
+    } else if (str[i] == "\"") {
+      strRow3 += But;
+      strRow3 += "\u200A";
+      But = "";
+    } else But += str[i];
+  }
+  return {
+    strRow1: strRow1,
+    strRow2: strRow2,
+    strRow3: strRow3
+  };
+}
 MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   //Update chord push/pull on change
   if (chord && chord.length > 0) {
@@ -18105,29 +18136,99 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var error = null;
   var retNotes = new Array();
   var retGraces = null;
-  if (strPush.length && this.tabstyle == 2) {
-    strPush = strPush.replaceAll("'", this.Row2Marker);
-    strPush = strPush.replaceAll("\"", this.Row3Marker);
+  //Single tab line
+  if (this.tabstyle == 1) {
+    strBoth = "";
+    if (strPush.length) {
+      strPush = strPush.replaceAll("$", "");
+      strPush = strPush.replaceAll("'", this.Row2Marker);
+      strPush = strPush.replaceAll("\"", this.Row3Marker);
+      strBoth = strPush;
+    }
+    if (strPull.length) {
+      strPull = "-" + strPull;
+      strPull = strPull.replaceAll("$", "");
+      strPull = strPull.replaceAll("'", this.Row2Marker);
+      strPull = strPull.replaceAll("\"", this.Row3Marker);
+      strBoth += strPull;
+    }
     var note = new TabNote.TabNote("");
     var number = {
-      num: strPush,
-      str: -1,
-      //Push row (top)
+      num: strBoth,
+      str: 1,
       note: note
     };
     retNotes.push(number);
   }
-  if (strPull.length && this.tabstyle == 2) {
-    strPull = strPull.replaceAll("'", this.Row2Marker);
-    strPull = strPull.replaceAll("\"", this.Row3Marker);
+  //Tab line for push and pull
+  else if (this.tabstyle == 2) {
+    if (strPush.length) {
+      strPush = strPush.replaceAll("$", "");
+      strPush = strPush.replaceAll("'", this.Row2Marker);
+      strPush = strPush.replaceAll("\"", this.Row3Marker);
+      var note = new TabNote.TabNote("");
+      var number = {
+        num: strPush,
+        str: 2,
+        //Push line (top)
+        note: note
+      };
+      retNotes.push(number);
+    }
+    if (strPull.length) {
+      strPull = strPull.replaceAll("$", "");
+      strPull = strPull.replaceAll("'", this.Row2Marker);
+      strPull = strPull.replaceAll("\"", this.Row3Marker);
+      var note = new TabNote.TabNote("");
+      var number = {
+        num: strPull,
+        str: 1,
+        //Pull line (bottom)
+        note: note
+      };
+      retNotes.push(number);
+    }
+  }
+  //Tab line per instrument row
+  else if (this.tabstyle == 3) {
+    var Strings = ButtonStringToArrays("");
+    if (strPush.length) {
+      var PushStrings = ButtonStringToArrays(strPush);
+      Strings.strRow1 = PushStrings.strRow1;
+      Strings.strRow2 = PushStrings.strRow2;
+      Strings.strRow3 = PushStrings.strRow3;
+    }
+    if (strPull.length) {
+      var PullStrings = ButtonStringToArrays(strPull);
+      if (PullStrings.strRow1.length) Strings.strRow1 = "-" + PullStrings.strRow1;
+      if (PullStrings.strRow2.length) Strings.strRow2 = "-" + PullStrings.strRow2;
+      if (PullStrings.strRow3.length) Strings.strRow3 = "-" + PullStrings.strRow3;
+    }
     var note = new TabNote.TabNote("");
-    var number = {
-      num: strPull,
-      str: 1,
-      //Pull row (bottom
-      note: note
-    };
-    retNotes.push(number);
+    if (Strings.strRow1.length) {
+      var number = {
+        num: Strings.strRow1,
+        str: 1,
+        note: note
+      };
+      retNotes.push(number);
+    }
+    if (Strings.strRow2.length) {
+      var number = {
+        num: Strings.strRow2,
+        str: 2,
+        note: note
+      };
+      retNotes.push(number);
+    }
+    if (Strings.strRow3.length) {
+      var number = {
+        num: Strings.strRow3,
+        str: 3,
+        note: note
+      };
+      retNotes.push(number);
+    }
   }
 
   //Create returns values for note head changes
@@ -18160,7 +18261,7 @@ MelodeonPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   };
 };
 MelodeonPatterns.prototype.stringToPitch = function (stringNumber) {
-  if (stringNumber < 1) return 14.7;else return 9.7;
+  if (stringNumber == 3) return 19.7;else if (stringNumber == 2) return 14.7;else return 9.7;
 };
 module.exports = MelodeonPatterns;
 
@@ -18294,6 +18395,11 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
   var semantics = new MelodeonPatterns(this);
   this.semantics = semantics;
 };
+function TuningStrip(RowTuning) {
+  RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
+  if (RowTuning.length > 2) RowTuning = "#";
+  return RowTuning;
+}
 Plugin.prototype.buildTabAbsolute = function (absX, relX) {
   var tabIcon = 'tab.tiny';
   var tabYPos = 10;
@@ -18319,18 +18425,48 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
 
     //For push/pull row style, set the push pull icons
     if (this._super.params.tabstyle == 2) {
+      var Xadjust = 20;
+      var Y = 7.5;
       tabIcon = 'tab.pull';
-      var tabRelative2 = new RelativeElement(tabIcon, 0, 0, 7.5, "tab");
-      tabRelative2.x = relX + 20;
-      tabAbsolute.children.push(tabRelative2);
+      var tabRelativeRow1 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
+      tabRelativeRow1.x = relX + Xadjust;
+      tabAbsolute.children.push(tabRelativeRow1);
       tabIcon = 'tab.push';
-      var tabRelative3 = new RelativeElement(tabIcon, 0, 0, 12.5, "tab");
-      tabRelative3.x = relX + 20 + 8.014;
-      tabAbsolute.children.push(tabRelative3);
+      Y += this.linePitch;
+      var tabRelativeRow2 = new RelativeElement(tabIcon, 0, 0, Y, "tab");
+      tabRelativeRow2.x = relX + Xadjust + 8.014;
+      tabAbsolute.children.push(tabRelativeRow2);
     }
     //For tab row per instrument row style, set the row keys
     else if (this._super.params.tabstyle == 3) {
+      var Xadjust = 25;
+      if (this.isTabBig) Xadjust += 5;
+      var opt = {
+        type: 'tabNumber'
+      };
+      var Y = 10;
+
       //TODO:
+      if (this._super.params.tuning.length >= 1) {
+        var str1 = TuningStrip(this._super.params.tuning[0]);
+        var tabRelativeRow1 = new RelativeElement(str1, 0, 0, Y, opt);
+        tabRelativeRow1.x = relX + Xadjust;
+        tabAbsolute.children.push(tabRelativeRow1);
+      }
+      if (this._super.params.tuning.length >= 2) {
+        Y += this.linePitch;
+        var str2 = TuningStrip(this._super.params.tuning[1]);
+        var tabRelativeRow2 = new RelativeElement(str2, 0, 0, Y, opt);
+        tabRelativeRow2.x = relX + Xadjust;
+        tabAbsolute.children.push(tabRelativeRow2);
+      }
+      if (this._super.params.tuning.length >= 3) {
+        Y += this.linePitch;
+        var str3 = TuningStrip(this._super.params.tuning[2]);
+        var tabRelativeRow3 = new RelativeElement(str3, 0, 0, Y, opt);
+        tabRelativeRow3.x = relX + Xadjust;
+        tabAbsolute.children.push(tabRelativeRow3);
+      }
     }
   }
   return tabAbsolute;
@@ -19830,8 +19966,10 @@ TabRenderer.prototype.doLayout = function () {
     this.absolutes.build(this.plugin, voices, this.tabStaff.voices[ii], ii, this.staffIndex, keySig, tabVoiceIndex);
   }
   linkStaffAndTabs(staffGroup.staffs); // crossreference tabs and staff
-};
 
+  //Remove tab staff if it is not to be displayed
+  if (this.plugin.nbLines < 1) staffGroup.staffs.splice(staffGroup.staffs.length - 1, 1);
+};
 module.exports = TabRenderer;
 
 /***/ }),
@@ -25629,7 +25767,6 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
   var bottomLine;
   var linePitch = 2;
   var bartop = 0;
-  var startswithlines = 0;
   for (var i = 0; i < params.voices.length; i++) {
     var staff = params.voices[i].staff;
     var tabName = params.voices[i].tabNameInfos;
@@ -25642,7 +25779,6 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
       if (!topLine) topLine = renderer.calcY(10);
       bottomLine = renderer.calcY(linePitch);
       if (staff.lines !== 0) {
-        startswithlines++;
         if (staff.linePitch) {
           linePitch = staff.linePitch;
         }
@@ -25706,7 +25842,7 @@ function drawStaffGroup(renderer, params, selectables, lineNumber) {
 
   // connect all the staves together with a vertical line
   var staffSize = params.staffs.length;
-  if (staffSize > 1 && startswithlines > 1) {
+  if (staffSize > 1) {
     topLine = params.staffs[0].topLine;
     bottomLine = params.staffs[staffSize - 1].bottomLine;
     printStem(renderer, params.startx, 0.6, topLine, bottomLine, null);

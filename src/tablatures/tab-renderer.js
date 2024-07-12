@@ -266,6 +266,11 @@ TabRenderer.prototype.doLayout = function () {
       this.tabStaff
     );
   }
+  
+
+
+
+  
   var staffGroup = this.line.staffGroup;
 
   var voices = staffGroup.voices;
@@ -321,6 +326,10 @@ TabRenderer.prototype.doLayout = function () {
     this.absolutes.build(this.plugin, voices, this.tabStaff.voices[ii], ii , this.staffIndex ,keySig, tabVoiceIndex);
   }
   linkStaffAndTabs(staffGroup.staffs); // crossreference tabs and staff
+
+  //Remove tab staff if it is not to be displayed
+  if (this.plugin.nbLines < 1)
+    staffGroup.staffs.splice(staffGroup.staffs.length-1, 1);
 };
 
 module.exports = TabRenderer;

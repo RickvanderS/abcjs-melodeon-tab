@@ -266,11 +266,6 @@ TabRenderer.prototype.doLayout = function () {
       this.tabStaff
     );
   }
-  
-
-
-
-  
   var staffGroup = this.line.staffGroup;
 
   var voices = staffGroup.voices;

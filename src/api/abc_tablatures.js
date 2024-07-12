@@ -155,7 +155,7 @@ var abcTablatures = {
         for (var jj = 0; jj < curStaff.length; jj++) {
 
           if (tabs[jj] && jj < maxStaves) {
-            // tablature requested for staff
+             // tablature requested for staff
             var tabPlugin = tabs[jj];
             if (tabPlugin.instance == null) {
               tabPlugin.instance = new tabPlugin.classz();

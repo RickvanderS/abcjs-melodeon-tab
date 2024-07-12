@@ -7,16 +7,16 @@ var addChord = function (getTextSize, abselem, elem, roomTaken, roomTakenRight, 
 		var pos = elem.chord[i].position;
 		var rel_position = elem.chord[i].rel_position;
 		var isAnnotation = pos === "left" || pos === "right" || pos === "below" || pos === "above" || !!rel_position
-			var font;
-			var klass;
+		var font;
+		var klass;
 		if (isAnnotation) {
-				font = 'annotationfont';
+			font = 'annotationfont';
 			klass = "abcjs-annotation";
-			} else {
-				font = 'gchordfont';
+		} else {
+			font = 'gchordfont';
 			klass = "abcjs-chord";
-			}
-			var attr = getTextSize.attr(font, klass);
+		}
+		var attr = getTextSize.attr(font, klass);
 
 		var name = elem.chord[i].name
 		var ret;
@@ -44,79 +44,79 @@ function chordString(chordString, pos, rel_position, isAnnotation, font, klass, 
 		var y;
 		if (!isAnnotation)
 			chord = translateChord(chord, jazzchords, germanAlphabet);
-			var dim = getTextSize.calc(chord, font, klass);
-			var chordWidth = dim.width;
-			var chordHeight = dim.height / spacing.STEP;
-			switch (pos) {
-				case "left":
-					roomTaken += chordWidth + 7;
-					x = -roomTaken;        // TODO-PER: This is just a guess from trial and error
-					y = elem.averagepitch;
-					abselem.addExtra(new RelativeElement(chord, x, chordWidth + 4, y, {
+		var dim = getTextSize.calc(chord, font, klass);
+		var chordWidth = dim.width;
+		var chordHeight = dim.height / spacing.STEP;
+		switch (pos) {
+			case "left":
+				roomTaken += chordWidth + 7;
+				x = -roomTaken;        // TODO-PER: This is just a guess from trial and error
+				y = elem.averagepitch;
+				abselem.addExtra(new RelativeElement(chord, x, chordWidth + 4, y, {
+					type: "text",
+					height: chordHeight,
+					dim: attr,
+					position: "left"
+				}));
+				break;
+			case "right":
+				roomTakenRight += 4;
+				x = roomTakenRight;// TODO-PER: This is just a guess from trial and error
+				y = elem.averagepitch;
+				abselem.addRight(new RelativeElement(chord, x, chordWidth + 4, y, {
+					type: "text",
+					height: chordHeight,
+					dim: attr,
+					position: "right"
+				}));
+				break;
+			case "below":
+				// setting the y-coordinate to undefined for now: it will be overwritten later on, after we figure out what the highest element on the line is.
+				abselem.addRight(new RelativeElement(chord, 0, 0, undefined, {
+					type: "text",
+					position: "below",
+					height: chordHeight,
+					dim: attr,
+					realWidth: chordWidth
+				}));
+				break;
+			case "above":
+				// setting the y-coordinate to undefined for now: it will be overwritten later on, after we figure out what the highest element on the line is.
+				abselem.addRight(new RelativeElement(chord, 0, 0, undefined, {
+					type: "text",
+					position: "above",
+					height: chordHeight,
+					dim: attr,
+					realWidth: chordWidth
+				}));
+				break;
+			default:
+				if (rel_position) {
+					var relPositionY = rel_position.y + 3 * spacing.STEP; // TODO-PER: this is a fudge factor to make it line up with abcm2ps
+					abselem.addRight(new RelativeElement(chord, x + rel_position.x, 0, elem.minpitch + relPositionY / spacing.STEP, {
+						position: "relative",
 						type: "text",
 						height: chordHeight,
-						dim: attr,
-						position: "left"
+						dim: attr
 					}));
-					break;
-				case "right":
-					roomTakenRight += 4;
-					x = roomTakenRight;// TODO-PER: This is just a guess from trial and error
-					y = elem.averagepitch;
-					abselem.addRight(new RelativeElement(chord, x, chordWidth + 4, y, {
-						type: "text",
-						height: chordHeight,
-						dim: attr,
-						position: "right"
-					}));
-					break;
-				case "below":
+				} else {
 					// setting the y-coordinate to undefined for now: it will be overwritten later on, after we figure out what the highest element on the line is.
-					abselem.addRight(new RelativeElement(chord, 0, 0, undefined, {
-						type: "text",
-						position: "below",
-						height: chordHeight,
-						dim: attr,
-						realWidth: chordWidth
-					}));
-					break;
-				case "above":
-					// setting the y-coordinate to undefined for now: it will be overwritten later on, after we figure out what the highest element on the line is.
-					abselem.addRight(new RelativeElement(chord, 0, 0, undefined, {
-						type: "text",
-						position: "above",
-						height: chordHeight,
-						dim: attr,
-						realWidth: chordWidth
-					}));
-					break;
-				default:
-					if (rel_position) {
-						var relPositionY = rel_position.y + 3 * spacing.STEP; // TODO-PER: this is a fudge factor to make it line up with abcm2ps
-						abselem.addRight(new RelativeElement(chord, x + rel_position.x, 0, elem.minpitch + relPositionY / spacing.STEP, {
-							position: "relative",
-							type: "text",
-							height: chordHeight,
-							dim: attr
-						}));
-					} else {
-						// setting the y-coordinate to undefined for now: it will be overwritten later on, after we figure out what the highest element on the line is.
-						var pos2 = 'above';
-						if (elem.positioning && elem.positioning.chordPosition)
-							pos2 = elem.positioning.chordPosition;
+					var pos2 = 'above';
+					if (elem.positioning && elem.positioning.chordPosition)
+						pos2 = elem.positioning.chordPosition;
 
-						if (pos2 !== 'hidden') {
-							abselem.addCentered(new RelativeElement(chord, noteheadWidth / 2, chordWidth, undefined, {
-								type: "chord",
-								position: pos2,
-								height: chordHeight,
-								dim: attr,
-								realWidth: chordWidth
-							}));
-						}
+					if (pos2 !== 'hidden') {
+						abselem.addCentered(new RelativeElement(chord, noteheadWidth / 2, chordWidth, undefined, {
+							type: "chord",
+							position: pos2,
+							height: chordHeight,
+							dim: attr,
+							realWidth: chordWidth
+						}));
 					}
-			}
+				}
 		}
+	}
 	return { roomTaken: roomTaken, roomTakenRight: roomTakenRight };
 }
 module.exports = addChord;

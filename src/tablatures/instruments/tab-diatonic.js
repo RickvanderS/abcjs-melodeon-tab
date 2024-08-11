@@ -110,6 +110,7 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
 			//TODO:
 			if (this._super.params.tuning.length >= 1) {
 				var str1 = TuningStrip(this._super.params.tuning[0]);
+				str1 = str1.replaceAll("b", "♭");
 				var tabRelativeRow1 = new RelativeElement(str1, 0, 0, Y, opt);
 				tabRelativeRow1.x = relX + Xadjust;
 				tabAbsolute.children.push(tabRelativeRow1);
@@ -118,6 +119,7 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
 			if (this._super.params.tuning.length >= 2) {
 				Y += this.linePitch;
 				var str2 = TuningStrip(this._super.params.tuning[1]);
+				str2 = str2.replaceAll("b", "♭");
 				var tabRelativeRow2 = new RelativeElement(str2, 0, 0, Y, opt);
 				tabRelativeRow2.x = relX + Xadjust;
 				tabAbsolute.children.push(tabRelativeRow2);
@@ -126,13 +128,11 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
 			if (this._super.params.tuning.length >= 3) {
 				Y += this.linePitch;
 				var str3 = TuningStrip(this._super.params.tuning[2]);
+				str3 = str3.replaceAll("b", "♭");
 				var tabRelativeRow3 = new RelativeElement(str3, 0, 0, Y, opt);
 				tabRelativeRow3.x = relX + Xadjust;
 				tabAbsolute.children.push(tabRelativeRow3);
 			}
-			
-			
-			
 		}
 	}
 

@@ -16755,31 +16755,31 @@ function DiatonicPatterns(plugin) {
         push_row3.push("^g"); // 7"
         pull_row3.push("_b");
       } else {
-        if ((Row2Info.Key == "Eb" || Row2Info.Key == "D#") && (Row3Info.Key == "Ab" || Row3Info.Key == "G#"))
-          //BbEbAb
-          TransposeHalfSteps = -3;else if (Row2Info.Key == "E" && Row3Info.Key == "A")
-          //BEA
-          TransposeHalfSteps = -3;else if (Row2Info.Key == "F" && (Row3Info.Key == "Bb" || Row3Info.Key == "A#"))
-          //CFBb
-          TransposeHalfSteps = -2;else if ((Row2Info.Key == "Gb" || Row2Info.Key == "F#") && Row3Info.Key == "B")
-          //DbDbB
-          TransposeHalfSteps = -1;else if (Row2Info.Key == "G" && Row3Info.Key == "C")
-          //DGC, does not exit
+        if (Row2Info.Key == "G" && Row3Info.Key == "C")
+          //DGC, rare mostly conversions with D an octave lower than standard DG
           TransposeHalfSteps = 0;else if ((Row2Info.Key == "Ab" || Row2Info.Key == "G#") && (Row3Info.Key == "Db" || Row3Info.Key == "C#"))
           //EbAbDb
           TransposeHalfSteps = 1;else if (Row2Info.Key == "A" && Row3Info.Key == "D")
-          //EAD
+          //EAD, exists (Hohner corona)
           TransposeHalfSteps = 2;else if ((Row2Info.Key == "Bb" || Row2Info.Key == "A#") && (Row3Info.Key == "Eb" || Row3Info.Key == "D#"))
-          //FBbEb
+          //FBbEb, exists (Hohner corona)
           TransposeHalfSteps = 3;else if (Row2Info.Key == "B" && Row3Info.Key == "E")
           //GbBE
           TransposeHalfSteps = 4;else if (Row2Info.Key == "C" && Row3Info.Key == "F")
-          //GCF
+          //GCF, exists (Hohner corona)
           TransposeHalfSteps = 5;else if ((Row2Info.Key == "Db" || Row2Info.Key == "C#") && (Row3Info.Key == "Gb" || Row3Info.Key == "F#"))
           //AbDbGb
           TransposeHalfSteps = 6;else if (Row2Info.Key == "D" && Row3Info.Key == "G")
-          //ADG
-          TransposeHalfSteps = 7;else {
+          //ADG, exists (Hohner corona)
+          TransposeHalfSteps = 7;else if ((Row2Info.Key == "Eb" || Row2Info.Key == "D#") && (Row3Info.Key == "Ab" || Row3Info.Key == "G#"))
+          //BbEbAb, exists (Hohner corona)
+          TransposeHalfSteps = 8;else if (Row2Info.Key == "E" && Row3Info.Key == "A")
+          //BEA
+          TransposeHalfSteps = 9;else if (Row2Info.Key == "F" && (Row3Info.Key == "Bb" || Row3Info.Key == "A#"))
+          //CFBb, exists
+          TransposeHalfSteps = 10;else if ((Row2Info.Key == "Gb" || Row2Info.Key == "F#") && Row3Info.Key == "B")
+          //DbGbB
+          TransposeHalfSteps = 11;else {
           console.error(this.tuning.length + ' row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' and row3 key \'' + Row3Info.Key + '\' is not supported');
           return;
         }

@@ -52,7 +52,7 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
 function TuningStrip(RowTuning) {
 	RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
 	if (RowTuning.length > 2)
-		RowTuning = "#";
+		RowTuning = "♯";
 	return RowTuning;
 }
 

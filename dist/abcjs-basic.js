@@ -16309,6 +16309,14 @@ function DiatonicPatterns(plugin) {
   //3 tab row per instrument row
   this.tabstyle = plugin._super.params.tabstyle;
   if (this.tabstyle == null) this.tabstyle = 2;
+
+  //Tablature format
+  //0 Button numbers
+  //1 Note names
+  //2 Button+Note
+  //3 Note+Button
+  this.tabformat = plugin._super.params.tabformat;
+  if (this.tabformat == null) this.tabformat = 0;
   this.changenoteheads = plugin._super.params.changenoteheads;
   if (this.changenoteheads == null) this.changenoteheads = false;
 
@@ -16714,46 +16722,55 @@ function DiatonicPatterns(plugin) {
         this.BassRow1Pull.splice(0, 0, "Bm");
         this.BassRow2Push.splice(0, 0, "Eb");
         this.BassRow2Pull.splice(0, 0, "Bb");
-        push_row3.push(""); // 0"
-        pull_row3.push("");
-        push_row3.push(""); // 1"
-        pull_row3.push("");
-        push_row3.push("^G"); // 2"
-        pull_row3.push("_B");
-        push_row3.push("_E"); // 3"
-        pull_row3.push("^C");
-        push_row3.push("^A"); // 4"
-        pull_row3.push("G");
-        push_row3.push("^g"); // 5"
-        pull_row3.push("_b");
-        push_row3.push("_e"); // 6"
-        pull_row3.push("^c");
-      } else if (Row3Tuning == "rick") {
-        //Add bass chords
-        this.BassRow1Push.push("A");
-        this.BassRow1Pull.push("B");
-        this.BassRow2Push.push("Eb");
-        this.BassRow2Pull.push("Bb");
-        push_row1[1] = "B,,"; // 1
-        pull_row1[1] = "D,";
-        push_row2[1] = "^G,"; // 1'
-        pull_row2[1] = "_B,";
-        push_row3.push(""); // 0"
-        pull_row3.push("");
         push_row3.push(""); // 1"
         pull_row3.push("");
         push_row3.push(""); // 2"
         pull_row3.push("");
-        push_row3.push(""); // 3"
-        pull_row3.push("");
+        push_row3.push("^G"); // 3"
+        pull_row3.push("_B");
         push_row3.push("_E"); // 4"
         pull_row3.push("^C");
-        push_row3.push("^G"); // 5"
+        push_row3.push("^A"); // 5"
+        pull_row3.push("G");
+        push_row3.push("^g"); // 6"
+        pull_row3.push("_b");
+        push_row3.push("_e"); // 7"
+        pull_row3.push("^c");
+      } else if (Row3Tuning == "rick") {
+        //Add bass chords
+        this.BassRow1Push.push("Ab");
+        this.BassRow1Pull.push("Bm");
+        this.BassRow2Push.push("Eb");
+        this.BassRow2Pull.push("Bb");
+        push_row1[0] = "B,,"; // 1
+        pull_row1[0] = "E,";
+        push_row2[0] = "E,"; // 1'
+        pull_row2[0] = "G,";
+        push_row2[1] = "A,"; // 2'
+        //
+        push_row2[4] = "A"; // 5'
+        pull_row2[4] = "G";
+        push_row2[7] = "a"; // 8'
+        pull_row2[8] = "g"; // 9'
+
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("_B,");
+        push_row3.push("_B,"); // 2"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 3"
+        pull_row3.push("^G");
+        push_row3.push("^G"); // 4"
+        pull_row3.push("A");
+        push_row3.push("_B"); // 5"
         pull_row3.push("_B");
         push_row3.push("_e"); // 6"
         pull_row3.push("^c");
         push_row3.push("^g"); // 7"
-        pull_row3.push("_b");
+        pull_row3.push("^g");
+        push_row3.push("_b"); // 8"
+        pull_row3.push("a");
+        push_row3.push("e'"); // 9"
+        pull_row3.push("_b'");
       } else {
         if (Row2Info.Key == "G" && Row3Info.Key == "C")
           //DGC, rare mostly conversions with D an octave lower than standard DG
@@ -17467,14 +17484,50 @@ DiatonicPatterns.prototype.MarkBar = function () {
   } else {}
   this.BarIndex++;
 };
-function AppendButton(strButtons, Button) {
+DiatonicPatterns.prototype.AppendButton = function (strButtons, Button, noteName) {
   //Append hair space if required
   if (strButtons.length > 0 && strButtons[strButtons.length - 1] != "'" && strButtons[strButtons.length - 1] != "\"") strButtons += "\u200A";
+  var RowMarker = "";
+  if (Button.includes("$")) {
+    RowMarker = "$";
+    Button = Button.replaceAll("$", "");
+  } else if (Button.includes("'")) {
+    RowMarker = "'";
+    Button = Button.replaceAll("'", "");
+  } else if (Button.includes('"')) {
+    RowMarker = '"';
+    Button = Button.replaceAll('"', "");
+  }
 
-  //Append the button
-  strButtons += Button;
+  //Format user readable note name
+  if (noteName.includes("_")) {
+    noteName = noteName.replaceAll("_", "");
+    noteName += "♭";
+  } else if (noteName.includes("^")) {
+    noteName = noteName.replaceAll("^", "");
+    noteName += "♯";
+  }
+  //noteName = noteName.replaceAll(",", "");
+  //noteName = noteName.replaceAll("'", "");
+  //noteName = noteName.toLowerCase();
+
+  //Append to string depending on the chosen format
+  switch (this.tabformat) {
+    case 0:
+      strButtons += Button + RowMarker;
+      break;
+    case 1:
+      strButtons += noteName + RowMarker;
+      break;
+    case 2:
+      strButtons += Button + noteName + RowMarker;
+      break;
+    case 3:
+      strButtons += noteName + Button + RowMarker;
+      break;
+  }
   return strButtons;
-}
+};
 function ChordReduce(Chord, MaxLength) {
   Chord = Chord.replace("♭", "b");
 
@@ -17845,12 +17898,12 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
           //Add it to tablature push or pull
           if (!Hidden) {
-            if (Push) strPush = AppendButton(strPush, Button);else strPull = AppendButton(strPull, Button);
+            if (Push) strPush = this.AppendButton(strPush, Button, noteName);else strPull = this.AppendButton(strPull, Button, noteName);
           }
 
           //Only when the note head change option is enabled
           if (this.changenoteheads) {
-            //Row2 gets diamands, row3 gets triangles
+            //Row2 gets diamonds, row3 gets triangles
             if (Button.search("'") >= 0) aDiamandNotes.push(notes[i]);else if (Button.search("\"") >= 0) aTriangleNotes.push(notes[i]);
           }
         }
@@ -17917,16 +17970,16 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
       //Set push buttons
       if (AllowPush) {
-        if (AllowRow1 && _push.length) strPush = AppendButton(strPush, _push);
-        if (AllowRow2 && _push4.length) strPush = AppendButton(strPush, _push4);
-        if (AllowRow3 && _push5.length) strPush = AppendButton(strPush, _push5);
+        if (AllowRow1 && _push.length) strPush = this.AppendButton(strPush, _push, _noteName);
+        if (AllowRow2 && _push4.length) strPush = this.AppendButton(strPush, _push4, _noteName);
+        if (AllowRow3 && _push5.length) strPush = this.AppendButton(strPush, _push5, _noteName);
       }
 
       //Set pull buttons
       if (AllowPull) {
-        if (AllowRow1 && _pull.length) strPull = AppendButton(strPull, _pull);
-        if (AllowRow2 && _pull4.length) strPull = AppendButton(strPull, _pull4);
-        if (AllowRow3 && _pull5.length) strPull = AppendButton(strPull, _pull5);
+        if (AllowRow1 && _pull.length) strPull = this.AppendButton(strPull, _pull, _noteName);
+        if (AllowRow2 && _pull4.length) strPull = this.AppendButton(strPull, _pull4, _noteName);
+        if (AllowRow3 && _pull5.length) strPull = this.AppendButton(strPull, _pull5, _noteName);
       }
     }
   }
@@ -18555,7 +18608,7 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params) {
 };
 function TuningStrip(RowTuning) {
   RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
-  if (RowTuning.length > 2) RowTuning = "#";
+  if (RowTuning.length > 2) RowTuning = "♯";
   return RowTuning;
 }
 Plugin.prototype.buildTabAbsolute = function (absX, relX) {

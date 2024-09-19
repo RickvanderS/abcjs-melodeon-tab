@@ -17500,16 +17500,21 @@ DiatonicPatterns.prototype.AppendButton = function (strButtons, Button, noteName
   }
 
   //Format user readable note name
+  var Flat = false;
+  var Sharp = false;
   if (noteName.includes("_")) {
     noteName = noteName.replaceAll("_", "");
-    noteName += "♭";
+    Flat = true;
   } else if (noteName.includes("^")) {
     noteName = noteName.replaceAll("^", "");
-    noteName += "♯";
+    Sharp = true;
   }
-  //noteName = noteName.replaceAll(",", "");
-  //noteName = noteName.replaceAll("'", "");
-  //noteName = noteName.toLowerCase();
+  noteName = noteName.replaceAll("''", "\u2087"); //Octave 7
+  noteName = noteName.replaceAll("'", "\u2086"); //Octave 6
+  noteName = noteName.replaceAll(",,", "\u2082"); //Octave 2
+  noteName = noteName.replaceAll(",", "\u2083"); //Octave 3
+  if (Flat) noteName += "♭";
+  if (Sharp) noteName += "♯";
 
   //Append to string depending on the chosen format
   switch (this.tabformat) {

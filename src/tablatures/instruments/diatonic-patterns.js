@@ -1751,14 +1751,28 @@ DiatonicPatterns.prototype.AppendButton = function(strButtons, Button, noteName)
 		noteName = noteName.replaceAll("^", "");
 		Sharp    = true;
 	}
-	noteName = noteName.replaceAll("''", '\u2087'); //Octave 7
-	noteName = noteName.replaceAll("'" , '\u2086'); //Octave 6
-	noteName = noteName.replaceAll(",,", '\u2082'); //Octave 2
-	noteName = noteName.replaceAll("," , '\u2083'); //Octave 3
+	var Octave = "";
+	if (noteName.includes("''")) {
+		noteName = noteName.replaceAll("''", ""); 
+		Octave = '\u2087'; //Octave 7
+	}
+	else if (noteName.includes("'")) {
+		noteName = noteName.replaceAll("'" , "");
+		Octave = '\u2086'; //Octave 6
+	}
+	else if (noteName.includes(",,")) {
+		noteName = noteName.replaceAll(",,", "");
+		Octave = '\u2082'; //Octave 2
+	}
+	else if (noteName.includes(",")) {
+		noteName = noteName.replaceAll("," , "");
+		Octave = '\u2083'; //Octave 3
+	}
 	if (Flat)
 		noteName += "♭";
 	if (Sharp)
 		noteName += "♯";
+	noteName += Octave;
 	
 	//Append to string depending on the chosen format
 	switch (this.tabformat) {

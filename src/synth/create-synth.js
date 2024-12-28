@@ -18,7 +18,8 @@ var defaultSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/FluidR
 var alternateSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/";
 
 
-function CreateSynth(ClearSoundsCache) {
+function CreateSynth(ClearSoundsCache) { //DIA:
+	//DIA:{
 	if (ClearSoundsCache && typeof soundsCache !== 'undefined') {
 		for (let key in soundsCache) {
 			if (soundsCache.hasOwnProperty(key)) {
@@ -27,6 +28,7 @@ function CreateSynth(ClearSoundsCache) {
 			}
 		}
 	}
+	//DIA:}
 	
 	var self = this;
 	self.audioBufferPossible = undefined;

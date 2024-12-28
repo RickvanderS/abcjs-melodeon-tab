@@ -10,11 +10,13 @@ var getNote = function (url, instrument, name, audioContext) {
 
 	if (!instrumentCache[name])
 		instrumentCache[name] = new Promise(function (resolve, reject) {
+			//DIA:{
 			//For melodeon, create the notes here instead of loading them from URL
 			if (instrument.startsWith("melodeon_")) {
 				genMelodeonNote(instrument, name, audioContext, resolve, reject);
 				return;
 			}
+			//DIA:}
 			
 			var xhr = new XMLHttpRequest();
 			let noteUrl = url + instrument + "-mp3/" + name + ".mp3";
@@ -47,6 +49,7 @@ var getNote = function (url, instrument, name, audioContext) {
 	return instrumentCache[name];
 };
 
+//DIA:{
 function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 	//Get user configuration from window global variables
 	//TODO: Hack
@@ -238,5 +241,6 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
 		resolve({instrument: instrument, name: name, status: "loaded", audioBuffer: renderedBuffer});
 	})
 }
+//DIA:}
 
 module.exports = getNote;

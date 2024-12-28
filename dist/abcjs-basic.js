@@ -1585,7 +1585,7 @@ var Tune = function Tune() {
         if (element.type === 'bar') {
           var barType = element.abcelem.type;
           var endRepeat = barType === "bar_right_repeat" || barType === "bar_dbl_repeat";
-          var startEnding = element.abcelem.startEnding && element.abcelem.startEnding.substring(0, 1) === '1';
+          var startEnding = element.abcelem.startEnding && element.abcelem.startEnding.substring(0, 1) === '1'; //DIA:
           var startRepeat = barType === "bar_left_repeat" || barType === "bar_dbl_repeat" || barType === "bar_right_repeat";
           if (endRepeat) {
             // Force the end of the previous note to the position of the measure - the cursor won't go past the end repeat
@@ -6818,6 +6818,7 @@ var setIsInTie = function setIsInTie(multilineVars, overlayLevel, value) {
   multilineVars.inTie[overlayLevel][voiceIndex] = value;
 };
 var letter_to_chord = function letter_to_chord(line, i) {
+  //DIA:{
   //Define characters used for melodeon tablature annotation
   var aMelodeonAnnotation = new Array();
   aMelodeonAnnotation.push("<");
@@ -6825,10 +6826,13 @@ var letter_to_chord = function letter_to_chord(line, i) {
   aMelodeonAnnotation.push(".");
   aMelodeonAnnotation.push(":");
   aMelodeonAnnotation.push(",");
+  //DIA:}
+
   if (line[i] === '"') {
     var chord = tokenizer.getBrackettedSubstring(line, i, 5);
     if (!chord[2]) warn("Missing the closing quote while parsing the chord symbol", line, i);
 
+    //DIA:{
     //Detect chord only being used for melodeon annotation
     var MelodeonAnnotationOnly = true;
     for (var _i = 0; _i < chord[1].length; ++_i) {
@@ -6844,6 +6848,7 @@ var letter_to_chord = function letter_to_chord(line, i) {
         break;
       }
     }
+    //DIA:}
 
     // If it starts with ^, then the chord appears above.
     // If it starts with _ then the chord appears below.
@@ -6855,9 +6860,11 @@ var letter_to_chord = function letter_to_chord(line, i) {
       chord[1] = chord[1].substring(1);
       chord[2] = 'below';
     } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '<' && !MelodeonAnnotationOnly) {
+      //DIA:
       chord[1] = chord[1].substring(1);
       chord[2] = 'left';
     } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '>' && !MelodeonAnnotationOnly) {
+      //DIA:
       chord[1] = chord[1].substring(1);
       chord[2] = 'right';
     } else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '@') {
@@ -12838,7 +12845,7 @@ var parseCommon = __webpack_require__(/*! ../parse/abc_common */ "./src/parse/ab
                   // figure out repeats and endings --
                   // The important part is where there is a start repeat, and end repeat, or a first ending.
                   var endRepeat = elem.type === "bar_right_repeat" || elem.type === "bar_dbl_repeat";
-                  var startEnding = elem.startEnding && elem.startEnding.substring(0, 1) === '1';
+                  var startEnding = elem.startEnding && elem.startEnding.substring(0, 1) === '1'; //DIA:
                   var startRepeat = elem.type === "bar_left_repeat" || elem.type === "bar_dbl_repeat" || elem.type === "bar_right_repeat";
                   if (endRepeat) {
                     var s = startRepeatPlaceholder[voiceNumber];
@@ -14181,6 +14188,8 @@ var originalSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/abcjs
 var defaultSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/";
 var alternateSoundFontUrl = "https://paulrosen.github.io/midi-js-soundfonts/MusyngKite/";
 function CreateSynth(ClearSoundsCache) {
+  //DIA:
+  //DIA:{
   if (ClearSoundsCache && typeof soundsCache !== 'undefined') {
     for (var key in soundsCache) {
       if (soundsCache.hasOwnProperty(key)) {
@@ -14189,6 +14198,8 @@ function CreateSynth(ClearSoundsCache) {
       }
     }
   }
+  //DIA:}
+
   var self = this;
   self.audioBufferPossible = undefined;
   self.directSource = []; // type: AudioBufferSourceNode
@@ -14915,9 +14926,14 @@ module.exports = svg;
   \***********************************************/
 /***/ (function(module) {
 
-var instrumentIndexToName = ["acoustic_grand_piano", "bright_acoustic_piano", "electric_grand_piano", "honkytonk_piano", "electric_piano_1", "electric_piano_2", "harpsichord", "clavinet", "celesta", "glockenspiel", "music_box", "vibraphone", "marimba", "xylophone", "tubular_bells", "dulcimer", "drawbar_organ", "percussive_organ", "rock_organ", "church_organ", "reed_organ", "accordion", "harmonica", "tango_accordion", "acoustic_guitar_nylon", "acoustic_guitar_steel", "electric_guitar_jazz", "electric_guitar_clean", "electric_guitar_muted", "overdriven_guitar", "distortion_guitar", "guitar_harmonics", "acoustic_bass", "electric_bass_finger", "electric_bass_pick", "fretless_bass", "slap_bass_1", "slap_bass_2", "synth_bass_1", "synth_bass_2", "violin", "viola", "cello", "contrabass", "tremolo_strings", "pizzicato_strings", "orchestral_harp", "timpani", "string_ensemble_1", "string_ensemble_2", "synth_strings_1", "synth_strings_2", "choir_aahs", "voice_oohs", "synth_choir", "orchestra_hit", "trumpet", "trombone", "tuba", "muted_trumpet", "french_horn", "brass_section", "synth_brass_1", "synth_brass_2", "soprano_sax", "alto_sax", "tenor_sax", "baritone_sax", "oboe", "english_horn", "bassoon", "clarinet", "piccolo", "flute", "recorder", "pan_flute", "blown_bottle", "shakuhachi", "whistle", "ocarina", "lead_1_square", "lead_2_sawtooth", "lead_3_calliope", "lead_4_chiff", "lead_5_charang", "lead_6_voice", "lead_7_fifths", "lead_8_bass_lead", "pad_1_new_age", "pad_2_warm", "pad_3_polysynth", "pad_4_choir", "pad_5_bowed", "pad_6_metallic", "pad_7_halo", "pad_8_sweep", "fx_1_rain", "fx_2_soundtrack", "fx_3_crystal", "fx_4_atmosphere", "fx_5_brightness", "fx_6_goblins", "fx_7_echoes", "fx_8_scifi", "sitar", "banjo", "shamisen", "koto", "kalimba", "bagpipe", "fiddle", "shanai", "tinkle_bell", "agogo", "steel_drums", "woodblock", "taiko_drum", "melodic_tom", "synth_drum", "reverse_cymbal", "guitar_fret_noise", "breath_noise", "seashore", "bird_tweet", "telephone_ring", "helicopter", "applause", "gunshot", "percussion", "melodeon_Off",
+var instrumentIndexToName = ["acoustic_grand_piano", "bright_acoustic_piano", "electric_grand_piano", "honkytonk_piano", "electric_piano_1", "electric_piano_2", "harpsichord", "clavinet", "celesta", "glockenspiel", "music_box", "vibraphone", "marimba", "xylophone", "tubular_bells", "dulcimer", "drawbar_organ", "percussive_organ", "rock_organ", "church_organ", "reed_organ", "accordion", "harmonica", "tango_accordion", "acoustic_guitar_nylon", "acoustic_guitar_steel", "electric_guitar_jazz", "electric_guitar_clean", "electric_guitar_muted", "overdriven_guitar", "distortion_guitar", "guitar_harmonics", "acoustic_bass", "electric_bass_finger", "electric_bass_pick", "fretless_bass", "slap_bass_1", "slap_bass_2", "synth_bass_1", "synth_bass_2", "violin", "viola", "cello", "contrabass", "tremolo_strings", "pizzicato_strings", "orchestral_harp", "timpani", "string_ensemble_1", "string_ensemble_2", "synth_strings_1", "synth_strings_2", "choir_aahs", "voice_oohs", "synth_choir", "orchestra_hit", "trumpet", "trombone", "tuba", "muted_trumpet", "french_horn", "brass_section", "synth_brass_1", "synth_brass_2", "soprano_sax", "alto_sax", "tenor_sax", "baritone_sax", "oboe", "english_horn", "bassoon", "clarinet", "piccolo", "flute", "recorder", "pan_flute", "blown_bottle", "shakuhachi", "whistle", "ocarina", "lead_1_square", "lead_2_sawtooth", "lead_3_calliope", "lead_4_chiff", "lead_5_charang", "lead_6_voice", "lead_7_fifths", "lead_8_bass_lead", "pad_1_new_age", "pad_2_warm", "pad_3_polysynth", "pad_4_choir", "pad_5_bowed", "pad_6_metallic", "pad_7_halo", "pad_8_sweep", "fx_1_rain", "fx_2_soundtrack", "fx_3_crystal", "fx_4_atmosphere", "fx_5_brightness", "fx_6_goblins", "fx_7_echoes", "fx_8_scifi", "sitar", "banjo", "shamisen", "koto", "kalimba", "bagpipe", "fiddle", "shanai", "tinkle_bell", "agogo", "steel_drums", "woodblock", "taiko_drum", "melodic_tom", "synth_drum", "reverse_cymbal", "guitar_fret_noise", "breath_noise", "seashore", "bird_tweet", "telephone_ring", "helicopter", "applause", "gunshot", "percussion",
+//DIA:
+
+//DIA:{
+"melodeon_Off",
 //129
 "melodeon_M", "melodeon_MM+", "melodeon_MM-", "melodeon_LMM+", "melodeon_LMM-", "melodeon_MM-M+", "melodeon_LMM+H", "melodeon_LMM-H", "melodeon_LMM-M+", "melodeon_basschord" //139
+//DIA:}
 ];
 
 module.exports = instrumentIndexToName;
@@ -14939,11 +14955,14 @@ var getNote = function getNote(url, instrument, name, audioContext) {
   if (!soundsCache[instrument]) soundsCache[instrument] = {};
   var instrumentCache = soundsCache[instrument];
   if (!instrumentCache[name]) instrumentCache[name] = new Promise(function (resolve, reject) {
+    //DIA:{
     //For melodeon, create the notes here instead of loading them from URL
     if (instrument.startsWith("melodeon_")) {
       genMelodeonNote(instrument, name, audioContext, resolve, reject);
       return;
     }
+    //DIA:}
+
     var xhr = new XMLHttpRequest();
     var noteUrl = url + instrument + "-mp3/" + name + ".mp3";
     xhr.open("GET", noteUrl, true);
@@ -14977,6 +14996,8 @@ var getNote = function getNote(url, instrument, name, audioContext) {
   });
   return instrumentCache[name];
 };
+
+//DIA:{
 function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
   //Get user configuration from window global variables
   //TODO: Hack
@@ -15165,6 +15186,8 @@ function genMelodeonNote(instrument, name, audioContext, resolve, reject) {
     });
   });
 }
+//DIA:}
+
 module.exports = getNote;
 
 /***/ }),
@@ -15986,7 +16009,7 @@ module.exports = SynthSequence;
 // This is the only entry point to the tablatures. It is called both after parsing a tune and just before engraving
 
 var TabString = __webpack_require__(/*! ./instruments/tab-string */ "./src/tablatures/instruments/tab-string.js");
-var TabDiatonic = __webpack_require__(/*! ./instruments/tab-diatonic */ "./src/tablatures/instruments/tab-diatonic.js");
+var TabDiatonic = __webpack_require__(/*! ./instruments/tab-diatonic */ "./src/tablatures/instruments/tab-diatonic.js"); //DIA:
 
 /* extend the table below when adding a new instrument plugin */
 
@@ -16027,8 +16050,9 @@ var pluginTab = {
     defaultTuning: ['G', 'C'],
     isTabBig: false,
     tabSymbolOffset: -.95
-  }
+  } //DIA:
 };
+
 var abcTablatures = {
   inited: false,
   plugins: {},
@@ -16060,7 +16084,7 @@ var abcTablatures = {
     if (!this.inited) {
       // TODO-PER: I don't think this is needed - the plugin array can be hard coded, right?
       this.register(new TabString());
-      this.register(new TabDiatonic());
+      this.register(new TabDiatonic()); //DIA:
       this.inited = true;
     }
     var returned = null;
@@ -16117,6 +16141,8 @@ var abcTablatures = {
   * @param {*} abcTune 
   */
   layoutTablatures: function layoutTablatures(renderer, abcTune, DiatonicScan) {
+    //DIA:
+    //DIA:{
     //Normal call from abcjs
     if (typeof DiatonicScan == "undefined") {
       //First call with pre-scan
@@ -16126,6 +16152,8 @@ var abcTablatures = {
       layoutTablatures(renderer, abcTune, false);
       return;
     }
+    //DIA:}
+
     var tabs = abcTune.tablatures;
 
     // chack tabs request for each staffs
@@ -16173,20 +16201,24 @@ var abcTablatures = {
               // call initer first
               tabPlugin.instance.init(abcTune, tabPlugin.tuneNumber, tabPlugin.params, tabPlugin.tabType);
             }
+
+            //DIA:{
             if (DiatonicScan) {
               //Scan if function exists
               if (tabPlugin.instance.scan) tabPlugin.instance.scan(renderer, line, jj);
             } else {
+              //DIA:}
               // render next
               //console.log("★★★★ Tab Render line: " + ii + " staff: " + jj)
               tabPlugin.instance.render(renderer, line, jj);
-            }
+            } //DIA:
           }
         }
       }
     }
   }
 };
+
 module.exports = abcTablatures;
 
 /***/ }),
@@ -19423,7 +19455,8 @@ function graceInRest(absElem) {
   return null;
 }
 function convertToNumber(plugin, pitches, graceNotes, chord) {
-  var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes, chord);
+  //DIA:
+  var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes, chord); //DIA:
   if (tabPos.error) {
     plugin.setError(tabPos.error);
     return tabPos; // give up on error here
@@ -19452,6 +19485,8 @@ function buildGraceRelativesForRest(plugin, abs, absChild, graceNotes, tabVoice)
     tabVoice.push(defGrace);
   }
 }
+
+//DIA:{
 TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex, staffIndex) {
   if (!plugin.semantics.StartScan) return;
   var source = staffAbsolute[staffIndex + voiceIndex];
@@ -19492,6 +19527,7 @@ TabAbsoluteElements.prototype.scan = function (plugin, staffAbsolute, voiceIndex
   plugin.semantics.accidentals = {};
   plugin.semantics.measureAccidentals = {};
 };
+//DIA:}
 
 /**
  * Build tab absolutes by scanning current staff line absolute array
@@ -19510,7 +19546,9 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
       source.children.splice(0, 0, keySig);
     }
   }
+  //DIA:{
   if (plugin.semantics.StartBuild) plugin.semantics.StartBuild();
+  //DIA:}
   for (var ii = 0; ii < source.children.length; ii++) {
     var absChild = source.children[ii];
     var absX = absChild.x;
@@ -19519,7 +19557,10 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
     //   relX = absChild.children[0].x;
     // }
     if (absChild.isClef) {
-      if (plugin.buildTabAbsolute) dest.children.push(plugin.buildTabAbsolute(absX, relX));else dest.children.push(buildTabAbsolute(plugin, absX, relX));
+      //DIA:{
+      if (plugin.buildTabAbsolute) dest.children.push(plugin.buildTabAbsolute(absX, relX));else
+        //DIA:}
+        dest.children.push(buildTabAbsolute(plugin, absX, relX));
       if (absChild.abcelem.type.indexOf('-8') >= 0) plugin.semantics.clefTranspose = -12;
       if (absChild.abcelem.type.indexOf('+8') >= 0) plugin.semantics.clefTranspose = 12;
     }
@@ -19532,6 +19573,7 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
       case 'bar':
         plugin.semantics.measureAccidentals = {};
         if (plugin.nbLines >= 1) {
+          //DIA:
           var lastBar = false;
           if (ii === source.children.length - 1) {
             // used for final line bar drawing
@@ -19557,14 +19599,19 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
             startChar: absChild.abcelem.startChar,
             abselem: cloned
           });
-        }
+        } //DIA:
+
+        //DIA:{
         if (plugin.semantics.MarkBar) plugin.semantics.MarkBar();
+        //DIA:}
         break;
       case 'rest':
         var restGraces = graceInRest(absChild);
+        //DIA:{
         var chord = absChild.abcelem.chord;
         tabPos = convertToNumber(plugin, null, restGraces, chord);
         if (tabPos.error) return;
+        //DIA:}
         if (restGraces) {
           // to number conversion 
           // build relative for grace
@@ -19579,16 +19626,18 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
         }
         break;
       case 'note':
+        //DIA:{
         if (absChild.heads.length == 0) return;
+        //DIA:}
         var abs = cloneAbsolute(absChild);
         abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
         abs.lyricDim = lyricsDim(absChild);
         var pitches = absChild.abcelem.pitches;
         var graceNotes = absChild.abcelem.gracenotes;
-        var chord = absChild.abcelem.chord;
+        var chord = absChild.abcelem.chord; //DIA:
         abs.type = 'tabNumber';
         // to number conversion 
-        tabPos = convertToNumber(plugin, pitches, graceNotes, chord);
+        tabPos = convertToNumber(plugin, pitches, graceNotes, chord); //DIA:
         if (tabPos.error) return;
         if (tabPos.graces) {
           // add graces to last note in notes
@@ -19620,12 +19669,15 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
               tabVoice.push(defGrace);
             }
           }
+          //DIA:{
           var lll = ll;
           if (lll >= absChild.heads.length) lll = absChild.heads.length - 1;
-          var tabNoteRelative = buildRelativeTabNote(plugin, abs.x + absChild.heads[lll].dx, defNote, curNote, false);
+          //DIA:}
+          var tabNoteRelative = buildRelativeTabNote(plugin, abs.x + absChild.heads[lll].dx, defNote, curNote, false); //DIA:
           abs.children.push(tabNoteRelative);
         }
 
+        //DIA:{
         //For each symbol check if it is a note head that needs to be replaced
         for (var s = 0; s < absChild.children.length; s++) {
           //Skip if not a note head
@@ -19683,6 +19735,8 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
             }
           }
         }
+        //DIA:}
+
         if (defNote.notes.length > 0) {
           defNote.abselem = abs;
           tabVoice.push(defNote);
@@ -19850,6 +19904,8 @@ function checkVoiceKeySig(voices, ii) {
   }
   return voices[ii - 1].children[0];
 }
+
+//DIA:{
 function tabScanner(plugin, staffIndex, absolutes, staffGroup) {
   var nextTabPos = 0;
   var parentStaff = getLastStaff(staffGroup.staffs, nextTabPos);
@@ -19864,7 +19920,10 @@ function tabScanner(plugin, staffIndex, absolutes, staffGroup) {
     absolutes.scan(plugin, voices, ii, staffIndex);
   }
 }
+//DIA:}
+
 function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) {
+  //DIA:
   //console.log("RENDER tabRenderer")
   var absolutes = new TabAbsoluteElements();
   var tabStaff = {
@@ -19888,16 +19947,22 @@ function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) {
     staffs.splice(staffs.length, 0, tabStaff);
   }
   var staffGroup = line.staffGroup;
+
+  //DIA:{
   if (typeof DiatonicScan != "undefined" && DiatonicScan) {
     tabScanner(plugin, staffIndex, absolutes, staffGroup);
     return;
   }
+  //DIA:}
+
   var voices = staffGroup.voices;
   var firstVoice = voices[0];
   // take lyrics into account if any
   var lyricsHeight = getLyricHeight(firstVoice);
   var padd = 3;
+  //DIA:{
   if (plugin.nbLines < 1) padd = 0;
+  //DIA:}
   var prevIndex = staffIndex;
   var previousStaff = staffGroup.staffs[prevIndex];
   var tabTop = tabSize + padd - previousStaff.bottom - lyricsHeight;
@@ -19944,9 +20009,12 @@ function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) {
   }
   linkStaffAndTabs(staffGroup.staffs); // crossreference tabs and staff
 
+  //DIA:{
   //Remove tab staff if it is not to be displayed
   if (plugin.nbLines < 1) staffGroup.staffs.splice(staffGroup.staffs.length - 1, 1);
+  //DIA:}
 }
+
 module.exports = tabRenderer;
 
 /***/ }),
@@ -23827,6 +23895,7 @@ var glyphs = (_glyphs = {
     w: 7.95,
     h: 7.977
   },
+  //DIA:{
   'tab.push': {
     d: [['M', -7.17, -3.69], ['c', 0.09, -0.06, 0.24, -0.06, 0.39, -0.03], ['c', 0.06, 0.03, 0.30, 0.27, 0.57, 0.54], ['c', 0.27, 0.27, 0.63, 0.60, 0.81, 0.75], ['c', 1.47, 1.17, 3.09, 1.77, 4.98, 1.89], ['c', 0.63, 0.03, 0.72, 0.06, 0.84, 0.24], ['c', 0.12, 0.18, 0.12, 0.42, 0.00, 0.60], ['c', -0.12, 0.18, -0.21, 0.21, -0.84, 0.24], ['c', -1.89, 0.12, -3.51, 0.72, -4.98, 1.89], ['c', -0.18, 0.15, -0.54, 0.48, -0.81, 0.75], ['c', -0.48, 0.48, -0.60, 0.57, -0.78, 0.57], ['c', -0.12, 0.00, -0.30, -0.09, -0.36, -0.18], ['c', -0.15, -0.18, -0.18, -0.36, -0.09, -0.57], ['c', 0.09, -0.18, 0.93, -1.02, 1.38, -1.35], ['c', 0.81, -0.66, 1.71, -1.17, 2.61, -1.53], ['l', 0.30, -0.12], ['l', -0.30, -0.12], ['c', -0.42, -0.15, -1.02, -0.45, -1.41, -0.69], ['c', -0.75, -0.45, -1.35, -0.90, -2.04, -1.59], ['c', -0.60, -0.60, -0.69, -0.75, -0.54, -1.05], ['c', 0.06, -0.12, 0.12, -0.18, 0.27, -0.24], ['z']],
     w: 8.014,
@@ -23837,6 +23906,7 @@ var glyphs = (_glyphs = {
     w: 8.014,
     h: 7.487
   },
+  //DIA:}
   'dots.dot': {
     d: [['M', 1.32, -1.68], ['c', 0.09, -0.03, 0.27, -0.06, 0.39, -0.06], ['c', 0.96, 0.00, 1.74, 0.78, 1.74, 1.71], ['c', 0.00, 0.96, -0.78, 1.74, -1.71, 1.74], ['c', -0.96, 0.00, -1.74, -0.78, -1.74, -1.71], ['c', 0.00, -0.78, 0.54, -1.50, 1.32, -1.68], ['z']],
     w: 3.45,
@@ -23872,6 +23942,7 @@ var glyphs = (_glyphs = {
     w: 9.843,
     h: 8.139
   },
+  //DIA:{
   'noteheads.triangle2.whole': {
     d: [['M', 7.29, -4.41], ['c', 0.12, -0.04, 0.30, -0.04, 0.42, 0.00], ['c', 0.06, 0.04, 1.71, 1.75, 3.66, 3.82], ['c', 3.03, 3.24, 3.54, 3.82, 3.60, 3.94], ['c', 0.15, 0.39, 0.00, 0.86, -0.27, 1.01], ['c', -0.12, 0.08, -0.39, 0.08, -7.17, 0.08], ['c', -7.68, 0.00, -7.17, 0.00, -7.35, -0.20], ['c', -0.09, -0.12, -0.18, -0.39, -0.18, -0.58], ['c', 0.00, -0.35, -0.18, -0.16, 3.66, -4.25], ['c', 1.95, -2.07, 3.60, -3.78, 3.63, -3.82], ['z'], ['m', 2.88, 4.52], ['c', -1.44, -1.56, -2.64, -2.81, -2.67, -2.81], ['l', -2.64, 2.81], ['l', -2.61, 2.77], ['l', 2.64, 0.04], ['l', 5.28, 0.00], ['l', 2.61, -0.04], ['z']],
     w: 15.031,
@@ -23907,6 +23978,7 @@ var glyphs = (_glyphs = {
     w: 3.042,
     h: 9.237
   },
+  //DIA:}
   'scripts.ufermata': {
     d: [['M', -0.75, -10.77], ['c', 0.12, 0.00, 0.45, -0.03, 0.69, -0.03], ['c', 2.91, -0.03, 5.55, 1.53, 7.41, 4.35], ['c', 1.17, 1.71, 1.95, 3.72, 2.43, 6.03], ['c', 0.12, 0.51, 0.12, 0.57, 0.03, 0.69], ['c', -0.12, 0.21, -0.48, 0.27, -0.69, 0.12], ['c', -0.12, -0.09, -0.18, -0.24, -0.27, -0.69], ['c', -0.78, -3.63, -3.42, -6.54, -6.78, -7.38], ['c', -0.78, -0.21, -1.20, -0.24, -2.07, -0.24], ['c', -0.63, 0.00, -0.84, 0.00, -1.20, 0.06], ['c', -1.83, 0.27, -3.42, 1.08, -4.80, 2.37], ['c', -1.41, 1.35, -2.40, 3.21, -2.85, 5.19], ['c', -0.09, 0.45, -0.15, 0.60, -0.27, 0.69], ['c', -0.21, 0.15, -0.57, 0.09, -0.69, -0.12], ['c', -0.09, -0.12, -0.09, -0.18, 0.03, -0.69], ['c', 0.33, -1.62, 0.78, -3.00, 1.47, -4.38], ['c', 1.77, -3.54, 4.44, -5.67, 7.56, -5.97], ['z'], ['m', 0.33, 7.47], ['c', 1.38, -0.30, 2.58, 0.90, 2.31, 2.25], ['c', -0.15, 0.72, -0.78, 1.35, -1.47, 1.50], ['c', -1.38, 0.27, -2.58, -0.93, -2.31, -2.31], ['c', 0.15, -0.69, 0.78, -1.29, 1.47, -1.44], ['z']],
     w: 19.748,
@@ -24323,6 +24395,7 @@ function germanNote(note) {
   return note;
 }
 function translateChord(chordString, jazzchords, germanAlphabet) {
+  //DIA:{
   //Define characters used for melodeon tablature annotation
   var aMelodeonAnnotation = new Array();
   aMelodeonAnnotation.push("<");
@@ -24330,10 +24403,13 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
   aMelodeonAnnotation.push(".");
   aMelodeonAnnotation.push(":");
   aMelodeonAnnotation.push(",");
+  //DIA:}
+
   var lines = chordString.split("\n");
   for (var i = 0; i < lines.length; i++) {
     var chord = lines[i];
 
+    //DIA:{
     //Detect the last character index that is not melodeon annotation
     var LastNonMelodeonAnnotationIndex = -1;
     for (var _i = 0; _i < chord.length; ++_i) {
@@ -24349,6 +24425,7 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
 
     //Only keep the part that is not melodeon annotation
     chord = chord.substring(0, LastNonMelodeonAnnotationIndex + 1);
+    //DIA:}
 
     // If the chord isn't in a recognizable format then just skip it.
     var reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/);

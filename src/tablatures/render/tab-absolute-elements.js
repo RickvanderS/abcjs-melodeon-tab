@@ -153,8 +153,8 @@ function graceInRest(absElem) {
 	return null;
 }
 
-function convertToNumber(plugin, pitches, graceNotes, chord) {
-	var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes, chord);
+function convertToNumber(plugin, pitches, graceNotes, chord) { //DIA:
+	var tabPos = plugin.semantics.notesToNumber(pitches, graceNotes, chord); //DIA:
 	if (tabPos.error) {
 		plugin.setError(tabPos.error);
 		return tabPos; // give up on error here
@@ -178,6 +178,7 @@ function buildGraceRelativesForRest(plugin, abs, absChild, graceNotes, tabVoice)
 	}
 }
 
+//DIA:{
 TabAbsoluteElements.prototype.scan = function (plugin,
 	staffAbsolute,
 	voiceIndex,
@@ -229,6 +230,7 @@ TabAbsoluteElements.prototype.scan = function (plugin,
 	plugin.semantics.accidentals = {};
 	plugin.semantics.measureAccidentals = {};
 }
+//DIA:}
 
 /**
  * Build tab absolutes by scanning current staff line absolute array
@@ -253,8 +255,10 @@ TabAbsoluteElements.prototype.build = function (plugin,
 			source.children.splice(0, 0, keySig);
 		}
 	}
+	//DIA:{
 	if (plugin.semantics.StartBuild)
 		plugin.semantics.StartBuild();
+	//DIA:}
 	for (var ii = 0; ii < source.children.length; ii++) {
 		var absChild = source.children[ii];
 		var absX = absChild.x;
@@ -263,9 +267,11 @@ TabAbsoluteElements.prototype.build = function (plugin,
 		//   relX = absChild.children[0].x;
 		// }
 		if ((absChild.isClef)) {
+			//DIA:{
       		if (plugin.buildTabAbsolute)
         		dest.children.push(plugin.buildTabAbsolute(absX, relX));
       		else
+      		//DIA:}
         		dest.children.push(buildTabAbsolute(plugin, absX, relX));
 			if (absChild.abcelem.type.indexOf('-8') >= 0) plugin.semantics.clefTranspose = -12
 			if (absChild.abcelem.type.indexOf('+8') >= 0) plugin.semantics.clefTranspose = 12
@@ -278,7 +284,7 @@ TabAbsoluteElements.prototype.build = function (plugin,
 				break;
 			case 'bar':
 				plugin.semantics.measureAccidentals = {}
-				if (plugin.nbLines >= 1) {
+				if (plugin.nbLines >= 1) { //DIA:
 					var lastBar = false;
 					if (ii === source.children.length - 1) {
 						// used for final line bar drawing
@@ -304,16 +310,20 @@ TabAbsoluteElements.prototype.build = function (plugin,
 						startChar: absChild.abcelem.startChar,
 						abselem: cloned
 					});
-				}
+				} //DIA:
 		
+				//DIA:{
 				if (plugin.semantics.MarkBar)
 					plugin.semantics.MarkBar();
+				//DIA:}
 				break;
 			case 'rest':
 				var restGraces = graceInRest(absChild);
+				//DIA:{
 				var chord = absChild.abcelem.chord;
 				tabPos = convertToNumber(plugin, null, restGraces, chord);
 				if (tabPos.error) return;
+				//DIA:}
 				if (restGraces) {
 					// to number conversion 
 					// build relative for grace
@@ -322,17 +332,19 @@ TabAbsoluteElements.prototype.build = function (plugin,
 				}
 				break;
 			case 'note':
+				//DIA:{
 				if (absChild.heads.length == 0)
 					return;
+				//DIA:}
 				var abs = cloneAbsolute(absChild);
 				abs.x = absChild.heads[0].x + absChild.heads[0].w / 2; // center the number
 				abs.lyricDim = lyricsDim(absChild);
 				var pitches = absChild.abcelem.pitches;
 				var graceNotes = absChild.abcelem.gracenotes;
-				var chord = absChild.abcelem.chord;
+				var chord = absChild.abcelem.chord; //DIA:
 				abs.type = 'tabNumber';
 				// to number conversion 
-				tabPos = convertToNumber(plugin, pitches, graceNotes, chord);
+				tabPos = convertToNumber(plugin, pitches, graceNotes, chord); //DIA:
 				if (tabPos.error) return;
 				if (tabPos.graces) {
 					// add graces to last note in notes
@@ -353,13 +365,16 @@ TabAbsoluteElements.prototype.build = function (plugin,
 							tabVoice.push(defGrace);
 						}
 					}
+					//DIA:{
 					let lll = ll;
 					if (lll >= absChild.heads.length)
 						lll = absChild.heads.length - 1;
-					var tabNoteRelative = buildRelativeTabNote(plugin, abs.x + absChild.heads[lll].dx, defNote, curNote, false);
+					//DIA:}
+					var tabNoteRelative = buildRelativeTabNote(plugin, abs.x + absChild.heads[lll].dx, defNote, curNote, false); //DIA:
 					abs.children.push(tabNoteRelative);
 				}
 		
+				//DIA:{
 				//For each symbol check if it is a note head that needs to be replaced
 				for (let s = 0; s < absChild.children.length; s++) {
 					//Skip if not a note head
@@ -435,6 +450,7 @@ TabAbsoluteElements.prototype.build = function (plugin,
 						}
 					}
 				}
+				//DIA:}
 		
 				if (defNote.notes.length > 0) {
 					defNote.abselem = abs;

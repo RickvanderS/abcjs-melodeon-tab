@@ -9,7 +9,7 @@
 // This is the only entry point to the tablatures. It is called both after parsing a tune and just before engraving
 
 var TabString = require('./instruments/tab-string');
-var TabDiatonic = require('./instruments/tab-diatonic');
+var TabDiatonic = require('./instruments/tab-diatonic'); //DIA:
 
 /* extend the table below when adding a new instrument plugin */
 
@@ -20,7 +20,7 @@ var pluginTab = {
 	'mandolin': { name: 'StringTab', defaultTuning: ['G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: 0 },
 	'guitar': { name: 'StringTab', defaultTuning: ['E,', 'A,', 'D', 'G', 'B', 'e'], isTabBig: true, tabSymbolOffset: 0 },
 	'fiveString': { name: 'StringTab', defaultTuning: ['C,', 'G,', 'D', 'A', 'e'], isTabBig: false, tabSymbolOffset: -.95 },
-	'diatonic': { name : 'DiatonicTab', defaultTuning: ['G', 'C'], isTabBig: false, tabSymbolOffset: -.95 },
+	'diatonic': { name : 'DiatonicTab', defaultTuning: ['G', 'C'], isTabBig: false, tabSymbolOffset: -.95 }, //DIA:
 };
 
 var abcTablatures = {
@@ -59,7 +59,7 @@ var abcTablatures = {
 		if (!this.inited) {
 			// TODO-PER: I don't think this is needed - the plugin array can be hard coded, right?
 			this.register(new TabString());
-			this.register(new TabDiatonic());
+			this.register(new TabDiatonic()); //DIA:
 			this.inited = true;
 		}
 		var returned = null;
@@ -116,7 +116,8 @@ var abcTablatures = {
 	* @param {*} renderer 
 	* @param {*} abcTune 
 	*/
-	layoutTablatures: function layoutTablatures(renderer, abcTune, DiatonicScan) {
+	layoutTablatures: function layoutTablatures(renderer, abcTune, DiatonicScan) { //DIA:
+		//DIA:{
 		//Normal call from abcjs
 		if (typeof(DiatonicScan) == "undefined") {
 			//First call with pre-scan
@@ -126,6 +127,7 @@ var abcTablatures = {
 			layoutTablatures(renderer, abcTune, false);
 			return;
 		}
+		//DIA:}
 
 		var tabs = abcTune.tablatures;
 
@@ -183,16 +185,18 @@ var abcTablatures = {
 							);
 						}
 
+						//DIA:{
 						if (DiatonicScan) {
 							//Scan if function exists
 							if (tabPlugin.instance.scan)
 							tabPlugin.instance.scan(renderer, line, jj);
 						}
 						else {
+						//DIA:}
 							// render next
 							//console.log("★★★★ Tab Render line: " + ii + " staff: " + jj)
 							tabPlugin.instance.render(renderer, line, jj);
-						}
+						} //DIA:
 					}
 				}
 			}

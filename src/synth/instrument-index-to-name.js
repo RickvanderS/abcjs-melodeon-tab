@@ -143,8 +143,9 @@ var instrumentIndexToName = [
 	"applause",
 	"gunshot",
 
-	"percussion",
+	"percussion", //DIA:
 	
+	//DIA:{
 	"melodeon_Off", //129
 	"melodeon_M", 
 	"melodeon_MM+",
@@ -157,6 +158,7 @@ var instrumentIndexToName = [
 	"melodeon_LMM-M+",
 	
 	"melodeon_basschord" //139
+	//DIA:}
 ];
 
 module.exports = instrumentIndexToName;

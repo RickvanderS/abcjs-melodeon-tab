@@ -160,6 +160,7 @@ function checkVoiceKeySig(voices, ii) {
 	return voices[ii - 1].children[0];
 }
 
+//DIA:{
 function tabScanner(plugin, staffIndex, absolutes, staffGroup) {
 	var nextTabPos = 0;
 	var parentStaff = getLastStaff(staffGroup.staffs, nextTabPos); 
@@ -174,8 +175,9 @@ function tabScanner(plugin, staffIndex, absolutes, staffGroup) {
 		absolutes.scan(plugin, voices, ii, staffIndex);
 	}
 }
+//DIA:}
 
-function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) {
+function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) { //DIA:
 	//console.log("RENDER tabRenderer")
 	var absolutes = new TabAbsoluteElements();
 	var tabStaff = {
@@ -203,18 +205,22 @@ function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) {
 	}
 	var staffGroup = line.staffGroup;
 	
+	//DIA:{
 	if (typeof(DiatonicScan) != "undefined" && DiatonicScan) {
 		tabScanner(plugin, staffIndex, absolutes, staffGroup);
 		return;
 	}
+	//DIA:}
 
 	var voices = staffGroup.voices;
 	var firstVoice = voices[0];
 	// take lyrics into account if any
 	var lyricsHeight = getLyricHeight(firstVoice);
 	var padd = 3;
+	//DIA:{
 	if (plugin.nbLines < 1)
 		padd = 0;
+	//DIA:}
 	var prevIndex = staffIndex;
 	var previousStaff = staffGroup.staffs[prevIndex];
 	var tabTop = tabSize + padd - previousStaff.bottom - lyricsHeight;
@@ -262,9 +268,11 @@ function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) {
 	}
 	linkStaffAndTabs(staffGroup.staffs); // crossreference tabs and staff
 	
+	//DIA:{
 	//Remove tab staff if it is not to be displayed
 	if (plugin.nbLines < 1)
 		staffGroup.staffs.splice(staffGroup.staffs.length-1, 1);
+	//DIA:}
 }
 
 module.exports = tabRenderer;

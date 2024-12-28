@@ -10,6 +10,7 @@ function germanNote(note) {
 }
 
 function translateChord(chordString, jazzchords, germanAlphabet) {
+	//DIA:{
 	//Define characters used for melodeon tablature annotation
 	var aMelodeonAnnotation = new Array;
 	aMelodeonAnnotation.push("<");
@@ -17,11 +18,13 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
 	aMelodeonAnnotation.push(".");
 	aMelodeonAnnotation.push(":");
 	aMelodeonAnnotation.push(",");
+	//DIA:}
 
 	var lines = chordString.split("\n");
 	for (let i = 0; i < lines.length; i++) {
 		let chord = lines[i];
 		
+		//DIA:{
 		//Detect the last character index that is not melodeon annotation
 		var LastNonMelodeonAnnotationIndex = -1;
 		for (let i = 0; i < chord.length; ++i) {
@@ -38,6 +41,7 @@ function translateChord(chordString, jazzchords, germanAlphabet) {
 		
 		//Only keep the part that is not melodeon annotation
 		chord = chord.substring(0, LastNonMelodeonAnnotationIndex+1);
+		//DIA:}
 		
 		// If the chord isn't in a recognizable format then just skip it.
 		let reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/);

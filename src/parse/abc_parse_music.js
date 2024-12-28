@@ -594,6 +594,7 @@ var setIsInTie =function(multilineVars, overlayLevel, value) {
 };
 
 var letter_to_chord = function(line, i) {
+	//DIA:{
 	//Define characters used for melodeon tablature annotation
 	var aMelodeonAnnotation = new Array;
 	aMelodeonAnnotation.push("<");
@@ -601,6 +602,7 @@ var letter_to_chord = function(line, i) {
 	aMelodeonAnnotation.push(".");
 	aMelodeonAnnotation.push(":");
 	aMelodeonAnnotation.push(",");
+	//DIA:}
 	
 	if (line[i] === '"')
 	{
@@ -608,6 +610,7 @@ var letter_to_chord = function(line, i) {
 		if (!chord[2])
 			warn("Missing the closing quote while parsing the chord symbol", line , i);
 		
+		//DIA:{
 		//Detect chord only being used for melodeon annotation
 		var MelodeonAnnotationOnly = true;
 		for (let i = 0; i < chord[1].length; ++i) {
@@ -623,6 +626,7 @@ var letter_to_chord = function(line, i) {
 				break;
 			}
 		}
+		//DIA:}
 		
 		// If it starts with ^, then the chord appears above.
 		// If it starts with _ then the chord appears below.
@@ -633,10 +637,10 @@ var letter_to_chord = function(line, i) {
 		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '_') {
 			chord[1] = chord[1].substring(1);
 			chord[2] = 'below';
-		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '<' && !MelodeonAnnotationOnly) {
+		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '<' && !MelodeonAnnotationOnly) { //DIA:
 			chord[1] = chord[1].substring(1);
 			chord[2] = 'left';
-		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '>' && !MelodeonAnnotationOnly) {
+		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '>' && !MelodeonAnnotationOnly) { //DIA:
 			chord[1] = chord[1].substring(1);
 			chord[2] = 'right';
 		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '@') {

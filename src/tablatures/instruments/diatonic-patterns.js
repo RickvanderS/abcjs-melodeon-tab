@@ -1,4 +1,3 @@
-var StringPatterns = require('./string-patterns');
 var TabNote = require('./tab-note');
 var transposeChordName = require("../../parse/transpose-chord")
 var allNotes = require('../../parse/all-notes');
@@ -323,26 +322,26 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
 }
 
 function DiatonicPatterns(plugin) {
-  //Get tablature options
-  this.showall = plugin._super.params.showall;
-  if (this.showall == null)
-    this.showall = false;
-  this.showall_ignorechords = plugin._super.params.showall_ignorechords;
-  if (this.showall_ignorechords === null)
-    this.showall_ignorechords = false;
-  this.Row2Marker = plugin._super.params.Row2Marker;
-  if (this.Row2Marker == null)
-    this.Row2Marker = "'";
-  this.Row3Marker = plugin._super.params.Row3Marker;
-  if (this.Row3Marker == null)
-    this.Row3Marker = "\"";
+	//Get tablature options
+	this.showall = plugin.params.showall;
+	if (this.showall == null)
+		this.showall = false;
+	this.showall_ignorechords = plugin.params.showall_ignorechords;
+	if (this.showall_ignorechords === null)
+		this.showall_ignorechords = false;
+	this.Row2Marker = plugin.params.Row2Marker;
+	if (this.Row2Marker == null)
+		this.Row2Marker = "'";
+	this.Row3Marker = plugin.params.Row3Marker;
+	if (this.Row3Marker == null)
+		this.Row3Marker = "\"";
 
 	//Tablature style
 	//0 hide
 	//1 push/pull on one tab row
 	//2 push and pull tab row
 	//3 tab row per instrument row
-	this.tabstyle = plugin._super.params.tabstyle;
+	this.tabstyle = plugin.params.tabstyle;
 	if (this.tabstyle == null)
 		this.tabstyle = 2;
 	
@@ -351,53 +350,53 @@ function DiatonicPatterns(plugin) {
 	//1 Note names
 	//2 Button+Note
 	//3 Note+Button
-	this.tabformat = plugin._super.params.tabformat;
+	this.tabformat = plugin.params.tabformat;
 	if (this.tabformat == null)
 		this.tabformat = 0;
 
-  this.changenoteheads = plugin._super.params.changenoteheads;
-  if (this.changenoteheads == null)
-    this.changenoteheads = false;
+	this.changenoteheads = plugin.params.changenoteheads;
+	if (this.changenoteheads == null)
+		this.changenoteheads = false;
 
-  //Set default tuning if not specified
-  this.tuning = plugin._super.params.tuning;
-  if (this.tuning == null) {
-    this.tuning = new Array;
-    this.tuning.push("G");
-    this.tuning.push("C5");
-    plugin.tuning = this.tuning;
-  }
-  
-  //Set default chin accidentals of not specified
-  this.startzero = plugin._super.params.startzero;
-  if (this.startzero == null) {
-    this.startzero = false;
-    plugin.startzero = this.startzero;
-  }
-  
-  //Define empty base rows (used for external access)
-  this.BassRow1Push = new Array();
-  this.BassRow1Pull = new Array();
-  this.BassRow2Push = new Array();
-  this.BassRow2Pull = new Array();
-  this.BassRow3Push = new Array();
-  this.BassRow3Pull = new Array();
-  this.BassCrossPush = new Array();
-  this.BassCrossPull = new Array();
+	//Set default tuning if not specified
+	this.tuning = plugin.params.tuning;
+	if (this.tuning == null) {
+		this.tuning = new Array;
+		this.tuning.push("G");
+		this.tuning.push("C5");
+		plugin.tuning = this.tuning;
+	}
+	
+	//Set default chin accidentals of not specified
+	this.startzero = plugin.params.startzero;
+	if (this.startzero == null) {
+		this.startzero = false;
+		plugin.startzero = this.startzero;
+	}
+	
+	//Define empty base rows (used for external access)
+	this.BassRow1Push = new Array();
+	this.BassRow1Pull = new Array();
+	this.BassRow2Push = new Array();
+	this.BassRow2Pull = new Array();
+	this.BassRow3Push = new Array();
+	this.BassRow3Pull = new Array();
+	this.BassCrossPush = new Array();
+	this.BassCrossPull = new Array();
 
-  //Lookup melodeon notes
-  let TransposeHalfSteps = 0;
-  let Row1Info;
-  let Row2Info;
-  let Row3Info;
-  this.push_chords = new Array;
-  this.pull_chords = new Array;
-  let push_row1 = new Array;
-  let pull_row1 = new Array;
-  let push_row2 = new Array;
-  let pull_row2 = new Array;
-  let push_row3 = new Array;
-  let pull_row3 = new Array;
+	//Lookup melodeon notes
+	let TransposeHalfSteps = 0;
+	let Row1Info;
+	let Row2Info;
+	let Row3Info;
+	this.push_chords = new Array;
+	this.pull_chords = new Array;
+	let push_row1 = new Array;
+	let pull_row1 = new Array;
+	let push_row2 = new Array;
+	let pull_row2 = new Array;
+	let push_row3 = new Array;
+	let pull_row3 = new Array;
 	if (this.tuning.length == 1) {
 		Row1Info = DecodeRowInfo(this.tuning[0]);
 		
@@ -1036,123 +1035,121 @@ function DiatonicPatterns(plugin) {
 	}
 	this.push_chords = [...new Set(this.push_chords)];
 	this.pull_chords = [...new Set(this.pull_chords)];
-  
-  //Define right hand notes from the note names, transpose if required
-  let TransposeLookup = CreateTransposeLookup();
-  this.push_row1 = new Array;
-  for (let i = 0; i < push_row1.length; ++i) {
-    this.push_row1.push(TransposeNameToNote(push_row1[i], TransposeHalfSteps, TransposeLookup));
-  }
-  this.pull_row1 = new Array;
-  for (let i = 0; i < pull_row1.length; ++i) {
-    this.pull_row1.push(TransposeNameToNote(pull_row1[i], TransposeHalfSteps, TransposeLookup));
-  }
-  this.push_row2 = new Array;
-  for (let i = 0; i < push_row2.length; ++i) {
-    this.push_row2.push(TransposeNameToNote(push_row2[i], TransposeHalfSteps, TransposeLookup));
-  }
-  this.pull_row2 = new Array;
-  for (let i = 0; i < pull_row2.length; ++i) {
-    this.pull_row2.push(TransposeNameToNote(pull_row2[i], TransposeHalfSteps, TransposeLookup));
-  }
-  this.push_row3 = new Array;
-  for (let i = 0; i < push_row3.length; ++i) {
-    this.push_row3.push(TransposeNameToNote(push_row3[i], TransposeHalfSteps, TransposeLookup));
-  }
-  this.pull_row3 = new Array;
-  for (let i = 0; i < pull_row3.length; ++i) {
-    this.pull_row3.push(TransposeNameToNote(pull_row3[i], TransposeHalfSteps, TransposeLookup));
-  }
-  
-  //console.log(this.push_row1);
-  //console.log(this.pull_row1);
-  //console.log(this.push_row2);
-  //console.log(this.pull_row2);
-  //console.log(this.push_row3);
-  //console.log(this.pull_row3);
-  
-  let Row1HandPosCount = Math.ceil(this.push_row1.length);
-  let Row2HandPosCount = Math.ceil(this.push_row2.length);
-  let Row3HandPosCount = Math.ceil(this.push_row3.length);
-  HandPosCount = Math.max(Row1HandPosCount, Row2HandPosCount, Row3HandPosCount);
-  HandPosCount -= 3;
-  
-  this.HandPos = new Array;
-  for (let h = 0; h < HandPosCount; ++h) {
-	this.HandPos[h] = {};
+
+	//Define right hand notes from the note names, transpose if required
+	let TransposeLookup = CreateTransposeLookup();
+	this.push_row1 = new Array;
+	for (let i = 0; i < push_row1.length; ++i) {
+		this.push_row1.push(TransposeNameToNote(push_row1[i], TransposeHalfSteps, TransposeLookup));
+	}
+	this.pull_row1 = new Array;
+	for (let i = 0; i < pull_row1.length; ++i) {
+		this.pull_row1.push(TransposeNameToNote(pull_row1[i], TransposeHalfSteps, TransposeLookup));
+	}
+	this.push_row2 = new Array;
+	for (let i = 0; i < push_row2.length; ++i) {
+		this.push_row2.push(TransposeNameToNote(push_row2[i], TransposeHalfSteps, TransposeLookup));
+	}
+	this.pull_row2 = new Array;
+	for (let i = 0; i < pull_row2.length; ++i) {
+		this.pull_row2.push(TransposeNameToNote(pull_row2[i], TransposeHalfSteps, TransposeLookup));
+	}
+	this.push_row3 = new Array;
+	for (let i = 0; i < push_row3.length; ++i) {
+		this.push_row3.push(TransposeNameToNote(push_row3[i], TransposeHalfSteps, TransposeLookup));
+	}
+	this.pull_row3 = new Array;
+	for (let i = 0; i < pull_row3.length; ++i) {
+		this.pull_row3.push(TransposeNameToNote(pull_row3[i], TransposeHalfSteps, TransposeLookup));
+	}
 	
-	//Easy, prefer outer row, then fingers index, middle, ring, little
-	this.HandPos[h].easy = new Array;
-	for (let Row = 1; Row <= 3; ++Row) {
-		for (let Finger = 0; Finger < 4; ++Finger) {
-			if (Row == 1) {
-				let Row1Index = h+Finger;
-				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index).toString() + "$");
+	//console.log(this.push_row1);
+	//console.log(this.pull_row1);
+	//console.log(this.push_row2);
+	//console.log(this.pull_row2);
+	//console.log(this.push_row3);
+	//console.log(this.pull_row3);
+	
+	let Row1HandPosCount = Math.ceil(this.push_row1.length);
+	let Row2HandPosCount = Math.ceil(this.push_row2.length);
+	let Row3HandPosCount = Math.ceil(this.push_row3.length);
+	HandPosCount = Math.max(Row1HandPosCount, Row2HandPosCount, Row3HandPosCount);
+	HandPosCount -= 3;
+	
+	this.HandPos = new Array;
+	for (let h = 0; h < HandPosCount; ++h) {
+		this.HandPos[h] = {};
+		
+		//Easy, prefer outer row, then fingers index, middle, ring, little
+		this.HandPos[h].easy = new Array;
+		for (let Row = 1; Row <= 3; ++Row) {
+			for (let Finger = 0; Finger < 4; ++Finger) {
+				if (Row == 1) {
+					let Row1Index = h+Finger;
+					if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index).toString() + "$");
+				}
+				else if (Row == 2) {
+					let Row2Index = h+Finger;
+					if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push((Row2Index).toString() + "'");
+					
+				}
+				else if (Row == 3) {
+					let Row3Index = h+Finger;
+					if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push((Row3Index).toString() + "\"");
+				}
 			}
-			else if (Row == 2) {
-				let Row2Index = h+Finger;
-				if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push((Row2Index).toString() + "'");
-				
-			}
-			else if (Row == 3) {
-				let Row3Index = h+Finger;
-				if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push((Row3Index).toString() + "\"");
+		}
+		
+		//Hard finger stretch
+		this.HandPos[h].hard = new Array;
+		let aFinger = [-1, 4];
+		for (let Row = 1; Row <= 3; ++Row) {
+			for (let i = 0; i < aFinger.length; ++i) {
+				let Finger = aFinger[i];
+				if (Row == 1) {
+					let Row1Index = h+Finger;
+					if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].hard.push((Row1Index).toString() + "$");
+				}
+				else if (Row == 2) {
+					let Row2Index = h+Finger;
+					if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].hard.push((Row2Index).toString() + "'");
+					
+				}
+				else if (Row == 3) {
+					let Row3Index = h+Finger;
+					if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].hard.push((Row3Index).toString() + "\"");
+				}
 			}
 		}
 	}
-	
-	//Hard finger stretch
-	this.HandPos[h].hard = new Array;
-	let aFinger = [-1, 4];
-	for (let Row = 1; Row <= 3; ++Row) {
-		for (let i = 0; i < aFinger.length; ++i) {
-			let Finger = aFinger[i];
-			if (Row == 1) {
-				let Row1Index = h+Finger;
-				if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].hard.push((Row1Index).toString() + "$");
-			}
-			else if (Row == 2) {
-				let Row2Index = h+Finger;
-				if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].hard.push((Row2Index).toString() + "'");
-				
-			}
-			else if (Row == 3) {
-				let Row3Index = h+Finger;
-				if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].hard.push((Row3Index).toString() + "\"");
-			}		}
-	}
-  }
-  this.HandPosIndex = -1; //Start with index finger at lowest position
-  this.LastButton = "";
-  
-    
-  //State variables
+	this.HandPosIndex = -1; //Start with index finger at lowest position
+	this.LastButton = "";
+
+//State variables
 //  this.PrevBar       = true;
 //  this.PrevPush      = true;
 //  this.PrevRow       = 0;
 //  this.PrevNumber    = 6;
 //  this.FingerNumber1 = 0;
 //  this.FingerNumber4 = 0;
-  
-  this.Scan   = false;
-  this.BarIndex = -1;
-  this.aBars    = new Array;
+
+	this.Scan   = false;
+	this.BarIndex = -1;
+	this.aBars    = new Array;
 //  this.PrevChord = "";
 
-  this.ChordPush = true;
-  this.ChordPull = true;
-  this.RowPrefer1 = -1;
-  this.RowPrefer2 = -1;
-  this.RowPrefer3 = -1;
-  this.PrevPushButtons = new Array();
-  this.PrevPullButtons = new Array();
-  
-  this.strings = {
-    tabInfos          : function (plugin) {return ""},
-    suppress          : function (plugin) {return false},
-    accidentals       : {},
-    measureAccidentals: {}
-  };
+	this.ChordPush = true;
+	this.ChordPull = true;
+	this.RowPrefer1 = -1;
+	this.RowPrefer2 = -1;
+	this.RowPrefer3 = -1;
+	this.PrevPushButtons = new Array();
+	this.PrevPullButtons = new Array();
+
+	this.tabInfos           = function (plugin) {return ""};
+	this.suppress           = function (plugin) {return false};
+	this.accidentals        = {};
+	this.measureAccidentals = {};
 }
 
 function CreateTransposeLookup() {
@@ -1519,8 +1516,8 @@ function BarChoose(aBars, BarIndex, NeedBoth, AllowPrev, AllowNext) {
 }
 
 DiatonicPatterns.prototype.StartBuild = function () {
-	this.strings.accidentals        = {};
-	this.strings.measureAccidentals = {};
+	this.accidentals        = {};
+	this.measureAccidentals = {};
 	
 	if (this.Scan) {
 		//console.log("bars:" + this.aBars.length);
@@ -1925,8 +1922,8 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	let aDiamandNotes  = new Array();
 	let aTriangleNotes = new Array();
 	for (var i = 0; notes && i < notes.length; ++i) {
-		var TNote = new TabNote.TabNote(notes[i].name);
-		TNote.checkKeyAccidentals(this.strings.accidentals, this.strings.measureAccidentals);
+		var TNote = new TabNote(notes[i].name);
+		TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
 		if (TNote.isAltered || TNote.natural) {
 			var acc;
 			if (TNote.isFlat) {
@@ -1941,7 +1938,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 					acc = "^";
 			} else if (TNote.natural)
 				acc = "=";
-			this.strings.measureAccidentals[TNote.name.toUpperCase()] = acc;
+			this.measureAccidentals[TNote.name.toUpperCase()] = acc;
 		}
 
 		//Get the note name
@@ -2368,7 +2365,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			strBoth += strPull;
 		}
 
-		var note = new TabNote.TabNote("");
+		var note = new TabNote("");
 		var number = {
 			num : strBoth,
 			str : 1,
@@ -2383,7 +2380,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			strPush = strPush.replaceAll("'" , this.Row2Marker);
 			strPush = strPush.replaceAll("\"", this.Row3Marker);
 
-			var note = new TabNote.TabNote("");
+			var note = new TabNote("");
 			var number = {
 				num : strPush,
 				str : 2, //Push line (top)
@@ -2396,7 +2393,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			strPull = strPull.replaceAll("'" , this.Row2Marker);
 			strPull = strPull.replaceAll("\"", this.Row3Marker);
 
-			var note = new TabNote.TabNote("");
+			var note = new TabNote("");
 			var number = {
 				num : strPull,
 				str : 1, //Pull line (bottom)
@@ -2427,7 +2424,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			
 		}
 		
-		var note = new TabNote.TabNote("");
+		var note = new TabNote("");
 		if (Strings.strRow1.length) {
 			var number = {
 				num : Strings.strRow1,
@@ -2456,17 +2453,17 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
 	//Create returns values for note head changes
 	for (let i = 0; i < aDiamandNotes.length; ++i) {
-		var note = new TabNote.TabNote("");
+		var note = new TabNote("");
 		note.pitch = aDiamandNotes[i].pitch;
 		var number = {
 			num : "",
-			str : -10, //Diamand indicator
+			str : -10, //Diamond indicator
 			note: note
 		};
 		retNotes.push(number);
 	}
 	for (let i = 0; i < aTriangleNotes.length; ++i) {
-		var note = new TabNote.TabNote("");
+		var note = new TabNote("");
 		note.pitch = aTriangleNotes[i].pitch;
 		var number = {
 			num : "",
@@ -2484,12 +2481,12 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 };
 
 DiatonicPatterns.prototype.stringToPitch = function (stringNumber) {
-  if (stringNumber == 3)
-    return 19.7;
-  else if (stringNumber == 2)
-    return 14.7;
-  else
-    return 9.7;
+	if (stringNumber == 3)
+		return 19.7;
+	else if (stringNumber == 2)
+		return 14.7;
+	else
+		return 9.7;
 };
 
 module.exports = DiatonicPatterns;

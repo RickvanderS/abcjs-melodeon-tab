@@ -1,4 +1,3 @@
-var parseCommon = require('./abc_common');
 var parseKeyVoice = require('./abc_parse_key_voice');
 var transpose = require('./abc_transpose');
 
@@ -145,6 +144,7 @@ MusicParser.prototype.parseMusic = function(line) {
 		var retInlineHeader = header.letter_to_inline_header(line, i, delayStartNewLine);
 		if (retInlineHeader[0] > 0) {
 			i += retInlineHeader[0];
+			//console.log("inline header", retInlineHeader)
 			if (retInlineHeader[1] === 'V')
 				delayStartNewLine = true; // fixes bug on this: c[V:2]d
 			// TODO-PER: Handle inline headers
@@ -457,6 +457,9 @@ MusicParser.prototype.parseMusic = function(line) {
 											else
 												postChordDone = true;
 											break;
+										case '0':
+											chordDuration = 0;
+											break;
 										default:
 											postChordDone = true;
 											break;
@@ -554,13 +557,17 @@ MusicParser.prototype.parseMusic = function(line) {
 						// The first item on a line is a regular note value, each item after that represents a dot placed after the previous note.
 						// Only durations less than a whole note are tested because whole note durations have some tricky rules.
 
-            if (el.duration < 1 && durations.indexOf(el.duration) === -1 && el.duration !== 0) {
+						if (el.duration < 1 && durations.indexOf(el.duration) === -1 && el.duration !== 0) {
 							if (!el.rest || el.rest.type !== 'spacer')
 								warn("Duration not representable: " + line.substring(startI, i), line, i);
 						}
 
 						multilineVars.addFormattingOptions(el, tune.formatting, 'note');
-						tuneBuilder.appendElement('note', startOfLine+startI, startOfLine+i, el);
+						var succeeded = tuneBuilder.appendElement('note', startOfLine+startI, startOfLine+i, el);
+						if (!succeeded) {
+							this.startNewLine()
+							tuneBuilder.appendElement('note', startOfLine+startI, startOfLine+i, el);
+						}
 						multilineVars.measureNotEmpty = true;
 						el = {};
 					}
@@ -633,23 +640,38 @@ var letter_to_chord = function(line, i) {
 			chord[1] = chord[1].substring(1);
 			chord[2] = 'right';
 		} else if (chord[0] > 0 && chord[1].length > 0 && chord[1][0] === '@') {
-			// @-15,5.7
-			chord[1] = chord[1].substring(1);
-			var x = tokenizer.getFloat(chord[1]);
-			if (x.digits === 0)
-				warn("Missing first position in absolutely positioned annotation.", line , i);
-			chord[1] = chord[1].substring(x.digits);
-			if (chord[1][0] !== ',')
-				warn("Missing comma absolutely positioned annotation.", line , i);
-			chord[1] = chord[1].substring(1);
-			var y = tokenizer.getFloat(chord[1]);
-			if (y.digits === 0)
-				warn("Missing second position in absolutely positioned annotation.", line , i);
-			chord[1] = chord[1].substring(y.digits);
-			var ws = tokenizer.skipWhiteSpace(chord[1]);
-			chord[1] = chord[1].substring(ws);
-			chord[2] = null;
-			chord[3] = { x: x.value, y: y.value };
+		      // @-15,5.7		
+		      chord[1] = chord[1].substring(1);
+		      var x = tokenizer.getFloat(chord[1]);
+		      if (x.digits === 0){
+			warn("Missing first position in absolutely positioned annotation.", line, i);
+			chord[1] = chord[1].replace("@","");
+			chord[2] = 'above';
+			return chord;
+		      }
+		      chord[1] = chord[1].substring(x.digits);
+		      if (chord[1][0] !== ','){
+			warn("Missing comma absolutely positioned annotation.", line, i);
+			chord[1] = chord[1].replace("@","");
+			chord[2] = 'above';
+			return chord;
+		      }
+		      chord[1] = chord[1].substring(1);
+		      var y = tokenizer.getFloat(chord[1]);
+		      if (y.digits === 0){
+			warn("Missing second position in absolutely positioned annotation.", line, i);
+			chord[1] = chord[1].replace("@","");
+			chord[2] = 'above';
+			return chord;
+		      }
+		      chord[1] = chord[1].substring(y.digits);
+		      var ws = tokenizer.skipWhiteSpace(chord[1]);
+		      chord[1] = chord[1].substring(ws);
+		      chord[2] = null;
+		      chord[3] = {
+			x: x.value,
+			y: y.value
+		      };	
 		} else {
 			if (multilineVars.freegchord !== true) {
 				chord[1] = chord[1].replace(/([ABCDEFG0-9])b/g, "$1♭");
@@ -695,7 +717,11 @@ var letter_to_grace =  function(line, i) {
 				note.duration = note.duration / (multilineVars.default_length * 8);
 				if (acciaccatura)
 					note.acciaccatura = true;
-				gracenotes.push(note);
+				if (note.rest) {
+					// don't allow rests inside gracenotes
+					warn("Rests not allowed as grace notes '" + gra[1][ii] + "' while parsing grace note", line, i);
+				} else
+					gracenotes.push(note);
 
 				if (inTie) {
 					note.endTie = true;
@@ -952,7 +978,7 @@ MusicParser.prototype.startNewLine = function() {
 	var params = { startChar: -1, endChar: -1};
 	if (multilineVars.partForNextLine.title)
 		params.part = multilineVars.partForNextLine;
-	params.clef = multilineVars.currentVoice && multilineVars.staves[multilineVars.currentVoice.staffNum].clef !== undefined ? parseCommon.clone(multilineVars.staves[multilineVars.currentVoice.staffNum].clef) : parseCommon.clone(multilineVars.clef);
+	params.clef = multilineVars.currentVoice && multilineVars.staves[multilineVars.currentVoice.staffNum].clef !== undefined ? Object.assign({},multilineVars.staves[multilineVars.currentVoice.staffNum].clef) : Object.assign({},multilineVars.clef);
 	var scoreTranspose = multilineVars.currentVoice ? multilineVars.currentVoice.scoreTranspose : 0;
 	params.key = parseKeyVoice.standardKey(multilineVars.key.root+multilineVars.key.acc+multilineVars.key.mode, multilineVars.key.root, multilineVars.key.acc, scoreTranspose);
 	params.key.mode = multilineVars.key.mode;
@@ -1022,6 +1048,12 @@ MusicParser.prototype.startNewLine = function() {
 			params.style = multilineVars.currentVoice.style;
 		if (multilineVars.currentVoice.transpose)
 			params.clef.transpose = multilineVars.currentVoice.transpose;
+		params.currentVoice = multilineVars.currentVoice
+		var voices = Object.keys(multilineVars.voices)
+		for (var mv = 0; mv < voices.length; mv++) {
+			if (params.currentVoice.staffNum === multilineVars.voices[voices[mv]].staffNum && params.currentVoice.index === multilineVars.voices[voices[mv]].index)
+				params.currentVoiceName = voices[mv]
+		}
 	}
 	var isFirstVoice = multilineVars.currentVoice === undefined || (multilineVars.currentVoice.staffNum ===  0 && multilineVars.currentVoice.index ===  0);
 	if (multilineVars.barNumbers === 0 && isFirstVoice && multilineVars.currBarNumber !== 1)

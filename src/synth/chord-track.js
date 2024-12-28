@@ -17,8 +17,6 @@
 //
 // If there is any note in the melody that has a rhythm head, then assume the melody controls the rhythm, so there is no chord added for that entire measure.
 
-var parseCommon = require("../parse/abc_common");
-
 var ChordTrack = function ChordTrack(numVoices, chordsOff, midiOptions, meter) {
 	this.chordTrack = [];
 	this.chordTrackFinished = false;
@@ -34,12 +32,24 @@ var ChordTrack = function ChordTrack(numVoices, chordsOff, midiOptions, meter) {
 	this.meter = meter;
 	this.tempoChangeFactor = 1;
 
-	this.bassInstrument = midiOptions.bassprog && midiOptions.bassprog.length === 1 ? midiOptions.bassprog[0] : 0;
-	this.chordInstrument = midiOptions.chordprog && midiOptions.chordprog.length === 1 ? midiOptions.chordprog[0] : 0;
+	// MAE 17 Jun 2024 - To allow for bass and chord instrument octave shifts
+	this.bassInstrument = midiOptions.bassprog && midiOptions.bassprog.length >= 1 ? midiOptions.bassprog[0] : 0;
+	this.chordInstrument = midiOptions.chordprog && midiOptions.chordprog.length >= 1 ? midiOptions.chordprog[0] : 0;
+
+	// MAE For octave shifted bass and chords
+	this.bassOctaveShift = midiOptions.bassprog && midiOptions.bassprog.length === 2 ? midiOptions.bassprog[1] : 0;
+	this.chordOctaveShift = midiOptions.chordprog && midiOptions.chordprog.length === 2 ? midiOptions.chordprog[1] : 0;
+
 	this.boomVolume = midiOptions.bassvol && midiOptions.bassvol.length === 1 ? midiOptions.bassvol[0] : 64;
 	this.chickVolume = midiOptions.chordvol && midiOptions.chordvol.length === 1 ? midiOptions.chordvol[0] : 48;
 
-	this.overridePattern = midiOptions.gchord ? parseGChord(midiOptions.gchord[0]) : undefined
+	// This allows for an initial %%MIDI gchord with no string
+	if (midiOptions.gchord && (midiOptions.gchord.length > 0)) {
+		this.overridePattern = parseGChord(midiOptions.gchord[0])
+	}
+	else {
+		this.overridePattern = undefined;
+	}
 };
 
 ChordTrack.prototype.setMeter = function (meter) {
@@ -64,7 +74,7 @@ ChordTrack.prototype.setRhythmHead = function (isRhythmHead, elem) {
 	if (isRhythmHead) {
 		if (this.lastChord && this.lastChord.chick) {
 			for (var i2 = 0; i2 < this.lastChord.chick.length; i2++) {
-				var note2 = parseCommon.clone(elem.pitches[0]);
+				var note2 = Object.assign({},elem.pitches[0]);
 				note2.actualPitch = this.lastChord.chick[i2];
 				ePitches.push(note2);
 			}
@@ -89,13 +99,32 @@ ChordTrack.prototype.gChordOn = function (element) {
 ChordTrack.prototype.paramChange = function (element) {
 	switch (element.el_type) {
 		case "gchord":
-			this.overridePattern = parseGChord(element.param);
+			// Skips gchord elements that don't have pattern strings
+			if (element.param && element.param.length > 0) {
+				this.overridePattern = parseGChord(element.param);
+
+				// Generate a default duration scale based on the pattern
+				//this.gchordduration = generateDefaultDurationScale(element.param);
+			} else
+				this.overridePattern = undefined;
 			break;
 		case "bassprog":
-			this.bassInstrument = element.param;
+			this.bassInstrument = element.value;
+			if ((element.octaveShift != undefined) && (element.octaveShift != null)) {
+				this.bassOctaveShift = element.octaveShift;
+			}
+			else {
+				this.bassOctaveShift = 0;
+			}
 			break;
 		case "chordprog":
-			this.chordInstrument = element.param;
+			this.chordInstrument = element.value;
+			if ((element.octaveShift != undefined) && (element.octaveShift != null)) {
+				this.chordOctaveShift = element.octaveShift;
+			}
+			else {
+				this.chordOctaveShift = 0;
+			}
 			break;
 		case "bassvol":
 			this.boomVolume = element.param;
@@ -169,6 +198,21 @@ ChordTrack.prototype.interpretChord = function (name) {
 	while (chordTranspose > 8)
 		chordTranspose -= 12;
 	bass += chordTranspose;
+	
+    	// MAE 31 Aug 2024 - For visual transpose backup range issue
+    	// If transposed below A or above G, bring it back in the normal backup range
+    	if (bass < 33){
+      		bass += 12;
+    	}
+    	else if (bass > 44){
+	     	 bass -= 12;
+    	}
+
+	// MAE 17 Jun 2024 - Supporting octave shifted bass and chords
+	var unshiftedBass = bass;
+
+	bass += this.bassOctaveShift * 12;
+
 	var bass2 = bass - 5;	// The alternating bass is a 4th below
 	var chick;
 	if (name.length === 1)
@@ -176,16 +220,18 @@ ChordTrack.prototype.interpretChord = function (name) {
 	var remaining = name.substring(1);
 	var acc = remaining.substring(0, 1);
 	if (acc === 'b' || acc === '♭') {
+		unshiftedBass--;
 		bass--;
 		bass2--;
 		remaining = remaining.substring(1);
 	} else if (acc === '#' || acc === '♯') {
+		unshiftedBass++;
 		bass++;
 		bass2++;
 		remaining = remaining.substring(1);
 	}
 	var arr = remaining.split('/');
-	chick = this.chordNotes(bass, arr[0]);
+	chick = this.chordNotes(unshiftedBass, arr[0]);
 	// If the 5th is altered then the bass is altered. Normally the bass is 7 from the root, so adjust if it isn't.
 	if (chick.length >= 3) {
 		var fifth = chick[2] - chick[0];
@@ -198,6 +244,10 @@ ChordTrack.prototype.interpretChord = function (name) {
 			var bassAcc = arr[1].substring(1);
 			var bassShift = { '#': 1, '♯': 1, 'b': -1, '♭': -1 }[bassAcc] || 0;
 			bass = this.basses[arr[1].substring(0, 1)] + bassShift + chordTranspose;
+
+			// MAE 22 May 2024 - Supporting octave shifted bass and chords
+			bass += this.bassOctaveShift * 12;
+
 			bass2 = bass;
 		}
 	}
@@ -215,6 +265,10 @@ ChordTrack.prototype.chordNotes = function (bass, modifier) {
 			intervals = this.chordIntervals.M;
 	}
 	bass += 12;	// the chord is an octave above the bass note.
+
+	// MAE 22 May 2024 - For chick octave shift
+	bass += (this.chordOctaveShift * 12);
+
 	var notes = [];
 	for (var i = 0; i < intervals.length; i++) {
 		notes.push(bass + intervals[i]);
@@ -338,23 +392,32 @@ function resolvePitch(currentChord, type, firstBoom, newBass) {
 		ret.push(firstBoom ? currentChord.boom : currentChord.boom2)
 	else if (newBass)
 		ret.push(currentChord.boom)
+	var numChordNotes = currentChord.chick.length
 	if (type.indexOf('chick') >= 0) {
-		for (var i = 0; i < currentChord.chick.length; i++)
+		for (var i = 0; i < numChordNotes; i++)
 			ret.push(currentChord.chick[i])
 	}
 	switch (type) {
 		case 'DO': ret.push(currentChord.chick[0]); break;
 		case 'MI': ret.push(currentChord.chick[1]); break;
-		case 'SOL': ret.push(currentChord.chick[2]); break;
-		case 'TI': currentChord.chick.length > 3 ? ret.push(currentChord.chick[2]) : ret.push(currentChord.chick[0]+12); break;
-		case 'TOP': currentChord.chick.length > 4 ? ret.push(currentChord.chick[2]) : ret.push(currentChord.chick[1]+12); break;
+		case 'SOL': ret.push(extractNote(currentChord,2)); break;
+		case 'TI': ret.push(extractNote(currentChord,3)); break;
+		case 'TOP': ret.push(extractNote(currentChord,4)); break;
 		case 'do': ret.push(currentChord.chick[0]+12); break;
 		case 'mi': ret.push(currentChord.chick[1]+12); break;
-		case 'sol': ret.push(currentChord.chick[2]+12); break;
-		case 'ti': currentChord.chick.length > 3 ? ret.push(currentChord.chick[2]+12) : ret.push(currentChord.chick[0]+24); break;
-		case 'top': currentChord.chick.length > 4 ? ret.push(currentChord.chick[2]+12) : ret.push(currentChord.chick[1]+24); break;
+		case 'sol': ret.push(extractNote(currentChord,2)+12); break;
+		case 'ti': ret.push(extractNote(currentChord,3)+12); break;
+		case 'top': ret.push(extractNote(currentChord,4)+12); break;
 	}
 	return ret
+}
+
+function extractNote(chord, index) {
+	// This creates an arpeggio note no matter how many notes are in the chord - if it runs out of notes it continues in the next octave
+	var octave = Math.floor(index / chord.chick.length)
+	var note = chord.chick[index % chord.chick.length]
+	//console.log(chord.chick, {index, octave, note}, index % chord.chick.length)
+	return note + octave * 12
 }
 
 function parseGChord(gchord) {
@@ -532,7 +595,12 @@ ChordTrack.prototype.chordIntervals = {
 	'maj7#5#11': [0, 4, 8, 11, 18],
 	'9(#5)': [0, 4, 8, 10, 14],
 	'13(#5)': [0, 4, 8, 10, 14, 21],
-	'13#5': [0, 4, 8, 10, 14, 21]
+	'13#5': [0, 4, 8, 10, 14, 21],
+	// MAE Power chords added 10 April 2024
+	'5': [0, 7],
+	'5(8)': [0, 7, 12],
+	'5add8': [0, 7, 12]
+
 };
 
 ChordTrack.prototype.rhythmPatterns = {
@@ -547,8 +615,12 @@ ChordTrack.prototype.rhythmPatterns = {
 	"6/4": ['boom', '', 'chick', '', 'boom', '', 'chick', '', 'boom', '', 'chick', ''],
 
 	"3/8": ['boom', '', 'chick'],
+	"5/8": ['boom', 'chick', 'chick', 'boom', 'chick'],
 	"6/8": ['boom', '', 'chick', 'boom', '', 'chick'],
+	"7/8": ['boom', 'chick', 'chick', 'boom', 'chick', 'boom', 'chick'],
 	"9/8": ['boom', '', 'chick', 'boom', '', 'chick', 'boom', '', 'chick'],
+	"10/8": ['boom', 'chick', 'chick', 'boom', 'chick', 'chick', 'boom', 'chick', 'boom', 'chick'],
+	"11/8": ['boom', 'chick', 'chick', 'boom', 'chick', 'chick', 'boom', 'chick', 'boom', 'chick', 'chick'],
 	"12/8": ['boom', '', 'chick', 'boom', '', 'chick', 'boom', '', 'chick', 'boom', '', 'chick'],
 };
 

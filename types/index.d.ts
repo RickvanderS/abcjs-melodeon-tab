@@ -379,7 +379,7 @@ declare module 'abcjs' {
 		chordprog?: number;
 		chordvol?: number;
 		gchord?: string;
-}
+	}
 
 	export interface SynthVisualOptions {
 		displayLoop?: boolean;
@@ -886,7 +886,7 @@ declare module 'abcjs' {
 		getBarLength: NumberFunction;
 		getBeatLength: NumberFunction;
 		getBeatsPerMeasure: NumberFunction;
-		getBpm: NumberFunction;
+		getBpm: (tempo?:TempoProperties) => number;
 		getMeter: () => Meter;
 		getMeterFraction: () => MeterFraction;
 		getPickupLength: NumberFunction;

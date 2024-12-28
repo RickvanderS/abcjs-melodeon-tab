@@ -1,4 +1,3 @@
-var parseCommon = require('./abc_common');
 var parseDirective = require('./abc_parse_directive');
 var transpose = require('./abc_transpose');
 
@@ -84,7 +83,7 @@ var parseKeyVoice = {};
 	parseKeyVoice.deepCopyKey = function(key) {
 		var ret = { accidentals: [], root: key.root, acc: key.acc, mode: key.mode };
 		key.accidentals.forEach(function(k) {
-		ret.accidentals.push(parseCommon.clone(k));
+		ret.accidentals.push(Object.assign({},k));
 		});
 		return ret;
 	};
@@ -151,7 +150,7 @@ var parseKeyVoice = {};
 	};
 
 	parseKeyVoice.fixKey = function(clef, key) {
-		var fixedKey = parseCommon.clone(key);
+		var fixedKey = Object.assign({},key);
 		parseKeyVoice.addPosToKey(clef, fixedKey);
 		return fixedKey;
 	};
@@ -494,8 +493,13 @@ var parseKeyVoice = {};
 	};
 
 	var setCurrentVoice = function(id) {
-		multilineVars.currentVoice = multilineVars.voices[id];
-		tuneBuilder.setCurrentVoice(multilineVars.currentVoice.staffNum, multilineVars.currentVoice.index);
+		var currentVoice = multilineVars.voices[id]
+		if (multilineVars.currentVoice) {
+			if (multilineVars.currentVoice.index === currentVoice.index && multilineVars.currentVoice.staffNum === currentVoice.staffNum)
+				return // there was no change so don't reset it.
+		}
+		multilineVars.currentVoice = currentVoice;
+		return tuneBuilder.setCurrentVoice(currentVoice.staffNum, currentVoice.index, id);
 	};
 
 	parseKeyVoice.parseVoice = function(line, i, e) {
@@ -788,7 +792,7 @@ var parseKeyVoice = {};
 		if (staffInfo.name) {if (s.name) s.name.push(staffInfo.name); else s.name = [ staffInfo.name ];}
 		if (staffInfo.subname) {if (s.subname) s.subname.push(staffInfo.subname); else s.subname = [ staffInfo.subname ];}
 
-		setCurrentVoice(id);
+		return setCurrentVoice(id);
 	};
 
 })();

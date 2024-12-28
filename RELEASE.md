@@ -1,3 +1,65 @@
+# Version 6.4.4
+
+## Bugs
+
+* Fix measure numbering when there are multi-measure rests.
+
+* Fix crash when subtitle is right before setting the bar number.
+
+* Don't allow the measure number to overlap the treble clef.
+
+* Improved trill, mordent, and turn playback rendering.
+
+* Increased measure number offset for wide measure numbers and treble clef.
+
+* Not adding the top position if putting a measure number on the clef.
+
+# Version 6.4.3
+
+## Bugs
+
+* If there is a slur or tie on the top or bottom of a line, make sure there is room for it.
+
+* Fix for crash on malformed @ positioned annotations
+
+* Fix call of getBpm() to use the specified tempo if it isn't supplied.
+
+* Bring bass note in range if transposed out-of-range by a visual transpose
+
+# Version 6.4.2
+
+## Bugs
+
+* Fix crash when there is a decoration on an invisible rest
+
+* Fix crash when the same voice is set on a line
+
+* Fix crash with rests in graces
+
+* Fix crash with decoration on invisible rests
+
+* Fix various crashes when declaring voices inline or after a line continuation
+
+* Fix for */8 rhythm tempos for MIDI export
+
+* Allow a midi volume of zero to mute a voice
+
+* Fix bug in selecting the correct note for chord arpeggios
+
+* Fix stemless chord parsing i.e. `[AB]0`
+
+* Don't put lower decorations too low on beamed notes that are beamed up
+
+## Features
+
+* add power chords
+
+* add patterns for 5/8, 7/8, 10/8 and 11/8
+
+* Add octave= parameter to bassprog and chordprog
+
+* allow an empty gchord to cancel a previously set gchord
+
 # Version 6.4.1
 
 ## Bugs
@@ -2706,4 +2768,3 @@ Examples
 * Updated the example files to always use the latest version.
 
 * Fixed font displaying html file to note have the elements write on top of each other.
-

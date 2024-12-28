@@ -315,7 +315,7 @@ var parseCommon = require("../parse/abc_common");
 										if (!e) e = voices[voiceNumber].length; // If there wasn't a first ending marker, then we copy everything.
 										// duplicate each of the elements - this has to be a deep copy.
 										for (var z = s; z < e; z++) {
-											var item = parseCommon.clone(voices[voiceNumber][z]);
+											var item = Object.assign({},voices[voiceNumber][z]);
 											if (item.pitches)
 												item.pitches = parseCommon.cloneArray(item.pitches);
 											voices[voiceNumber].push(item);
@@ -389,12 +389,27 @@ var parseCommon = require("../parse/abc_common");
 											break;
 										case "swing":
 										case "gchord":
-										case "bassprog":
-										case "chordprog":
 										case "bassvol":
 										case "chordvol":
 											voices[voiceNumber].push({ el_type: elem.cmd, param: elem.params[0] });
 											break;
+
+										case "bassprog": // MAE 22 May 2024
+										case "chordprog": // MAE 22 May 2024
+					                      voices[voiceNumber].push({
+					                        el_type: elem.cmd,
+					                        value: elem.params[0],
+					                        octaveShift: elem.params[1]
+					                      });
+					                      break;
+
+					                    // MAE 23 Jun 2024
+					                    case "gchordbars":
+					                        voices[voiceNumber].push({
+					                          el_type: elem.cmd,
+					                          param: elem.params[0]
+					                        });
+					                    break;
 										default:
 											console.log("MIDI seq: midi cmd not handled: ", elem.cmd, elem);
 									}

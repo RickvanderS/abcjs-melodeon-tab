@@ -1,3 +1,7 @@
+# Abcjs-melodeon-tab
+
+This fork of abcjs adds tablature for diatonic accordion / melodeon and harmonica. It is used for an application called Diatotab. See [website](https://diatotab.com) and [repository](https://github.com/RickvanderS/diatotab.com). 
+
 ![abcjs](https://paulrosen.github.io/abcjs/img/abcjs_comp_extended_08.svg)
 
 # Javascript library for rendering standard music notation in a browser.

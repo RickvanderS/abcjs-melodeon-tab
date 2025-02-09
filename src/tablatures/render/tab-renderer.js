@@ -222,6 +222,10 @@ function tabRenderer(plugin, renderer, line, staffIndex, DiatonicScan) { //DIA:
 		padd = 0;
 	//DIA:}
 	var prevIndex = staffIndex;
+	//DIA:{
+	if (prevIndex >= staffGroup.staffs.length)
+		prevIndex = staffGroup.staffs.length - 1;
+	//DIA:}
 	var previousStaff = staffGroup.staffs[prevIndex];
 	var tabTop = tabSize + padd - previousStaff.bottom - lyricsHeight;
 	if (previousStaff.isTabStaff) {

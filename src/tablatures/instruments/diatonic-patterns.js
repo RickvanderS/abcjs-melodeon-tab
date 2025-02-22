@@ -168,25 +168,33 @@ function DecodeRowInfo(TuningString) {
 	Key = Key.replaceAll("^", "");
 	Key = Key.replaceAll(">", "");
 	Key = Key.replaceAll("~", "");
+	Key = Key.replaceAll("+", "");
 	let Acc       = TuningString.includes("^");
 	let Start     = TuningString.includes(">") ? 4 : 3;
 	let Harmonica = TuningString.includes("~");
 	
-	aInvert = new Array();
+	aInvert    = new Array();
+	aInvertAll = new Array();
 	for (let i = TuningString.length - 1; i >= 0; --i) {
-		if ('0' <= TuningString[i] && TuningString[i] <= '9')
+		if ('0' <= TuningString[i] && TuningString[i] <= '9') {
 			aInvert.push(TuningString[i]);
-		else
+			if (TuningString[i+1] == '+')
+				aInvertAll.push(true);
+			else
+				aInvertAll.push(false);
+		}
+		else if (TuningString[i] != '+')
 			break;
 	}
 	
 	return {
-		Buttons   : Buttons,
-		Key       : Key    ,
-		Acc       : Acc    ,
-		Start     : Start  ,
-		Harmonica : Harmonica,
-		aInvert   : aInvert
+		Buttons    : Buttons   ,
+		Key        : Key       ,
+		Acc        : Acc       ,
+		Start      : Start     ,
+		Harmonica  : Harmonica ,
+		aInvert    : aInvert   ,
+		aInvertAll : aInvertAll
 	}
 }
 
@@ -321,6 +329,76 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
 	}
 }
 
+function TransposeConditional(Row, Note, TransposeHalfSteps, SharpNotFlat, TransposeLookup) {
+	Note = Note.replace(",", "");
+	Note = Note.replace("'", "");
+	Note = Note.toLowerCase();
+	for (let i = 0; i < Row.length; ++i) {
+		let Tmp = Row[i];
+		Tmp = Tmp.replace(",", "");
+		Tmp = Tmp.replace("'", "");
+		Tmp = Tmp.toLowerCase();
+		
+		if (Note == Tmp) {
+			let Tmp2 = TransposeNameToNote(Row[i], TransposeHalfSteps, TransposeLookup);
+			if (SharpNotFlat)
+				Row[i] = Tmp2.SharpName;
+			else
+				Row[i] = Tmp2.FlatName;
+		}
+	}
+}
+
+/// Does push/pull inversions for a row as specified in the info
+function RowInvert(RowInfo, push_row, pull_row) {
+	if (typeof RowInfo !== 'undefined') {
+		for (let i = 0; i < RowInfo.aInvert.length; ++i) {
+			let Index = RowInfo.aInvert[i] - 1;
+			
+			if (RowInfo.aInvertAll[i]) {
+				let TransposeLookup = CreateTransposeLookup();
+				
+				//Test how much to transpose up/down for push/pull
+				let PushTransposeHalfSteps = 0;
+				let PushSharp              = false;
+				let PullTransposeHalfSteps = 0;
+				let PullSharp              = false;
+				for (let TransposeHalfSteps = -11; TransposeHalfSteps <= 11; ++TransposeHalfSteps) {
+					let TransPush = TransposeNameToNote(push_row[Index], TransposeHalfSteps, TransposeLookup);
+					if (TransPush.SharpName == pull_row[Index]) {
+						PushTransposeHalfSteps = TransposeHalfSteps;
+						PushSharp              = true;
+					}
+					else if (TransPush.FlatName == pull_row[Index]) {
+						PushTransposeHalfSteps = TransposeHalfSteps;
+						PushSharp              = false;
+					}
+					
+					let TransPull = TransposeNameToNote(pull_row[Index], TransposeHalfSteps, TransposeLookup);
+					if (TransPull.SharpName == push_row[Index]) {
+						PullTransposeHalfSteps = TransposeHalfSteps;
+						PullSharp              = true;
+					}
+					else if (TransPull.FlatName == push_row[Index]) {
+						PullTransposeHalfSteps = TransposeHalfSteps;
+						PullSharp              = false;
+					}
+				}
+				
+				//Transpose the applicable notes
+				TransposeConditional(push_row, push_row[Index], PushTransposeHalfSteps, PushSharp, TransposeLookup);
+				TransposeConditional(pull_row, pull_row[Index], PullTransposeHalfSteps, PullSharp, TransposeLookup);
+			}
+			else {
+				let Tmp = push_row[Index];
+				push_row[Index] = pull_row[Index];
+				pull_row[Index] = Tmp;
+			}
+			
+		}
+	}
+}
+
 function DiatonicPatterns(plugin) {
 	//Get tablature options
 	this.showall = plugin.params.showall;
@@ -367,7 +445,6 @@ function DiatonicPatterns(plugin) {
 		plugin.tuning = this.tuning;
 	}
 	
-	//Set default chin accidentals of not specified
 	this.startzero = plugin.params.startzero;
 	if (this.startzero == null) {
 		this.startzero = false;
@@ -961,30 +1038,9 @@ function DiatonicPatterns(plugin) {
 	}
 	
 	//Handle button push/pull inversions for each row
-	if (typeof Row1Info !== 'undefined') {
-		for (let i = 0; i < Row1Info.aInvert.length; ++i) {
-			let Index = Row1Info.aInvert[i] - 1;
-			let Tmp = push_row1[Index];
-			push_row1[Index] = pull_row1[Index];
-			pull_row1[Index] = Tmp;
-		}
-	}
-	if (typeof Row2Info !== 'undefined') {
-		for (let i = 0; i < Row2Info.aInvert.length; ++i) {
-			let Index = Row2Info.aInvert[i] - 1;
-			let Tmp = push_row2[Index];
-			push_row2[Index] = pull_row2[Index];
-			pull_row2[Index] = Tmp;
-		}
-	}
-	if (typeof Row3Info !== 'undefined') {
-		for (let i = 0; i < Row3Info.aInvert.length; ++i) {
-			let Index = Row3Info.aInvert[i] - 1;
-			let Tmp = push_row3[Index];
-			push_row3[Index] = pull_row3[Index];
-			pull_row3[Index] = Tmp;
-		}
-	}
+	RowInvert(Row1Info, push_row1, pull_row1);
+	RowInvert(Row2Info, push_row2, pull_row2);
+	RowInvert(Row3Info, push_row3, pull_row3);
 	
 	//If not starting the numbering at 0, add empty buttons to the beginning of the arrays
 	if (!this.startzero) {

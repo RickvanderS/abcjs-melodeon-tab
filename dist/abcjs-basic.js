@@ -16371,12 +16371,17 @@ function DecodeRowInfo(TuningString) {
   Key = Key.replaceAll("^", "");
   Key = Key.replaceAll(">", "");
   Key = Key.replaceAll("~", "");
+  Key = Key.replaceAll("+", "");
   var Acc = TuningString.includes("^");
   var Start = TuningString.includes(">") ? 4 : 3;
   var Harmonica = TuningString.includes("~");
   aInvert = new Array();
+  aInvertAll = new Array();
   for (var i = TuningString.length - 1; i >= 0; --i) {
-    if ('0' <= TuningString[i] && TuningString[i] <= '9') aInvert.push(TuningString[i]);else break;
+    if ('0' <= TuningString[i] && TuningString[i] <= '9') {
+      aInvert.push(TuningString[i]);
+      if (TuningString[i + 1] == '+') aInvertAll.push(true);else aInvertAll.push(false);
+    } else if (TuningString[i] != '+') break;
   }
   return {
     Buttons: Buttons,
@@ -16384,7 +16389,8 @@ function DecodeRowInfo(TuningString) {
     Acc: Acc,
     Start: Start,
     Harmonica: Harmonica,
-    aInvert: aInvert
+    aInvert: aInvert,
+    aInvertAll: aInvertAll
   };
 }
 function LoadRowD(aOutPush, aOutPull, RowInfo) {
@@ -16512,6 +16518,65 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
     aOutPull[0] = "^G";
   }
 }
+function TransposeConditional(Row, Note, TransposeHalfSteps, SharpNotFlat, TransposeLookup) {
+  Note = Note.replace(",", "");
+  Note = Note.replace("'", "");
+  Note = Note.toLowerCase();
+  for (var i = 0; i < Row.length; ++i) {
+    var Tmp = Row[i];
+    Tmp = Tmp.replace(",", "");
+    Tmp = Tmp.replace("'", "");
+    Tmp = Tmp.toLowerCase();
+    if (Note == Tmp) {
+      var Tmp2 = TransposeNameToNote(Row[i], TransposeHalfSteps, TransposeLookup);
+      if (SharpNotFlat) Row[i] = Tmp2.SharpName;else Row[i] = Tmp2.FlatName;
+    }
+  }
+}
+
+/// Does push/pull inversions for a row as specified in the info
+function RowInvert(RowInfo, push_row, pull_row) {
+  if (typeof RowInfo !== 'undefined') {
+    for (var i = 0; i < RowInfo.aInvert.length; ++i) {
+      var Index = RowInfo.aInvert[i] - 1;
+      if (RowInfo.aInvertAll[i]) {
+        var _TransposeLookup = CreateTransposeLookup();
+
+        //Test how much to transpose up/down for push/pull
+        var PushTransposeHalfSteps = 0;
+        var PushSharp = false;
+        var PullTransposeHalfSteps = 0;
+        var PullSharp = false;
+        for (var TransposeHalfSteps = -11; TransposeHalfSteps <= 11; ++TransposeHalfSteps) {
+          var TransPush = TransposeNameToNote(push_row[Index], TransposeHalfSteps, _TransposeLookup);
+          if (TransPush.SharpName == pull_row[Index]) {
+            PushTransposeHalfSteps = TransposeHalfSteps;
+            PushSharp = true;
+          } else if (TransPush.FlatName == pull_row[Index]) {
+            PushTransposeHalfSteps = TransposeHalfSteps;
+            PushSharp = false;
+          }
+          var TransPull = TransposeNameToNote(pull_row[Index], TransposeHalfSteps, _TransposeLookup);
+          if (TransPull.SharpName == push_row[Index]) {
+            PullTransposeHalfSteps = TransposeHalfSteps;
+            PullSharp = true;
+          } else if (TransPull.FlatName == push_row[Index]) {
+            PullTransposeHalfSteps = TransposeHalfSteps;
+            PullSharp = false;
+          }
+        }
+
+        //Transpose the applicable notes
+        TransposeConditional(push_row, push_row[Index], PushTransposeHalfSteps, PushSharp, _TransposeLookup);
+        TransposeConditional(pull_row, pull_row[Index], PullTransposeHalfSteps, PullSharp, _TransposeLookup);
+      } else {
+        var Tmp = push_row[Index];
+        push_row[Index] = pull_row[Index];
+        pull_row[Index] = Tmp;
+      }
+    }
+  }
+}
 function DiatonicPatterns(plugin) {
   //Get tablature options
   this.showall = plugin.params.showall;
@@ -16549,8 +16614,6 @@ function DiatonicPatterns(plugin) {
     this.tuning.push("C5");
     plugin.tuning = this.tuning;
   }
-
-  //Set default chin accidentals of not specified
   this.startzero = plugin.params.startzero;
   if (this.startzero == null) {
     this.startzero = false;
@@ -17061,30 +17124,9 @@ function DiatonicPatterns(plugin) {
   }
 
   //Handle button push/pull inversions for each row
-  if (typeof Row1Info !== 'undefined') {
-    for (var i = 0; i < Row1Info.aInvert.length; ++i) {
-      var Index = Row1Info.aInvert[i] - 1;
-      var Tmp = push_row1[Index];
-      push_row1[Index] = pull_row1[Index];
-      pull_row1[Index] = Tmp;
-    }
-  }
-  if (typeof Row2Info !== 'undefined') {
-    for (var _i = 0; _i < Row2Info.aInvert.length; ++_i) {
-      var _Index = Row2Info.aInvert[_i] - 1;
-      var _Tmp = push_row2[_Index];
-      push_row2[_Index] = pull_row2[_Index];
-      pull_row2[_Index] = _Tmp;
-    }
-  }
-  if (typeof Row3Info !== 'undefined') {
-    for (var _i2 = 0; _i2 < Row3Info.aInvert.length; ++_i2) {
-      var _Index2 = Row3Info.aInvert[_i2] - 1;
-      var _Tmp2 = push_row3[_Index2];
-      push_row3[_Index2] = pull_row3[_Index2];
-      pull_row3[_Index2] = _Tmp2;
-    }
-  }
+  RowInvert(Row1Info, push_row1, pull_row1);
+  RowInvert(Row2Info, push_row2, pull_row2);
+  RowInvert(Row3Info, push_row3, pull_row3);
 
   //If not starting the numbering at 0, add empty buttons to the beginning of the arrays
   if (!this.startzero) {
@@ -17123,13 +17165,13 @@ function DiatonicPatterns(plugin) {
   //Add them to the push/pull arrays
   this.push_chords = this.push_chords.concat(this.BassCrossPush);
   this.pull_chords = this.pull_chords.concat(this.BassCrossPull);
-  for (var _i3 = 0; _i3 < this.push_chords.length; ++_i3) {
-    var pos = this.push_chords[_i3].search(" ");
-    if (pos >= 0) this.push_chords[_i3] = this.push_chords[_i3].substr(0, pos);
+  for (var i = 0; i < this.push_chords.length; ++i) {
+    var pos = this.push_chords[i].search(" ");
+    if (pos >= 0) this.push_chords[i] = this.push_chords[i].substr(0, pos);
   }
-  for (var _i4 = 0; _i4 < this.pull_chords.length; ++_i4) {
-    var _pos = this.pull_chords[_i4].search(" ");
-    if (_pos >= 0) this.pull_chords[_i4] = this.pull_chords[_i4].substr(0, _pos);
+  for (var _i = 0; _i < this.pull_chords.length; ++_i) {
+    var _pos = this.pull_chords[_i].search(" ");
+    if (_pos >= 0) this.pull_chords[_i] = this.pull_chords[_i].substr(0, _pos);
   }
   this.push_chords = _toConsumableArray(new Set(this.push_chords));
   this.pull_chords = _toConsumableArray(new Set(this.pull_chords));
@@ -17137,28 +17179,28 @@ function DiatonicPatterns(plugin) {
   //Define right hand notes from the note names, transpose if required
   var TransposeLookup = CreateTransposeLookup();
   this.push_row1 = new Array();
-  for (var _i5 = 0; _i5 < push_row1.length; ++_i5) {
-    this.push_row1.push(TransposeNameToNote(push_row1[_i5], TransposeHalfSteps, TransposeLookup));
+  for (var _i2 = 0; _i2 < push_row1.length; ++_i2) {
+    this.push_row1.push(TransposeNameToNote(push_row1[_i2], TransposeHalfSteps, TransposeLookup));
   }
   this.pull_row1 = new Array();
-  for (var _i6 = 0; _i6 < pull_row1.length; ++_i6) {
-    this.pull_row1.push(TransposeNameToNote(pull_row1[_i6], TransposeHalfSteps, TransposeLookup));
+  for (var _i3 = 0; _i3 < pull_row1.length; ++_i3) {
+    this.pull_row1.push(TransposeNameToNote(pull_row1[_i3], TransposeHalfSteps, TransposeLookup));
   }
   this.push_row2 = new Array();
-  for (var _i7 = 0; _i7 < push_row2.length; ++_i7) {
-    this.push_row2.push(TransposeNameToNote(push_row2[_i7], TransposeHalfSteps, TransposeLookup));
+  for (var _i4 = 0; _i4 < push_row2.length; ++_i4) {
+    this.push_row2.push(TransposeNameToNote(push_row2[_i4], TransposeHalfSteps, TransposeLookup));
   }
   this.pull_row2 = new Array();
-  for (var _i8 = 0; _i8 < pull_row2.length; ++_i8) {
-    this.pull_row2.push(TransposeNameToNote(pull_row2[_i8], TransposeHalfSteps, TransposeLookup));
+  for (var _i5 = 0; _i5 < pull_row2.length; ++_i5) {
+    this.pull_row2.push(TransposeNameToNote(pull_row2[_i5], TransposeHalfSteps, TransposeLookup));
   }
   this.push_row3 = new Array();
-  for (var _i9 = 0; _i9 < push_row3.length; ++_i9) {
-    this.push_row3.push(TransposeNameToNote(push_row3[_i9], TransposeHalfSteps, TransposeLookup));
+  for (var _i6 = 0; _i6 < push_row3.length; ++_i6) {
+    this.push_row3.push(TransposeNameToNote(push_row3[_i6], TransposeHalfSteps, TransposeLookup));
   }
   this.pull_row3 = new Array();
-  for (var _i10 = 0; _i10 < pull_row3.length; ++_i10) {
-    this.pull_row3.push(TransposeNameToNote(pull_row3[_i10], TransposeHalfSteps, TransposeLookup));
+  for (var _i7 = 0; _i7 < pull_row3.length; ++_i7) {
+    this.pull_row3.push(TransposeNameToNote(pull_row3[_i7], TransposeHalfSteps, TransposeLookup));
   }
 
   //console.log(this.push_row1);
@@ -17198,8 +17240,8 @@ function DiatonicPatterns(plugin) {
     this.HandPos[h].hard = new Array();
     var aFinger = [-1, 4];
     for (var _Row = 1; _Row <= 3; ++_Row) {
-      for (var _i11 = 0; _i11 < aFinger.length; ++_i11) {
-        var _Finger = aFinger[_i11];
+      for (var _i8 = 0; _i8 < aFinger.length; ++_i8) {
+        var _Finger = aFinger[_i8];
         if (_Row == 1) {
           var _Row1Index = h + _Finger;
           if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString() + "$");
@@ -18017,10 +18059,10 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           aRowOrder.sort(function (a, b) {
             return a - b;
           });
-          for (var _i12 = 0; _i12 < aRowOrder.length; ++_i12) {
-            if (aRowOrder[_i12] == this.RowPrefer1) aRowOrder[_i12] = 1;
-            if (aRowOrder[_i12] == this.RowPrefer2) aRowOrder[_i12] = 2;
-            if (aRowOrder[_i12] == this.RowPrefer3) aRowOrder[_i12] = 3;
+          for (var _i9 = 0; _i9 < aRowOrder.length; ++_i9) {
+            if (aRowOrder[_i9] == this.RowPrefer1) aRowOrder[_i9] = 1;
+            if (aRowOrder[_i9] == this.RowPrefer2) aRowOrder[_i9] = 2;
+            if (aRowOrder[_i9] == this.RowPrefer3) aRowOrder[_i9] = 3;
           }
 
           //Any
@@ -18037,14 +18079,14 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
               for (var HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
                 for (var f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
                   //Search all buttons
-                  for (var _i13 = 0; _i13 < aButtons.length; ++_i13) {
+                  for (var _i10 = 0; _i10 < aButtons.length; ++_i10) {
                     var Row = 1;
-                    if (aButtons[_i13][aButtons[_i13].length - 1] == "'") Row = 2;else if (aButtons[_i13][aButtons[_i13].length - 1] == "\"") Row = 3;
+                    if (aButtons[_i10][aButtons[_i10].length - 1] == "'") Row = 2;else if (aButtons[_i10][aButtons[_i10].length - 1] == "\"") Row = 3;
 
                     //If button match on the required row
-                    if ((RequireRow == 0 || Row == RequireRow) && aButtons[_i13] == this.HandPos[HandPosIndex].easy[f]) {
+                    if ((RequireRow == 0 || Row == RequireRow) && aButtons[_i10] == this.HandPos[HandPosIndex].easy[f]) {
                       this.HandPosIndex = HandPosIndex;
-                      Button = aButtons[_i13];
+                      Button = aButtons[_i10];
                       Found = true;
                       break;
                     }
@@ -18078,9 +18120,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
                     //Find same as last button
                     if (!Found) {
-                      for (var _i14 = 0; _i14 < aHandPosButtons.length; ++_i14) {
-                        if (this.LastButton == aHandPosButtons[_i14]) {
-                          Button = aHandPosButtons[_i14];
+                      for (var _i11 = 0; _i11 < aHandPosButtons.length; ++_i11) {
+                        if (this.LastButton == aHandPosButtons[_i11]) {
+                          Button = aHandPosButtons[_i11];
                           Found = true;
                           break;
                         }
@@ -18091,11 +18133,11 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
                     if (!Found) {
                       var LastRow = 1;
                       if (this.LastButton[this.LastButton.length - 1] == "'") LastRow = 2;else if (this.LastButton[this.LastButton.length - 1] == "\"") LastRow = 3;
-                      for (var _i15 = 0; _i15 < aHandPosButtons.length; ++_i15) {
+                      for (var _i12 = 0; _i12 < aHandPosButtons.length; ++_i12) {
                         var _Row3 = 1;
-                        if (aHandPosButtons[_i15][aHandPosButtons[_i15].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i15][aHandPosButtons[_i15].length - 1] == "\"") _Row3 = 3;
+                        if (aHandPosButtons[_i12][aHandPosButtons[_i12].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i12][aHandPosButtons[_i12].length - 1] == "\"") _Row3 = 3;
                         if (LastRow == _Row3) {
-                          Button = aHandPosButtons[_i15];
+                          Button = aHandPosButtons[_i12];
                           Found = true;
                           break;
                         }
@@ -18104,10 +18146,10 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
                     //Find same number as last button
                     if (!Found) {
-                      for (var _i16 = 0; _i16 < aHandPosButtons.length; ++_i16) {
+                      for (var _i13 = 0; _i13 < aHandPosButtons.length; ++_i13) {
                         //TODO: 10 / 1 risk
-                        if (this.LastButton.substring(0, 1) == aHandPosButtons[_i16].substring(0, 1)) {
-                          Button = aHandPosButtons[_i16];
+                        if (this.LastButton.substring(0, 1) == aHandPosButtons[_i13].substring(0, 1)) {
+                          Button = aHandPosButtons[_i13];
                           Found = true;
                           break;
                         }
@@ -18322,9 +18364,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   }
 
   //Create returns values for note head changes
-  for (var _i17 = 0; _i17 < aDiamandNotes.length; ++_i17) {
+  for (var _i14 = 0; _i14 < aDiamandNotes.length; ++_i14) {
     var note = new TabNote("");
-    note.pitch = aDiamandNotes[_i17].pitch;
+    note.pitch = aDiamandNotes[_i14].pitch;
     var number = {
       num: "",
       str: -10,
@@ -18333,9 +18375,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     };
     retNotes.push(number);
   }
-  for (var _i18 = 0; _i18 < aTriangleNotes.length; ++_i18) {
+  for (var _i15 = 0; _i15 < aTriangleNotes.length; ++_i15) {
     var note = new TabNote("");
-    note.pitch = aTriangleNotes[_i18].pitch;
+    note.pitch = aTriangleNotes[_i15].pitch;
     var number = {
       num: "",
       str: -20,

@@ -16229,12 +16229,6 @@ module.exports = abcTablatures;
   \*********************************************************/
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 var TabNote = __webpack_require__(/*! ./tab-note */ "./src/tablatures/instruments/tab-note.js");
 var transposeChordName = __webpack_require__(/*! ../../parse/transpose-chord */ "./src/parse/transpose-chord.js");
 var allNotes = __webpack_require__(/*! ../../parse/all-notes */ "./src/parse/all-notes.js");
@@ -16336,7 +16330,7 @@ function GetChordNotes(ChordName, ForceSharp) {
 function FindCrossBassChords(aDirChords) {
   var aCrossChords = new Array();
   for (var i = 0; i < aDirChords.length; ++i) {
-    //Skip minor chords
+    //Skip minor chords, they are already minor, so no need for a m7
     if (aDirChords[i].indexOf("m") >= 0) continue;
     var CrossChordName = aDirChords[i] + "m7";
 
@@ -17026,6 +17020,7 @@ function DiatonicPatterns(plugin) {
         this.BassRow1Pull.push("Bm");
         this.BassRow2Push.push("Eb");
         this.BassRow2Pull.push("Bb");
+        this.BassRow2Push[1] = "A";
         push_row1[0] = "B,,"; // 1
         pull_row1[0] = "E,";
         push_row2[0] = "E,"; // 1'
@@ -17042,19 +17037,19 @@ function DiatonicPatterns(plugin) {
         push_row3.push("_B,"); // 2"
         pull_row3.push("^C");
         push_row3.push("_E"); // 3"
-        pull_row3.push("^G");
+        pull_row3.push("_E");
         push_row3.push("^G"); // 4"
-        pull_row3.push("A");
+        pull_row3.push("^G");
         push_row3.push("_B"); // 5"
         pull_row3.push("_B");
         push_row3.push("_e"); // 6"
         pull_row3.push("^c");
         push_row3.push("^g"); // 7"
-        pull_row3.push("^g");
+        pull_row3.push("_e");
         push_row3.push("_b"); // 8"
-        pull_row3.push("a");
-        push_row3.push("e'"); // 9"
-        pull_row3.push("_b'");
+        pull_row3.push("^g");
+        push_row3.push("_e'"); // 9"
+        pull_row3.push("_b");
       } else {
         if (Row2Info.Key == "G" && Row3Info.Key == "C")
           //DGC, rare mostly conversions with D an octave lower than standard DG
@@ -17166,15 +17161,13 @@ function DiatonicPatterns(plugin) {
   this.push_chords = this.push_chords.concat(this.BassCrossPush);
   this.pull_chords = this.pull_chords.concat(this.BassCrossPull);
   for (var i = 0; i < this.push_chords.length; ++i) {
-    var pos = this.push_chords[i].search(" ");
+    var pos = this.push_chords[i].search("7 ");
     if (pos >= 0) this.push_chords[i] = this.push_chords[i].substr(0, pos);
   }
   for (var _i = 0; _i < this.pull_chords.length; ++_i) {
-    var _pos = this.pull_chords[_i].search(" ");
+    var _pos = this.pull_chords[_i].search("7 ");
     if (_pos >= 0) this.pull_chords[_i] = this.pull_chords[_i].substr(0, _pos);
   }
-  this.push_chords = _toConsumableArray(new Set(this.push_chords));
-  this.pull_chords = _toConsumableArray(new Set(this.pull_chords));
 
   //Define right hand notes from the note names, transpose if required
   var TransposeLookup = CreateTransposeLookup();

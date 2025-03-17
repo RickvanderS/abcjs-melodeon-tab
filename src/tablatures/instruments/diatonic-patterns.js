@@ -124,7 +124,7 @@ function FindCrossBassChords(aDirChords) {
 	let aCrossChords = new Array();
 	
 	for (let i = 0; i < aDirChords.length; ++i) {
-		//Skip minor chords
+		//Skip minor chords, they are already minor, so no need for a m7
 		if (aDirChords[i].indexOf("m") >= 0)
 			continue;
 		
@@ -936,6 +936,7 @@ function DiatonicPatterns(plugin) {
 				this.BassRow1Pull.push("Bm");
 				this.BassRow2Push.push("Eb");
 				this.BassRow2Pull.push("Bb");
+				this.BassRow2Push[1] = "A";
 				
 				push_row1[0] = "B,,"; // 1
 				pull_row1[0] = "E,";
@@ -954,19 +955,19 @@ function DiatonicPatterns(plugin) {
 				push_row3.push("_B,"); // 2"
 				pull_row3.push("^C");
 				push_row3.push("_E"); // 3"
-				pull_row3.push("^G");
+				pull_row3.push("_E");
 				push_row3.push("^G"); // 4"
-				pull_row3.push("A");
+				pull_row3.push("^G");
 				push_row3.push("_B"); // 5"
 				pull_row3.push("_B");
 				push_row3.push("_e"); // 6"
 				pull_row3.push("^c");
 				push_row3.push("^g"); // 7"
-				pull_row3.push("^g");
+				pull_row3.push("_e");
 				push_row3.push("_b"); // 8"
-				pull_row3.push("a");
-				push_row3.push("e'"); // 9"
-				pull_row3.push("_b'");
+				pull_row3.push("^g");
+				push_row3.push("_e'"); // 9"
+				pull_row3.push("_b");
 			}
 			else {
 				if      ((Row2Info.Key == "G"                         ) && (Row3Info.Key == "C"                         )) //DGC, rare mostly conversions with D an octave lower than standard DG
@@ -1080,17 +1081,15 @@ function DiatonicPatterns(plugin) {
 	this.push_chords = this.push_chords.concat(this.BassCrossPush);
 	this.pull_chords = this.pull_chords.concat(this.BassCrossPull);
 	for (let i = 0; i < this.push_chords.length; ++i) {
-		let pos = this.push_chords[i].search(" ");
+		let pos = this.push_chords[i].search("7 ");
 		if (pos >= 0)
 			this.push_chords[i] = this.push_chords[i].substr(0, pos);
 	}
 	for (let i = 0; i < this.pull_chords.length; ++i) {
-		let pos = this.pull_chords[i].search(" ");
+		let pos = this.pull_chords[i].search("7 ");
 		if (pos >= 0)
 			this.pull_chords[i] = this.pull_chords[i].substr(0, pos);
 	}
-	this.push_chords = [...new Set(this.push_chords)];
-	this.pull_chords = [...new Set(this.pull_chords)];
 
 	//Define right hand notes from the note names, transpose if required
 	let TransposeLookup = CreateTransposeLookup();

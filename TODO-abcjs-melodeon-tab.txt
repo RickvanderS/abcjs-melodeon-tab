@@ -5,9 +5,10 @@ Bugs:
 - "Show all (remaining) possibilities" should not show ties
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
-- Support 4th row (one harminica bend is currently missing)
+- Support 4th row (one harmonica bend is currently missing)
 New features:
-- Optional push/pull indicators next to chords
+- Optional push/pull indicators for notes (color?)
+- Custom layout inputs
 - Export ABC with injected tablature
 - Option to disable chord thirds (so chord is neither minor or major)
 abcjs:

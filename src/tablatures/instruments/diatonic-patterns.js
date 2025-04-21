@@ -1,165 +1,40 @@
 var TabNote = require('./tab-note');
-var transposeChordName = require("../../parse/transpose-chord")
-var allNotes = require('../../parse/all-notes');
+var DiatonicHelper = require('./diatonic-helper');
 
-function TransposeChordArray(aBassChords, TransposeHalfSteps) {
-	for (let i = 0; i < aBassChords.length; ++i) {
-		aBassChords[i] = transposeChordName(aBassChords[i], TransposeHalfSteps, true, true);
+DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName, keyAccidentals, measureAccidentals) {
+	var TNote = new TabNote(NoteName);
+	TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
+	if (TNote.isAltered || TNote.natural) {
+		var acc;
+		if (TNote.isFlat) {
+			if (TNote.isDouble)
+				acc = "__";
+			else
+				acc = "_";
+		} else if (TNote.isSharp) {
+			if (TNote.isDouble)
+				acc = "^^";
+			else
+				acc = "^";
+		} else if (TNote.natural)
+			acc = "=";
+		this.measureAccidentals[TNote.name.toUpperCase()] = acc;
 	}
-}
 
-function GetChordNotes(ChordName, ForceSharp) {
-	let aAllSharp = new Array();
-	aAllSharp.push( "C,,");
-	aAllSharp.push("^C,,");
-	aAllSharp.push( "D,,");
-	aAllSharp.push("^D,,");
-	aAllSharp.push( "E,,");
-	aAllSharp.push( "F,,");
-	aAllSharp.push("^F,,");
-	aAllSharp.push( "G,,");
-	aAllSharp.push("^G,,");
-	aAllSharp.push( "A,,");
-	aAllSharp.push("^A,,");
-	aAllSharp.push( "B,,");
-	aAllSharp.push( "C,");
-	aAllSharp.push("^C,");
-	aAllSharp.push( "D,");
-	aAllSharp.push("^D,");
-	aAllSharp.push( "E,");
-	aAllSharp.push( "F,");
-	aAllSharp.push("^F,");
-	aAllSharp.push( "G,");
-	aAllSharp.push("^G,");
-	aAllSharp.push( "A,");
-	aAllSharp.push("^A,");
-	aAllSharp.push( "B,");
-	let aAllFlat = new Array();
-	aAllFlat.push( "C,,");
-	aAllFlat.push("_D,,");
-	aAllFlat.push( "D,,");
-	aAllFlat.push("_E,,");
-	aAllFlat.push( "E,,");
-	aAllFlat.push( "F,,");
-	aAllFlat.push("_G,,");
-	aAllFlat.push( "G,,");
-	aAllFlat.push("_A,,");
-	aAllFlat.push( "A,,");
-	aAllFlat.push("_B,,");
-	aAllFlat.push( "B,,");
-	aAllFlat.push( "C,");
-	aAllFlat.push("_D,");
-	aAllFlat.push( "D,");
-	aAllFlat.push("_E,");
-	aAllFlat.push( "E,");
-	aAllFlat.push( "F,");
-	aAllFlat.push("_G,");
-	aAllFlat.push( "G,");
-	aAllFlat.push("_A,");
-	aAllFlat.push( "A,");
-	aAllFlat.push("_B,");
-	aAllFlat.push( "B,");
+	//Get the note name with accidentals
+	var NoteName = TNote.emitNoAccidentals();
+	if      (TNote.acc ==  1)
+		NoteName = "^"  + NoteName;
+	else if (TNote.acc >=  2)
+		NoteName = "^^" + NoteName;
+	else if (TNote.acc == -1)
+		NoteName = "_"  + NoteName;
+	else if (TNote.acc <= -2)
+		NoteName = "__" + NoteName;
 	
-	let BassSearch = ChordName[0];
-	if (ChordName.length > 1) {
-		if (ChordName[1] == "#")
-			BassSearch = "^" + BassSearch[0];
-		else if (ChordName[1] == "b")
-			BassSearch = "_" + BassSearch[0];
-	}
-	
-	let UseFlat = false;
-	let BassIndex = 0;
-	for (; BassIndex < aAllSharp.length; ++BassIndex) {
-		if (aAllSharp[BassIndex].startsWith(BassSearch))
-			break;
-		else if (aAllFlat[BassIndex].startsWith(BassSearch)) {
-			UseFlat = true;
-			break;
-		}
-	}
-	if (ChordName[0] == "G")
-		UseFlat = true;
-	
-	if (ForceSharp)
-		UseFlat = false;
-	
-	if (BassIndex >= aAllSharp.length)
-		return "";
-	
-	
-	let aChordNotes = new Array();
-	//Major chord
-	let Index1 = BassIndex + 0;
-	let Index2 = BassIndex + 4;
-	let Index3 = BassIndex + 7;
-	//Minor chord
-	if (ChordName.indexOf("m") >= 0)
-		Index2 = BassIndex + 3;
-	
-	if (!UseFlat) {
-		aChordNotes.push(aAllSharp[Index1]);
-		aChordNotes.push(aAllSharp[Index2]);
-		aChordNotes.push(aAllSharp[Index3]);
-	}
-	else {
-		aChordNotes.push(aAllFlat[Index1]);
-		aChordNotes.push(aAllFlat[Index2]);
-		aChordNotes.push(aAllFlat[Index3]);
-	}
-	
-	if (ChordName.indexOf("m7") >= 0) {
-		let Index4 = BassIndex + 10;
-		if (!UseFlat)
-			aChordNotes.push(aAllSharp[Index4]);
-		else
-			aChordNotes.push(aAllFlat[Index4]);
-	}
-	
-	return aChordNotes;
-}
-
-/// Return Xm7 cross-bass chords for chords in the same direction
-function FindCrossBassChords(aDirChords) {
-	let aCrossChords = new Array();
-	
-	for (let i = 0; i < aDirChords.length; ++i) {
-		//Skip minor chords, they are already minor, so no need for a m7
-		if (aDirChords[i].indexOf("m") >= 0)
-			continue;
-		
-		let CrossChordName = aDirChords[i] + "m7";
-		
-		//Get the notes for the potential Xm7 chord
-		let aChordM7Notes = GetChordNotes(CrossChordName, true);
-		
-		//See if there is a chord with matching notes (except for the bass)
-		for (let j = 0; j < aDirChords.length; ++j) {
-			let aChordNotes = GetChordNotes(aDirChords[j], true);
-			
-			let Match = true;
-			for (n = 1; n < aChordM7Notes.length; ++n) {
-				let len = aChordM7Notes[n].length;
-				if (aChordNotes[n-1].length < len)
-					len = aChordNotes[n-1].length;
-				
-				if (aChordM7Notes[n].substr(0, len) != aChordNotes[n-1].substr(0, len)) {
-					Match = false;
-					break;
-				}
-			}
-			
-			if (Match)
-				aCrossChords.push(CrossChordName + " " + aDirChords[j]);
-		}
-	}
-	
-	//Remove duplicates
-	aCrossChords = aCrossChords.filter(function(elem, index, self) {
-	return index === self.indexOf(elem);
-	})
-	
-	return aCrossChords;
+	//Normalize the , and ' in the note name
+	NoteName = this.helper.NoteNameNormalize(NoteName);
+	return NoteName;
 }
 
 function DecodeRowInfo(TuningString) {
@@ -329,65 +204,30 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
 	}
 }
 
-function TransposeConditional(Row, Note, TransposeHalfSteps, SharpNotFlat, TransposeLookup) {
-	Note = Note.replace(",", "");
-	Note = Note.replace("'", "");
-	Note = Note.toLowerCase();
-	for (let i = 0; i < Row.length; ++i) {
-		let Tmp = Row[i];
-		Tmp = Tmp.replace(",", "");
-		Tmp = Tmp.replace("'", "");
-		Tmp = Tmp.toLowerCase();
-		
-		if (Note == Tmp) {
-			let Tmp2 = TransposeNameToNote(Row[i], TransposeHalfSteps, TransposeLookup);
-			if (SharpNotFlat)
-				Row[i] = Tmp2.SharpName;
-			else
-				Row[i] = Tmp2.FlatName;
-		}
-	}
-}
-
 /// Does push/pull inversions for a row as specified in the info
-function RowInvert(RowInfo, push_row, pull_row) {
+DiatonicPatterns.prototype.RowInvert = function(RowInfo, push_row, pull_row) {
 	if (typeof RowInfo !== 'undefined') {
 		for (let i = 0; i < RowInfo.aInvert.length; ++i) {
 			let Index = RowInfo.aInvert[i] - 1;
 			
 			if (RowInfo.aInvertAll[i]) {
-				let TransposeLookup = CreateTransposeLookup();
-				
 				//Test how much to transpose up/down for push/pull
 				let PushTransposeHalfSteps = 0;
-				let PushSharp              = false;
 				let PullTransposeHalfSteps = 0;
 				let PullSharp              = false;
 				for (let TransposeHalfSteps = -11; TransposeHalfSteps <= 11; ++TransposeHalfSteps) {
-					let TransPush = TransposeNameToNote(push_row[Index], TransposeHalfSteps, TransposeLookup);
-					if (TransPush.SharpName == pull_row[Index]) {
+					let TransPush = this.helper.TransposeNote(push_row[Index], TransposeHalfSteps);
+					if (TransPush == pull_row[Index])
 						PushTransposeHalfSteps = TransposeHalfSteps;
-						PushSharp              = true;
-					}
-					else if (TransPush.FlatName == pull_row[Index]) {
-						PushTransposeHalfSteps = TransposeHalfSteps;
-						PushSharp              = false;
-					}
 					
-					let TransPull = TransposeNameToNote(pull_row[Index], TransposeHalfSteps, TransposeLookup);
-					if (TransPull.SharpName == push_row[Index]) {
+					let TransPull = this.helper.TransposeNote(pull_row[Index], TransposeHalfSteps);
+					if (TransPull == push_row[Index])
 						PullTransposeHalfSteps = TransposeHalfSteps;
-						PullSharp              = true;
-					}
-					else if (TransPull.FlatName == push_row[Index]) {
-						PullTransposeHalfSteps = TransposeHalfSteps;
-						PullSharp              = false;
-					}
 				}
 				
 				//Transpose the applicable notes
-				TransposeConditional(push_row, push_row[Index], PushTransposeHalfSteps, PushSharp, TransposeLookup);
-				TransposeConditional(pull_row, pull_row[Index], PullTransposeHalfSteps, PullSharp, TransposeLookup);
+				this.helper.TransposeConditional(push_row, push_row[Index], PushTransposeHalfSteps);
+				this.helper.TransposeConditional(pull_row, pull_row[Index], PullTransposeHalfSteps);
 			}
 			else {
 				let Tmp = push_row[Index];
@@ -400,6 +240,8 @@ function RowInvert(RowInfo, push_row, pull_row) {
 }
 
 function DiatonicPatterns(plugin) {
+	this.helper = new DiatonicHelper();
+		
 	//Get tablature options
 	this.showall = plugin.params.showall;
 	if (this.showall == null)
@@ -1039,9 +881,9 @@ function DiatonicPatterns(plugin) {
 	}
 	
 	//Handle button push/pull inversions for each row
-	RowInvert(Row1Info, push_row1, pull_row1);
-	RowInvert(Row2Info, push_row2, pull_row2);
-	RowInvert(Row3Info, push_row3, pull_row3);
+	this.RowInvert(Row1Info, push_row1, pull_row1);
+	this.RowInvert(Row2Info, push_row2, pull_row2);
+	this.RowInvert(Row3Info, push_row3, pull_row3);
 	
 	//If not starting the numbering at 0, add empty buttons to the beginning of the arrays
 	if (!this.startzero) {
@@ -1061,12 +903,12 @@ function DiatonicPatterns(plugin) {
 	
 	//Transpose left hand bass chords if required
 	if (TransposeHalfSteps != 0) {
-		TransposeChordArray(this.BassRow1Push , TransposeHalfSteps);
-		TransposeChordArray(this.BassRow1Pull , TransposeHalfSteps);
-		TransposeChordArray(this.BassRow2Push , TransposeHalfSteps);
-		TransposeChordArray(this.BassRow2Pull , TransposeHalfSteps);
-		TransposeChordArray(this.BassRow3Push , TransposeHalfSteps);
-		TransposeChordArray(this.BassRow3Pull , TransposeHalfSteps);
+		this.helper.TransposeChordArray(this.BassRow1Push , TransposeHalfSteps);
+		this.helper.TransposeChordArray(this.BassRow1Pull , TransposeHalfSteps);
+		this.helper.TransposeChordArray(this.BassRow2Push , TransposeHalfSteps);
+		this.helper.TransposeChordArray(this.BassRow2Pull , TransposeHalfSteps);
+		this.helper.TransposeChordArray(this.BassRow3Push , TransposeHalfSteps);
+		this.helper.TransposeChordArray(this.BassRow3Pull , TransposeHalfSteps);
 	}
 	
 	//Combine left hand into push and pull arrays
@@ -1074,8 +916,8 @@ function DiatonicPatterns(plugin) {
 	this.pull_chords = this.BassRow1Pull.concat(this.BassRow2Pull).concat(this.BassRow3Pull).concat(this.BassCrossPull);
 	
 	//Calculate minor7 cross basses
-	this.BassCrossPush = FindCrossBassChords(this.push_chords);
-	this.BassCrossPull = FindCrossBassChords(this.pull_chords);
+	this.BassCrossPush = this.helper.FindCrossBassChords(this.push_chords);
+	this.BassCrossPull = this.helper.FindCrossBassChords(this.pull_chords);
 	
 	//Add them to the push/pull arrays
 	this.push_chords = this.push_chords.concat(this.BassCrossPush);
@@ -1092,30 +934,29 @@ function DiatonicPatterns(plugin) {
 	}
 
 	//Define right hand notes from the note names, transpose if required
-	let TransposeLookup = CreateTransposeLookup();
 	this.push_row1 = new Array;
 	for (let i = 0; i < push_row1.length; ++i) {
-		this.push_row1.push(TransposeNameToNote(push_row1[i], TransposeHalfSteps, TransposeLookup));
+		this.push_row1.push(this.helper.TransposeNote(push_row1[i], TransposeHalfSteps));
 	}
 	this.pull_row1 = new Array;
 	for (let i = 0; i < pull_row1.length; ++i) {
-		this.pull_row1.push(TransposeNameToNote(pull_row1[i], TransposeHalfSteps, TransposeLookup));
+		this.pull_row1.push(this.helper.TransposeNote(pull_row1[i], TransposeHalfSteps));
 	}
 	this.push_row2 = new Array;
 	for (let i = 0; i < push_row2.length; ++i) {
-		this.push_row2.push(TransposeNameToNote(push_row2[i], TransposeHalfSteps, TransposeLookup));
+		this.push_row2.push(this.helper.TransposeNote(push_row2[i], TransposeHalfSteps));
 	}
 	this.pull_row2 = new Array;
 	for (let i = 0; i < pull_row2.length; ++i) {
-		this.pull_row2.push(TransposeNameToNote(pull_row2[i], TransposeHalfSteps, TransposeLookup));
+		this.pull_row2.push(this.helper.TransposeNote(pull_row2[i], TransposeHalfSteps));
 	}
 	this.push_row3 = new Array;
 	for (let i = 0; i < push_row3.length; ++i) {
-		this.push_row3.push(TransposeNameToNote(push_row3[i], TransposeHalfSteps, TransposeLookup));
+		this.push_row3.push(this.helper.TransposeNote(push_row3[i], TransposeHalfSteps));
 	}
 	this.pull_row3 = new Array;
 	for (let i = 0; i < pull_row3.length; ++i) {
-		this.pull_row3.push(TransposeNameToNote(pull_row3[i], TransposeHalfSteps, TransposeLookup));
+		this.pull_row3.push(this.helper.TransposeNote(pull_row3[i], TransposeHalfSteps));
 	}
 	
 	//console.log(this.push_row1);
@@ -1207,46 +1048,15 @@ function DiatonicPatterns(plugin) {
 	this.measureAccidentals = {};
 }
 
-function CreateTransposeLookup() {
-	TransposeLookup = new Array();
-	for (let i = 0; i < 7 * 8; ++i) {
-		noteName = allNotes.noteName(i);
-		TransposeLookup.push({SharpName: noteName, FlatName: noteName});
-		
-		note = allNotes.noteName(i).toLowerCase()[0];
-		if (note == 'c' || note == 'd' || note == 'f' || note == 'g' || note == 'a') {
-			NextNoteName = allNotes.noteName(i+1);
-			TransposeLookup.push({SharpName: "^" + noteName, FlatName: "_" + NextNoteName});
-		}
-	}
-	
-	return TransposeLookup;
-}
-
-function TransposeNameToNote(noteName, TransposeHalfSteps, TransposeLookup) {
-	if (noteName.length == 0)
-		return "";
-	
-	for (let i = 0; i < TransposeLookup.length; ++i) {
-		if (TransposeLookup[i].SharpName == noteName || TransposeLookup[i].FlatName == noteName)
-			return TransposeLookup[i + TransposeHalfSteps];
-	}
-	
-	//Error
-	console.log("err");
-	return {};
-}
-
 function noteToButton(noteName, LookupArray) {
 	for (let i = 0; i < LookupArray.length; ++i) {
-		if (LookupArray[i].SharpName == noteName || LookupArray[i].FlatName == noteName) {
+		if (LookupArray[i] == noteName) {
 			return (i).toString();
 		}
 	}
 	
 	return "";
 }
-
 
 DiatonicPatterns.prototype.noteToPushButtonRow1 = function(noteName) {
 	let ButtonNumber = noteToButton(noteName, this.push_row1);
@@ -1977,31 +1787,8 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	let aDiamandNotes  = new Array();
 	let aTriangleNotes = new Array();
 	for (var i = 0; notes && i < notes.length; ++i) {
-		var TNote = new TabNote(notes[i].name);
-		TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
-		if (TNote.isAltered || TNote.natural) {
-			var acc;
-			if (TNote.isFlat) {
-				if (TNote.isDouble)
-					acc = "__";
-				else
-					acc = "_";
-			} else if (TNote.isSharp) {
-				if (TNote.isDouble)
-					acc = "^^";
-				else
-					acc = "^";
-			} else if (TNote.natural)
-				acc = "=";
-			this.measureAccidentals[TNote.name.toUpperCase()] = acc;
-		}
-
-		//Get the note name
-		var noteName = TNote.emitNoAccidentals();
-		if (TNote.acc > 0)
-			noteName = "^" + noteName;
-		else if (TNote.acc < 0)
-			noteName = "_" + noteName;
+		//Get the normalized note name with accidentals from key and measure
+		noteName = this.NoteNameAddAccidentals(notes[i].name);
 		aNoteNames.push(noteName);
 		
 		//Run the tablature algorithm if not in 'show all' mode or node heads need to be changed

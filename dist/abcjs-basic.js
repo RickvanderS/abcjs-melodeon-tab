@@ -16521,6 +16521,8 @@ function DecodeRowInfo(TuningString) {
   };
 }
 function LoadRowD(aOutPush, aOutPull, RowInfo) {
+  aOutPush.length = 0;
+  aOutPull.length = 0;
   if (isNaN(RowInfo.Buttons)) RowInfo.Buttons = 12;
 
   //Define D row
@@ -16562,10 +16564,12 @@ function LoadRowD(aOutPush, aOutPull, RowInfo) {
   }
 }
 function LoadRowG(aOutPush, aOutPull, RowInfo) {
+  aOutPush.length = 0;
+  aOutPull.length = 0;
   if (isNaN(RowInfo.Buttons)) RowInfo.Buttons = 11;
 
   //Define G row
-  if (RowInfo.Buttons == 12 || RowInfo.Start == 4) {
+  if (RowInfo.Start == 4) {
     aOutPush.push("G,,"); // 0
     aOutPull.push("C,");
   }
@@ -16591,6 +16595,10 @@ function LoadRowG(aOutPush, aOutPull, RowInfo) {
   aOutPull.push("^f");
   aOutPush.push("d'"); // 11
   aOutPull.push("a");
+  if (RowInfo.Buttons == 12 && RowInfo.Start == 3) {
+    aOutPush.push("g'"); // 12
+    aOutPull.push("c'");
+  }
 
   //Remove buttons not required
   while (aOutPush.length > RowInfo.Buttons) {
@@ -16605,10 +16613,12 @@ function LoadRowG(aOutPush, aOutPull, RowInfo) {
   }
 }
 function LoadRowC(aOutPush, aOutPull, RowInfo) {
+  aOutPush.length = 0;
+  aOutPull.length = 0;
   if (isNaN(RowInfo.Buttons)) RowInfo.Buttons = 10;
 
   //Define C row
-  if (RowInfo.Buttons == 11 || RowInfo.Start == 4) {
+  if (RowInfo.Start == 4) {
     aOutPush.push("C,"); // 0'
     aOutPull.push("F,");
   }
@@ -16632,6 +16642,10 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
   aOutPull.push("a");
   aOutPush.push("e'"); // 10'
   aOutPull.push("b");
+  if (RowInfo.Buttons == 11 && RowInfo.Start == 3) {
+    aOutPush.push("g'"); // 11'
+    aOutPull.push("d'");
+  }
 
   //Remove buttons not required
   while (aOutPush.length > RowInfo.Buttons) {
@@ -16726,6 +16740,7 @@ function DiatonicPatterns(plugin) {
   this.BassRow2Pull = new Array();
   this.BassRow3Push = new Array();
   this.BassRow3Pull = new Array();
+  this.BassRow3ChordLess = false;
   this.BassCrossPush = new Array();
   this.BassCrossPull = new Array();
 
@@ -16960,12 +16975,10 @@ function DiatonicPatterns(plugin) {
           return;
         }
         if (Row3Info.Buttons != 25) {
+          Row1Info.Start = 4;
+          Row2Info.Start = 4;
           Row1Info.Buttons = 12;
           Row2Info.Buttons = 11;
-          push_row1 = new Array();
-          pull_row1 = new Array();
-          push_row2 = new Array();
-          pull_row2 = new Array();
           LoadRowG(push_row1, pull_row1, Row1Info);
           LoadRowC(push_row2, pull_row2, Row2Info);
         }
@@ -17041,14 +17054,6 @@ function DiatonicPatterns(plugin) {
           push_row3.push("a"); //9"
           pull_row3.push("_b");
         }
-      } else if (Row3Tuning == "vanderaa") {
-        //Add bass chords
-        this.BassRow1Push.splice(0, 0, "G#");
-        this.BassRow1Pull.splice(0, 0, "Bb");
-        this.BassRow2Push.splice(0, 0, "B");
-        this.BassRow2Pull.splice(0, 0, "F#");
-
-        //TODO: Treble
       } else if (Row3Tuning == "saltarelle") {
         //Add bass chords
         this.BassRow1Push.splice(0, 0, "D");
@@ -17057,10 +17062,6 @@ function DiatonicPatterns(plugin) {
         this.BassRow2Pull.splice(0, 0, "Bb");
 
         //Reload rows with button 4 starts and the required number of buttons
-        push_row1 = new Array();
-        pull_row1 = new Array();
-        push_row2 = new Array();
-        pull_row2 = new Array();
         Row1Info.Start = 4;
         Row2Info.Start = 4;
         if (Row3Info.Buttons == 26) {
@@ -17119,7 +17120,461 @@ function DiatonicPatterns(plugin) {
         pull_row3.push("_b");
         push_row3.push("_e"); // 7"
         pull_row3.push("^c");
-      } else if (Row3Tuning == "rick") {
+      } else if (Row3Tuning == "letron" || Row3Tuning == "laloy") {
+        //Add bass chords
+        this.BassRow1Push.splice(0, 0, "Ab");
+        this.BassRow1Pull.splice(0, 0, "Bm");
+        this.BassRow2Push.splice(0, 0, "Eb");
+        this.BassRow2Pull.splice(0, 0, "Bb");
+        this.BassRow3Push.push("B");
+        this.BassRow3Pull.push("C#m");
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("F#m");
+        this.BassRow3Push.push("D");
+        this.BassRow3Pull.push("C");
+
+        //Change row1
+        Row1Info.Buttons = 12;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        push_row1[0] = "^C"; // 1
+        pull_row1[0] = "_E";
+
+        //Change row2
+        Row2Info.Buttons = 11;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        push_row2[0] = "A"; // 1'
+        pull_row2[0] = "^G";
+
+        //Add row3
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("_B,");
+        push_row3.push("_B,"); // 2"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 3"
+        pull_row3.push("G");
+        push_row3.push("^G"); // 4"
+        pull_row3.push("^G");
+        push_row3.push("_B"); // 5"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 6"
+        pull_row3.push("^c");
+        push_row3.push("^g"); // 7"
+        pull_row3.push("g");
+        push_row3.push("_b"); // 8"
+        pull_row3.push("^g");
+        push_row3.push("_e'"); // 9"
+        pull_row3.push("_b");
+        push_row3.push("^g'"); // 10"
+        pull_row3.push("^c'");
+      } else if (Row3Tuning == "heima") {
+        //Heim No1
+        //Add bass chords to existing rows
+        this.BassRow1Push.splice(0, 0, "Ab");
+        this.BassRow1Pull.splice(0, 0, "Bm");
+        this.BassRow2Push.splice(0, 0, "Eb");
+        this.BassRow2Pull.splice(0, 0, "Bb");
+        this.BassRow3Push.push("B");
+        this.BassRow3Pull.push("C#m");
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("F#m");
+        this.BassRow3Push.push("D");
+        this.BassRow3Pull.push("C");
+
+        //Change row1
+        Row1Info.Buttons = 12;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        pull_row1[0] = "E,"; //1
+
+        //Change row2
+        Row2Info.Buttons = 11;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        pull_row2[0] = "A,"; //1'
+
+        //Add row3
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("_B,");
+        push_row3.push("A,"); // 2"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 3"
+        pull_row3.push("G");
+        push_row3.push("^G"); // 4"
+        pull_row3.push("^G");
+        push_row3.push("A"); // 5"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 6"
+        pull_row3.push("^c");
+        push_row3.push("^g"); // 7"
+        pull_row3.push("g");
+        push_row3.push("a"); // 8"
+        pull_row3.push("^g");
+        push_row3.push("_e'"); // 9"
+        pull_row3.push("_b");
+        push_row3.push("^g'"); // 10"
+        pull_row3.push("^c'");
+      } else if (Row3Tuning == "heimb") {
+        //Heim No2
+        //Add bass chords to existing rows
+        this.BassRow1Push.splice(0, 0, "Ab");
+        this.BassRow1Pull.splice(0, 0, "Bm");
+        this.BassRow2Push.splice(0, 0, "Eb");
+        this.BassRow2Pull.splice(0, 0, "Bb");
+        this.BassRow3Push.push("B");
+        this.BassRow3Pull.push("C#m");
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("F#m");
+        this.BassRow3Push.push("D");
+        this.BassRow3Pull.push("C");
+
+        //Change row1
+        Row1Info.Buttons = 12;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        pull_row1[0] = "E,"; //1
+
+        //Invert A/G on row2
+        Row2Info.Buttons = 11;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        Row2Info.aInvert.push('5');
+        Row2Info.aInvertAll.push(true);
+
+        //Add row3
+        push_row3.push("F,"); // 1"
+        pull_row3.push("_B,");
+        push_row3.push("_A,"); // 2"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 3"
+        pull_row3.push("_E");
+        push_row3.push("F"); // 4"
+        pull_row3.push("^A");
+        push_row3.push("_A"); // 5"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 6"
+        pull_row3.push("^c");
+        push_row3.push("f"); // 7"
+        pull_row3.push("_e");
+        push_row3.push("_a"); // 8"
+        pull_row3.push("_a");
+        push_row3.push("_e'"); // 9"
+        pull_row3.push("_b");
+        push_row3.push("f'"); // 10"
+        pull_row3.push("^c'");
+      } else if (Row3Tuning == "corgeron") {
+        //Add bass chords to existing rows
+        this.BassRow1Push.splice(0, 0, "Ab");
+        this.BassRow1Pull.splice(0, 0, "Bm");
+        this.BassRow2Push.splice(0, 0, "Eb");
+        this.BassRow2Pull.splice(0, 0, "Bb");
+        this.BassRow3Push.push("B");
+        this.BassRow3Pull.push("C#m");
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("F#m");
+        this.BassRow3Push.push("D");
+        this.BassRow3Pull.push("C");
+
+        //Change row1
+        Row1Info.Buttons = 12;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        pull_row1[0] = "E,"; //1
+
+        //Change row2
+        Row2Info.Buttons = 11;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        pull_row2[0] = "A,"; //1'
+
+        //Add row3
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("_B,");
+        push_row3.push("_B,"); // 2"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 3"
+        pull_row3.push("G");
+        push_row3.push("^G"); // 4"
+        pull_row3.push("^G");
+        push_row3.push("_B"); // 5"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 6"
+        pull_row3.push("^c");
+        push_row3.push("^g"); // 7"
+        pull_row3.push("g");
+        push_row3.push("_b"); // 8"
+        pull_row3.push("^g");
+        push_row3.push("_e'"); // 9"
+        pull_row3.push("_b");
+        push_row3.push("^g'"); // 10"
+        pull_row3.push("^c'");
+      } else if (Row3Tuning == "gaillard") {
+        this.startzero = true;
+
+        //Add bass chords to existing rows
+        this.BassRow1Push.push("Eb");
+        this.BassRow1Pull.push("Bb");
+        this.BassRow2Push.push("Ab");
+        this.BassRow2Pull.push("Bm");
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("E");
+        this.BassRow3Push.push("D#m");
+        this.BassRow3Pull.push("C#m");
+
+        //Change row1
+        Row1Info.Buttons = 11;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        pull_row1[0] = "E"; //1
+        push_row1.splice(0, 0, "");
+        pull_row1.splice(0, 0, "");
+
+        //Change row2
+        Row2Info.Buttons = 12;
+        Row2Info.Start = 4;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        //pull_row2[0] = "A"; //1'
+
+        //Add row3
+        push_row3.push("_E,"); // 0"
+        pull_row3.push("^G,");
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("_B,");
+        push_row3.push("A,"); // 2"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 3"
+        pull_row3.push("G");
+        push_row3.push("^G"); // 4"
+        pull_row3.push("^G");
+        push_row3.push("A"); // 5"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 6"
+        pull_row3.push("^c");
+        push_row3.push("^g"); // 7"
+        pull_row3.push("g");
+        push_row3.push("a"); // 8"
+        pull_row3.push("^g");
+        push_row3.push("_e'"); // 9"
+        pull_row3.push("_b");
+        push_row3.push("^g'"); // 10"
+        pull_row3.push("^c'");
+      } else if (Row3Tuning == "milleret" || Row3Tuning == "pignol") {
+        this.startzero = true;
+
+        //Add bass chords to existing rows
+        this.BassRow1Push.push("Eb");
+        this.BassRow1Pull.push("Bb");
+        this.BassRow2Push.push("Ab");
+        this.BassRow2Pull.push("Bm");
+        this.BassRow3ChordLess = true;
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("E");
+        this.BassRow3Push.push("C#");
+        this.BassRow3Pull.push("C#");
+        this.BassRow3Push.push("F#");
+        this.BassRow3Pull.push("F#");
+        this.BassRow3Push.push("D");
+        this.BassRow3Pull.push("C");
+        this.BassRow3Push.push("B");
+        this.BassRow3Pull.push("G#");
+        this.BassRow3Push.push("Bb");
+        this.BassRow3Pull.push("Eb");
+
+        //Change row1
+        Row1Info.Buttons = 11;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        push_row1[0] = "^C,"; //1
+        pull_row1[0] = "F,"; //1
+        push_row1.splice(0, 0, "");
+        pull_row1.splice(0, 0, "");
+
+        //Change row2
+        Row2Info.Buttons = 11;
+        Row2Info.Start = 3;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        push_row2.splice(0, 0, "");
+        pull_row2.splice(0, 0, "");
+        push_row2[0] = "E,"; // 0'
+        pull_row2[0] = "G,";
+        push_row2[1] = "_B,"; // 1'
+        pull_row2[1] = "^G,";
+        push_row2[2] = "A,"; // 2'
+        push_row2[5] = "A"; // 5'
+        pull_row2[5] = "^G";
+        push_row2[8] = "a"; // 8'
+        pull_row2[9] = "^g"; // 9'
+
+        //Add row3
+        push_row3.push("F,"); // 0"
+        pull_row3.push("_B,");
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 2"
+        pull_row3.push("_E");
+        push_row3.push("F"); // 3"
+        pull_row3.push("G");
+        push_row3.push("^F"); // 4"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 5"
+        pull_row3.push("^c");
+        push_row3.push("f"); // 6"
+        pull_row3.push("_e");
+        push_row3.push("^f"); // 7"
+        pull_row3.push("g");
+        push_row3.push("_e'"); // 8"
+        pull_row3.push("_b");
+        push_row3.push("f'"); // 9"
+        pull_row3.push("^c'");
+        push_row3.push("^f'"); // 10"
+        pull_row3.push("c'");
+      } else if (Row3Tuning == "bottasso") {
+        //Add bass chords to existing rows
+        this.BassRow1Push.push("Eb");
+        this.BassRow1Pull.push("Bb");
+        this.BassRow2Push.push("Ab");
+        this.BassRow2Pull.push("Bm");
+        this.BassRow3ChordLess = true;
+        this.BassRow3Push.push("A");
+        this.BassRow3Pull.push("E");
+        this.BassRow3Push.push("C#");
+        this.BassRow3Pull.push("C#");
+        this.BassRow3Push.push("F#");
+        this.BassRow3Pull.push("F#");
+        this.BassRow3Push.push("D");
+        this.BassRow3Pull.push("C");
+        this.BassRow3Push.push("B");
+        this.BassRow3Pull.push("G#");
+        this.BassRow3Push.push("Bb");
+        this.BassRow3Pull.push("Eb");
+
+        //Change row1
+        Row1Info.Buttons = 12;
+        LoadRowG(push_row1, pull_row1, Row1Info);
+        push_row1[0] = "^C"; //1
+        pull_row1[0] = "_B,";
+
+        //Change row2
+        Row2Info.Buttons = 11;
+        LoadRowC(push_row2, pull_row2, Row2Info);
+        push_row2[0] = "_B,"; //1'
+        pull_row2[0] = "^G,";
+        push_row2[1] = "A,"; //2'
+        push_row2[4] = "A"; // 5'
+        pull_row2[4] = "^G";
+        push_row2[7] = "a"; // 8'
+        pull_row2[8] = "^g"; // 9'
+        push_row2[10] = "a'"; // 11'
+
+        //Add row3
+        push_row3.push("^G,"); // 1"
+        pull_row3.push("^C");
+        push_row3.push("_E"); // 2"
+        pull_row3.push("_E");
+        push_row3.push("F"); // 3"
+        pull_row3.push("G");
+        push_row3.push("^F"); // 4"
+        pull_row3.push("_B");
+        push_row3.push("_e"); // 5"
+        pull_row3.push("^c");
+        push_row3.push("f"); // 6"
+        pull_row3.push("_e");
+        push_row3.push("^f"); // 7"
+        pull_row3.push("g");
+        push_row3.push("_e'"); // 8"
+        pull_row3.push("_b");
+        push_row3.push("f'"); // 9"
+        pull_row3.push("^c'");
+        push_row3.push("^f'"); // 10"
+        pull_row3.push("_e'");
+      } else if (Row3Tuning == "young") {
+        //Add bass chords to existing rows
+        this.BassRow1Push.splice(0, 0, "Ab");
+        this.BassRow1Pull.splice(0, 0, "Bm");
+        this.BassRow2Push.splice(0, 0, "Eb");
+        this.BassRow2Pull.splice(0, 0, "Bb");
+
+        //21+5, 4th button start
+        if (Row3Info.Buttons == 26) {
+          this.BassRow2Pull[1] = "A";
+
+          //Row1
+          Row1Info.Start = 4;
+          Row1Info.Buttons = 11;
+          LoadRowG(push_row1, pull_row1, Row1Info);
+          push_row1[0] = "_E,"; //1
+          pull_row1[0] = "E,";
+          push_row1[1] = "C,"; //2
+
+          //Row2
+          Row2Info.Start = 4;
+          Row2Info.Buttons = 10;
+          LoadRowC(push_row2, pull_row2, Row2Info);
+          push_row2[0] = "_A,"; //1'
+          pull_row2[0] = "G,";
+          push_row2[1] = "E,"; // 2'
+          pull_row2[1] = "F,";
+
+          //Accidental row 3
+          push_row3.push("");
+          pull_row3.push("");
+          push_row3.push("");
+          pull_row3.push("");
+          push_row3.push("_B,");
+          pull_row3.push("_B,");
+          push_row3.push("_E");
+          pull_row3.push("^C");
+          push_row3.push("_A");
+          pull_row3.push("G");
+          push_row3.push("_B");
+          pull_row3.push("_B");
+          push_row3.push("_e");
+          pull_row3.push("^c");
+        } else if (Row3Info.Buttons == 33) {
+          this.BassRow3Push.push("Bm");
+          this.BassRow3Pull.push("C#");
+          this.BassRow3Push.push("Am");
+          this.BassRow3Pull.push("F#m");
+          this.BassRow3Push.push("D");
+          this.BassRow3Pull.push("C");
+
+          //Row1
+          Row1Info.Start = 3;
+          Row1Info.Buttons = 12;
+          LoadRowG(push_row1, pull_row1, Row1Info);
+          pull_row1[0] = "E,";
+
+          //Row2
+          Row2Info.Start = 3;
+          Row2Info.Buttons = 11;
+          LoadRowC(push_row2, pull_row2, Row2Info);
+          //Change G to G# and flip G#/A
+          for (var i = 0; i < push_row2.length; ++i) {
+            if (push_row2[i].length > 0 && (push_row2[i][0] == 'g' || push_row2[i][0] == 'G')) push_row2[i] = "^" + push_row2[i];
+          }
+          for (var _i = 0; _i < pull_row2.length; ++_i) {
+            if (pull_row2[_i].length > 0 && (pull_row2[_i][0] == 'g' || pull_row2[_i][0] == 'G')) pull_row2[_i] = "^" + pull_row2[_i];
+          }
+          Row2Info.aInvert.push('5');
+          Row2Info.aInvertAll.push(true);
+
+          //Add row3
+          push_row3.push("^G,"); // 1"
+          pull_row3.push("_B,");
+          push_row3.push("_B,"); // 2"
+          pull_row3.push("^C");
+          push_row3.push("_E"); // 3"
+          pull_row3.push("_E");
+          push_row3.push("^G"); // 4"
+          pull_row3.push("G");
+          push_row3.push("_B"); // 5"
+          pull_row3.push("_B");
+          push_row3.push("_e"); // 6"
+          pull_row3.push("^c");
+          push_row3.push("^g"); // 7"
+          pull_row3.push("_e");
+          push_row3.push("_b"); // 8"
+          pull_row3.push("g");
+          push_row3.push("_e'"); // 9"
+          pull_row3.push("_b");
+          push_row3.push("^g'"); // 10"
+          pull_row3.push("^c'");
+        } else {
+          console.error(Row3Tuning + ' layout with ' + Row3Info.Buttons + ' buttons is not supported');
+          return;
+        }
+      } else if (Row3Tuning == "asbest") {
         //Add bass chords
         this.BassRow1Push.push("Ab");
         this.BassRow1Pull.push("Bm");
@@ -17128,15 +17583,10 @@ function DiatonicPatterns(plugin) {
         this.BassRow2Push[1] = "A";
         push_row1[0] = "B,,"; // 1
         pull_row1[0] = "E,";
-        push_row2[0] = "E,"; // 1'
-        pull_row2[0] = "G,";
-        push_row2[1] = "A,"; // 2'
-        //
-        push_row2[4] = "A"; // 5'
-        pull_row2[4] = "G";
-        push_row2[7] = "a"; // 8'
-        pull_row2[8] = "g"; // 9'
 
+        //Invert A/G on row2
+        Row2Info.aInvert.push('5');
+        Row2Info.aInvertAll.push(true);
         push_row3.push("^G,"); // 1"
         pull_row3.push("_B,");
         push_row3.push("_B,"); // 2"
@@ -17187,12 +17637,6 @@ function DiatonicPatterns(plugin) {
 
         //Row1 with 12 buttons is added before the other rows, define it as a D row here, event though DGC does not exist due to an octave rollover, it will be transposed below
         //Therefore the D row is one octave lower than a normal D row
-        push_row1 = new Array();
-        pull_row1 = new Array();
-        push_row2 = new Array();
-        pull_row2 = new Array();
-        push_row3 = new Array();
-        pull_row3 = new Array();
         Row1Info.Acc = true;
         Row2Info.Acc = true;
         Row3Info.Acc = true;
@@ -17259,45 +17703,52 @@ function DiatonicPatterns(plugin) {
   this.pull_chords = this.BassRow1Pull.concat(this.BassRow2Pull).concat(this.BassRow3Pull).concat(this.BassCrossPull);
 
   //Calculate minor7 cross basses
-  this.BassCrossPush = this.helper.FindCrossBassChords(this.push_chords);
-  this.BassCrossPull = this.helper.FindCrossBassChords(this.pull_chords);
+  if (!this.BassRow3ChordLess) {
+    this.BassCrossPush = this.helper.FindCrossBassChords(this.push_chords);
+    this.BassCrossPull = this.helper.FindCrossBassChords(this.pull_chords);
+  } else {
+    push_chords12 = this.BassRow1Push.concat(this.BassRow2Push);
+    pull_chords12 = this.BassRow1Pull.concat(this.BassRow2Pull);
+    this.BassCrossPush = this.helper.FindCrossBassChords(push_chords12);
+    this.BassCrossPull = this.helper.FindCrossBassChords(pull_chords12);
+  }
 
   //Add them to the push/pull arrays
   this.push_chords = this.push_chords.concat(this.BassCrossPush);
   this.pull_chords = this.pull_chords.concat(this.BassCrossPull);
-  for (var i = 0; i < this.push_chords.length; ++i) {
-    var pos = this.push_chords[i].search("7 ");
-    if (pos >= 0) this.push_chords[i] = this.push_chords[i].substr(0, pos);
+  for (var _i2 = 0; _i2 < this.push_chords.length; ++_i2) {
+    var pos = this.push_chords[_i2].search("7 ");
+    if (pos >= 0) this.push_chords[_i2] = this.push_chords[_i2].substr(0, pos);
   }
-  for (var _i = 0; _i < this.pull_chords.length; ++_i) {
-    var _pos = this.pull_chords[_i].search("7 ");
-    if (_pos >= 0) this.pull_chords[_i] = this.pull_chords[_i].substr(0, _pos);
+  for (var _i3 = 0; _i3 < this.pull_chords.length; ++_i3) {
+    var _pos = this.pull_chords[_i3].search("7 ");
+    if (_pos >= 0) this.pull_chords[_i3] = this.pull_chords[_i3].substr(0, _pos);
   }
 
   //Define right hand notes from the note names, transpose if required
   this.push_row1 = new Array();
-  for (var _i2 = 0; _i2 < push_row1.length; ++_i2) {
-    this.push_row1.push(this.helper.TransposeNote(push_row1[_i2], TransposeHalfSteps));
+  for (var _i4 = 0; _i4 < push_row1.length; ++_i4) {
+    this.push_row1.push(this.helper.TransposeNote(push_row1[_i4], TransposeHalfSteps));
   }
   this.pull_row1 = new Array();
-  for (var _i3 = 0; _i3 < pull_row1.length; ++_i3) {
-    this.pull_row1.push(this.helper.TransposeNote(pull_row1[_i3], TransposeHalfSteps));
+  for (var _i5 = 0; _i5 < pull_row1.length; ++_i5) {
+    this.pull_row1.push(this.helper.TransposeNote(pull_row1[_i5], TransposeHalfSteps));
   }
   this.push_row2 = new Array();
-  for (var _i4 = 0; _i4 < push_row2.length; ++_i4) {
-    this.push_row2.push(this.helper.TransposeNote(push_row2[_i4], TransposeHalfSteps));
+  for (var _i6 = 0; _i6 < push_row2.length; ++_i6) {
+    this.push_row2.push(this.helper.TransposeNote(push_row2[_i6], TransposeHalfSteps));
   }
   this.pull_row2 = new Array();
-  for (var _i5 = 0; _i5 < pull_row2.length; ++_i5) {
-    this.pull_row2.push(this.helper.TransposeNote(pull_row2[_i5], TransposeHalfSteps));
+  for (var _i7 = 0; _i7 < pull_row2.length; ++_i7) {
+    this.pull_row2.push(this.helper.TransposeNote(pull_row2[_i7], TransposeHalfSteps));
   }
   this.push_row3 = new Array();
-  for (var _i6 = 0; _i6 < push_row3.length; ++_i6) {
-    this.push_row3.push(this.helper.TransposeNote(push_row3[_i6], TransposeHalfSteps));
+  for (var _i8 = 0; _i8 < push_row3.length; ++_i8) {
+    this.push_row3.push(this.helper.TransposeNote(push_row3[_i8], TransposeHalfSteps));
   }
   this.pull_row3 = new Array();
-  for (var _i7 = 0; _i7 < pull_row3.length; ++_i7) {
-    this.pull_row3.push(this.helper.TransposeNote(pull_row3[_i7], TransposeHalfSteps));
+  for (var _i9 = 0; _i9 < pull_row3.length; ++_i9) {
+    this.pull_row3.push(this.helper.TransposeNote(pull_row3[_i9], TransposeHalfSteps));
   }
 
   //console.log(this.push_row1);
@@ -17337,8 +17788,8 @@ function DiatonicPatterns(plugin) {
     this.HandPos[h].hard = new Array();
     var aFinger = [-1, 4];
     for (var _Row = 1; _Row <= 3; ++_Row) {
-      for (var _i8 = 0; _i8 < aFinger.length; ++_i8) {
-        var _Finger = aFinger[_i8];
+      for (var _i10 = 0; _i10 < aFinger.length; ++_i10) {
+        var _Finger = aFinger[_i10];
         if (_Row == 1) {
           var _Row1Index = h + _Finger;
           if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString() + "$");
@@ -18114,10 +18565,10 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           aRowOrder.sort(function (a, b) {
             return a - b;
           });
-          for (var _i9 = 0; _i9 < aRowOrder.length; ++_i9) {
-            if (aRowOrder[_i9] == this.RowPrefer1) aRowOrder[_i9] = 1;
-            if (aRowOrder[_i9] == this.RowPrefer2) aRowOrder[_i9] = 2;
-            if (aRowOrder[_i9] == this.RowPrefer3) aRowOrder[_i9] = 3;
+          for (var _i11 = 0; _i11 < aRowOrder.length; ++_i11) {
+            if (aRowOrder[_i11] == this.RowPrefer1) aRowOrder[_i11] = 1;
+            if (aRowOrder[_i11] == this.RowPrefer2) aRowOrder[_i11] = 2;
+            if (aRowOrder[_i11] == this.RowPrefer3) aRowOrder[_i11] = 3;
           }
 
           //Any
@@ -18134,14 +18585,14 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
               for (var HandPosIndex = 0; HandPosIndex < this.HandPos.length && !Found; ++HandPosIndex) {
                 for (var f = 0; f < this.HandPos[HandPosIndex].easy.length; ++f) {
                   //Search all buttons
-                  for (var _i10 = 0; _i10 < aButtons.length; ++_i10) {
+                  for (var _i12 = 0; _i12 < aButtons.length; ++_i12) {
                     var Row = 1;
-                    if (aButtons[_i10][aButtons[_i10].length - 1] == "'") Row = 2;else if (aButtons[_i10][aButtons[_i10].length - 1] == "\"") Row = 3;
+                    if (aButtons[_i12][aButtons[_i12].length - 1] == "'") Row = 2;else if (aButtons[_i12][aButtons[_i12].length - 1] == "\"") Row = 3;
 
                     //If button match on the required row
-                    if ((RequireRow == 0 || Row == RequireRow) && aButtons[_i10] == this.HandPos[HandPosIndex].easy[f]) {
+                    if ((RequireRow == 0 || Row == RequireRow) && aButtons[_i12] == this.HandPos[HandPosIndex].easy[f]) {
                       this.HandPosIndex = HandPosIndex;
-                      Button = aButtons[_i10];
+                      Button = aButtons[_i12];
                       Found = true;
                       break;
                     }
@@ -18175,9 +18626,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
                     //Find same as last button
                     if (!Found) {
-                      for (var _i11 = 0; _i11 < aHandPosButtons.length; ++_i11) {
-                        if (this.LastButton == aHandPosButtons[_i11]) {
-                          Button = aHandPosButtons[_i11];
+                      for (var _i13 = 0; _i13 < aHandPosButtons.length; ++_i13) {
+                        if (this.LastButton == aHandPosButtons[_i13]) {
+                          Button = aHandPosButtons[_i13];
                           Found = true;
                           break;
                         }
@@ -18188,11 +18639,11 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
                     if (!Found) {
                       var LastRow = 1;
                       if (this.LastButton[this.LastButton.length - 1] == "'") LastRow = 2;else if (this.LastButton[this.LastButton.length - 1] == "\"") LastRow = 3;
-                      for (var _i12 = 0; _i12 < aHandPosButtons.length; ++_i12) {
+                      for (var _i14 = 0; _i14 < aHandPosButtons.length; ++_i14) {
                         var _Row3 = 1;
-                        if (aHandPosButtons[_i12][aHandPosButtons[_i12].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i12][aHandPosButtons[_i12].length - 1] == "\"") _Row3 = 3;
+                        if (aHandPosButtons[_i14][aHandPosButtons[_i14].length - 1] == "'") _Row3 = 2;else if (aHandPosButtons[_i14][aHandPosButtons[_i14].length - 1] == "\"") _Row3 = 3;
                         if (LastRow == _Row3) {
-                          Button = aHandPosButtons[_i12];
+                          Button = aHandPosButtons[_i14];
                           Found = true;
                           break;
                         }
@@ -18201,10 +18652,10 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 
                     //Find same number as last button
                     if (!Found) {
-                      for (var _i13 = 0; _i13 < aHandPosButtons.length; ++_i13) {
+                      for (var _i15 = 0; _i15 < aHandPosButtons.length; ++_i15) {
                         //TODO: 10 / 1 risk
-                        if (this.LastButton.substring(0, 1) == aHandPosButtons[_i13].substring(0, 1)) {
-                          Button = aHandPosButtons[_i13];
+                        if (this.LastButton.substring(0, 1) == aHandPosButtons[_i15].substring(0, 1)) {
+                          Button = aHandPosButtons[_i15];
                           Found = true;
                           break;
                         }
@@ -18419,9 +18870,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   }
 
   //Create returns values for note head changes
-  for (var _i14 = 0; _i14 < aDiamandNotes.length; ++_i14) {
+  for (var _i16 = 0; _i16 < aDiamandNotes.length; ++_i16) {
     var note = new TabNote("");
-    note.pitch = aDiamandNotes[_i14].pitch;
+    note.pitch = aDiamandNotes[_i16].pitch;
     var number = {
       num: "",
       str: -10,
@@ -18430,9 +18881,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     };
     retNotes.push(number);
   }
-  for (var _i15 = 0; _i15 < aTriangleNotes.length; ++_i15) {
+  for (var _i17 = 0; _i17 < aTriangleNotes.length; ++_i17) {
     var note = new TabNote("");
-    note.pitch = aTriangleNotes[_i15].pitch;
+    note.pitch = aTriangleNotes[_i17].pitch;
     var number = {
       num: "",
       str: -20,

@@ -17244,7 +17244,7 @@ function DiatonicPatterns(plugin) {
         push_row3.push("_E"); // 3"
         pull_row3.push("_E");
         push_row3.push("F"); // 4"
-        pull_row3.push("^A");
+        pull_row3.push("_A");
         push_row3.push("_A"); // 5"
         pull_row3.push("_B");
         push_row3.push("_e"); // 6"
@@ -17375,7 +17375,7 @@ function DiatonicPatterns(plugin) {
         //Change row1
         Row1Info.Buttons = 11;
         LoadRowG(push_row1, pull_row1, Row1Info);
-        push_row1[0] = "^C,"; //1
+        push_row1[0] = "^C"; //1
         pull_row1[0] = "F,"; //1
         push_row1.splice(0, 0, "");
         pull_row1.splice(0, 0, "");

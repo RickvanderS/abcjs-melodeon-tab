@@ -17581,10 +17581,13 @@ function DiatonicPatterns(plugin) {
         this.BassRow2Push.push("Eb");
         this.BassRow2Pull.push("Bb");
         this.BassRow2Push[1] = "A";
-        push_row1[0] = "B,,"; // 1
+
+        //Row1
+        push_row1[0] = "^F"; // 1
         pull_row1[0] = "E,";
 
-        //Invert A/G on row2
+        //Row2 (Invert A/G)
+        push_row2[0] = "F"; // 1'
         Row2Info.aInvert.push('5');
         Row2Info.aInvertAll.push(true);
         push_row3.push("^G,"); // 1"

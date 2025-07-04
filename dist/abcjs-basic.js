@@ -17574,7 +17574,7 @@ function DiatonicPatterns(plugin) {
           console.error(Row3Tuning + ' layout with ' + Row3Info.Buttons + ' buttons is not supported');
           return;
         }
-      } else if (Row3Tuning == "asbest") {
+      } else if (Row3Tuning == "rick") {
         //Add bass chords
         this.BassRow1Push.push("Ab");
         this.BassRow1Pull.push("Bm");
@@ -17583,26 +17583,26 @@ function DiatonicPatterns(plugin) {
         this.BassRow2Push[1] = "A";
 
         //Row1
-        push_row1[0] = "^F"; // 1
+        push_row1[0] = "^C"; // 1
         pull_row1[0] = "E,";
 
         //Row2 (Invert A/G)
-        push_row2[0] = "F"; // 1'
+        push_row2[0] = "^G,"; // 1'
         Row2Info.aInvert.push('5');
         Row2Info.aInvertAll.push(true);
-        push_row3.push("^G,"); // 1"
+        push_row3.push("^G"); // 1"
         pull_row3.push("_B,");
         push_row3.push("_B,"); // 2"
         pull_row3.push("^C");
         push_row3.push("_E"); // 3"
         pull_row3.push("_E");
-        push_row3.push("^G"); // 4"
+        push_row3.push("F"); // 4"
         pull_row3.push("^G");
         push_row3.push("_B"); // 5"
         pull_row3.push("_B");
         push_row3.push("_e"); // 6"
         pull_row3.push("^c");
-        push_row3.push("^g"); // 7"
+        push_row3.push("f"); // 7"
         pull_row3.push("_e");
         push_row3.push("_b"); // 8"
         pull_row3.push("^g");

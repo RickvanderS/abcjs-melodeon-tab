@@ -35,6 +35,7 @@ var pitchesToPerc = require('./pitches-to-perc');
 	var stressBeat1 = 105;
 	var stressBeatDown = 95;
 	var stressBeatUp = 85;
+	var volumesPerNotePitch = [[stressBeat1, stressBeatDown, stressBeatUp]];
 	var beatFraction = 0.25;
 	var nextVolume;
 	var nextVolumeDelta;
@@ -77,6 +78,7 @@ var pitchesToPerc = require('./pitches-to-perc');
 		stressBeat1 = 105;
 		stressBeatDown = 95;
 		stressBeatUp = 85;
+		volumesPerNotePitch = [];
 		beatFraction = 0.25;
 		nextVolume = undefined;
 		nextVolumeDelta = undefined;
@@ -193,6 +195,10 @@ var pitchesToPerc = require('./pitches-to-perc');
 						stressBeat1 = element.beats[0];
 						stressBeatDown = element.beats[1];
 						stressBeatUp = element.beats[2];
+						if (!element.volumesPerNotePitch)
+							volumesPerNotePitch = []
+						else
+							volumesPerNotePitch = element.volumesPerNotePitch;
 						// TODO-PER: also use the last parameter - which changes which beats are strong.
 						break;
 					case "vol":
@@ -343,28 +349,35 @@ var pitchesToPerc = require('./pitches-to-perc');
 		return distanceFromStart / beatLength;
 	}
 
-	function processVolume(beat, voiceOff) {
+	function processVolume(beat, voiceOff, pitchIndexOfNote) {
 		if (voiceOff)
 			return 0;
-
+		let pitchStressBeat1 = stressBeat1;
+		let pitchStressBeatDown = stressBeatDown;
+		let pitchStressBeatUp = stressBeatUp;
+		if(pitchIndexOfNote !== undefined && volumesPerNotePitch.length >= pitchIndexOfNote+1){
+			pitchStressBeat1 = volumesPerNotePitch[pitchIndexOfNote][0];
+			pitchStressBeatDown = volumesPerNotePitch[pitchIndexOfNote][1];
+			pitchStressBeatUp = volumesPerNotePitch[pitchIndexOfNote][2];
+		}
 		var volume;
     	// MAE 21 Jun 2024 - This previously wasn't allowing zero volume to be applied
-		if (nextVolume != undefined) {
+		if (nextVolume !== undefined) {
 			volume = nextVolume;
 			nextVolume = undefined;
 		} else if (!doBeatAccents) {
-			volume = stressBeatDown;
+			volume = pitchStressBeatDown;
 		} else if (pickupLength > beat) {
-			volume = stressBeatUp;
+			volume = pitchStressBeatUp;
 		} else {
 			//var barLength = meter.num / meter.den;
 			var barBeat = calcBeat(lastBarTime, getBeatFraction(meter), beat);
 			if (barBeat === 0)
-				volume = stressBeat1;
+				volume = pitchStressBeat1;
 			else if (parseInt(barBeat,10) === barBeat)
-				volume = stressBeatDown;
+				volume = pitchStressBeatDown;
 			else
-				volume = stressBeatUp;
+				volume = pitchStressBeatUp;
 		}
 		if (nextVolumeDelta) {
 			volume += nextVolumeDelta;
@@ -393,13 +406,17 @@ var pitchesToPerc = require('./pitches-to-perc');
 				else if (elem.decoration[d] === 'lowermordent')
 					ret.noteModification = "lowermordent";
 				else if (elem.decoration[d] === 'uppermordent')
-					ret.noteModification = "mordent";
+					ret.noteModification = "pralltriller";
 				else if (elem.decoration[d] === 'mordent')
 					ret.noteModification = "mordent";
 				else if (elem.decoration[d] === 'turn')
 					ret.noteModification = "turn";
 				else if (elem.decoration[d] === 'roll')
 					ret.noteModification = "roll";
+				else if (elem.decoration[d] === 'pralltriller')
+					ret.noteModification = "pralltriller";
+				else if (elem.decoration[d] === 'trillh') 
+					ret.noteModification = "trillh";
 			}
 		}
 		return ret;
@@ -415,39 +432,57 @@ var pitchesToPerc = require('./pitches-to-perc');
 
 		switch (noteModification) {
 			case "trill":
-				var note = 1;
+				var note = 2;
 				while (runningDuration > 0) {
 					currentTrack.push({ cmd: 'note', pitch: p.pitch+note, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
-					note = (note === 1) ? 0 : 1;
+					note = (note === 2) ? 0 : 2;
 					runningDuration -= shortestNote;
 					start += shortestNote;
 				}
 				break;
-			case "mordent":
+		      case "trillh":
+			        var note = 1;
+			        while (runningDuration > 0) {
+			          currentTrack.push({
+			            cmd: 'note',
+			            pitch: p.pitch + note,
+			            volume: p.volume,
+			            start: start,
+			            duration: shortestNote,
+			            gap: 0,
+			            instrument: currentInstrument,
+			            style: 'decoration'
+			          });
+			          note = note === 1 ? 0 : 1;
+			          runningDuration -= shortestNote;
+			          start += shortestNote;
+			        }
+			        break;
+			case "pralltriller":
 				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
 				runningDuration -= shortestNote;
 				start += shortestNote;
-				currentTrack.push({ cmd: 'note', pitch: p.pitch+1, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
+				currentTrack.push({ cmd: 'note', pitch: p.pitch+2, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
 				runningDuration -= shortestNote;
 				start += shortestNote;
 				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start, duration: runningDuration, gap: 0, instrument: currentInstrument });
 				break;
+			case "mordent":
 			case "lowermordent":
 				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
 				runningDuration -= shortestNote;
 				start += shortestNote;
-				currentTrack.push({ cmd: 'note', pitch: p.pitch-1, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
+				currentTrack.push({ cmd: 'note', pitch: p.pitch-2, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
 				runningDuration -= shortestNote;
 				start += shortestNote;
 				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start, duration: runningDuration, gap: 0, instrument: currentInstrument });
 				break;
 			case "turn":
-				shortestNote = p.duration / 5;
-				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
-				currentTrack.push({ cmd: 'note', pitch: p.pitch+1, volume: p.volume, start: start+shortestNote, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
-				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start+shortestNote*2, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
-				currentTrack.push({ cmd: 'note', pitch: p.pitch+1, volume: p.volume, start: start+shortestNote*3, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
-				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start+shortestNote*4, duration: shortestNote, gap: 0, instrument: currentInstrument });
+				shortestNote = p.duration / 4;
+				currentTrack.push({ cmd: 'note', pitch: p.pitch+2, volume: p.volume, start: start, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
+				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start+shortestNote, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
+				currentTrack.push({ cmd: 'note', pitch: p.pitch-1, volume: p.volume, start: start+shortestNote*2, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
+				currentTrack.push({ cmd: 'note', pitch: p.pitch, volume: p.volume, start: start+shortestNote*3, duration: shortestNote, gap: 0, instrument: currentInstrument, style: 'decoration' });
 				break;
 			case "roll":
 				while (runningDuration > 0) {
@@ -533,6 +568,11 @@ var pitchesToPerc = require('./pitches-to-perc');
 			if (elem.elem)
 				elem.elem.midiPitches = [];
 			for (var i=0; i<ePitches.length; i++) {
+				//here we can set the volume for each note in a chord, if specified
+				let pitchVelocity = velocity;
+				if(!ret.velocity && Array.isArray(elem.decoration) && elem.decoration.length > i){
+					pitchVelocity = processVolume(timeToRealTime(elem.time), voiceOff, i)
+				}
 				var note = ePitches[i];
 				if (!note)
 					continue;
@@ -546,7 +586,7 @@ var pitchesToPerc = require('./pitches-to-perc');
 					if (name && percmap[name])
 						actualPitch = percmap[name].sound;
 				}
-				var p = { cmd: 'note', pitch: actualPitch, volume: velocity, start: timeToRealTime(elem.time), duration: durationRounded(note.duration), instrument: currentInstrument, startChar: elem.elem.startChar, endChar: elem.elem.endChar};
+				var p = { cmd: 'note', pitch: actualPitch, volume: pitchVelocity, start: timeToRealTime(elem.time), duration: durationRounded(note.duration), instrument: currentInstrument, startChar: elem.elem.startChar, endChar: elem.elem.endChar};
 				p = adjustForMicroTone(p);
 				if (elem.gracenotes) {
 					p.duration = p.duration / 2;

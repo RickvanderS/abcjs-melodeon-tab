@@ -63,11 +63,11 @@ describe("Transpose", function() {
 		'K:C\n' +
 		'"N.C."AB|"C"c"C#"^c"D"d"D#"^d|"E"e"F"F"F#"^F"G"G|"G#"^G"A/F#"A"A#"^A"B"B|"Db"_d"Eb"_e"Gb"_G"Ab"_A|"Bb"_B4||'
 
-	var expectedChords_2 = [{"key":"Bb","notes":[{ note: 'G', pitch: 4, chord: 'N.C.' },{ note: 'A', pitch: 5 },{},{"note":"B","pitch":6,"chord":"B♭"},{"note":"=B","pitch":6,"chord":"B"},{"note":"c","pitch":7,"chord":"C"},{"note":"^c","pitch":7,"chord":"D♭"},{},{"note":"d","pitch":8,"chord":"D"},{"note":"E","pitch":2,"chord":"E♭"},{"note":"=E","pitch":2,"chord":"E"},{"note":"F","pitch":3,"chord":"F"},{},{"note":"^F","pitch":3,"chord":"G♭"},{"note":"G","pitch":4,"chord":"G"},{"note":"^G","pitch":4,"chord":"A♭"},{"note":"A","pitch":5,"chord":"A"},{},{"note":"_c","pitch":7,"chord":"B"},{"note":"_d","pitch":8,"chord":"D♭"},{"note":"_F","pitch":3,"chord":"E"},{"note":"_G","pitch":4,"chord":"G♭"},{},{"note":"_A","pitch":5,"chord":"A♭"},{}]}]
-	var expectedChords_1 = [{"key":"B","notes":[{ note: 'G', pitch: 4, chord: 'N.C.' },{ note: 'A', pitch: 5 },{},{"note":"B","pitch":6,"chord":"B"},{"note":"^B","pitch":6,"chord":"C"},{"note":"c","pitch":7,"chord":"C♯"},{"note":"^^c","pitch":7,"chord":"D"},{},{"note":"d","pitch":8,"chord":"D♯"},{"note":"E","pitch":2,"chord":"E"},{"note":"^E","pitch":2,"chord":"F"},{"note":"F","pitch":3,"chord":"F♯"},{},{"note":"^^F","pitch":3,"chord":"G"},{"note":"G","pitch":4,"chord":"G♯"},{"note":"^^G","pitch":4,"chord":"A"},{"note":"A","pitch":5,"chord":"A♯"},{},{"note":"=c","pitch":7,"chord":"C"},{"note":"=d","pitch":8,"chord":"D"},{"note":"=F","pitch":3,"chord":"F"},{"note":"=G","pitch":4,"chord":"G"},{},{"note":"=A","pitch":5,"chord":"A"},{}]}]
-	var expectedChords0 = [{"key":"C","notes":[{ note: 'G', pitch: 4, chord: 'N.C.' },{ note: 'A', pitch: 5 },{},{"note":"c","pitch":7,"chord":"C"},{"note":"^c","pitch":7,"chord":"C♯"},{"note":"d","pitch":8,"chord":"D"},{"note":"^d","pitch":8,"chord":"D♯"},{},{"note":"e","pitch":9,"chord":"E"},{"note":"F","pitch":3,"chord":"F"},{"note":"^F","pitch":3,"chord":"F♯"},{"note":"G","pitch":4,"chord":"G"},{},{"note":"^G","pitch":4,"chord":"G♯"},{"note":"A","pitch":5,"chord":"A"},{"note":"^A","pitch":5,"chord":"A♯"},{"note":"B","pitch":6,"chord":"B"},{},{"note":"_d","pitch":8,"chord":"D♭"},{"note":"_e","pitch":9,"chord":"E♭"},{"note":"_G","pitch":4,"chord":"G♭"},{"note":"_A","pitch":5,"chord":"A♭"},{},{"note":"_B","pitch":6,"chord":"B♭"},{}]}]
-	var expectedChords1 = [{"key":"Db","notes":[{"note":"d","pitch":8,"chord":"D♭"},{"note":"=d","pitch":8,"chord":"D"},{"note":"e","pitch":9,"chord":"E♭"},{"note":"=e","pitch":9,"chord":"E"},{},{"note":"f","pitch":10,"chord":"F"},{"note":"G","pitch":4,"chord":"G♭"},{"note":"=G","pitch":4,"chord":"G"},{"note":"A","pitch":5,"chord":"A♭"},{},{"note":"=A","pitch":5,"chord":"A"},{"note":"B","pitch":6,"chord":"B♭"},{"note":"=B","pitch":6,"chord":"B"},{"note":"c","pitch":7,"chord":"C"},{},{"note":"__e","pitch":9,"chord":"D"},{"note":"_f","pitch":10,"chord":"E"},{"note":"__A","pitch":5,"chord":"G"},{"note":"__B","pitch":6,"chord":"A"},{},{"note":"_c","pitch":7,"chord":"B"},{}]}]
-	var expectedChords2 = [{"key":"D","notes":[{ note: 'G', pitch: 4, chord: 'N.C.' },{ note: 'A', pitch: 5 },{},{"note":"d","pitch":8,"chord":"D"},{"note":"^d","pitch":8,"chord":"D♯"},{"note":"e","pitch":9,"chord":"E"},{"note":"^e","pitch":9,"chord":"F"},{},{"note":"f","pitch":10,"chord":"F♯"},{"note":"G","pitch":4,"chord":"G"},{"note":"^G","pitch":4,"chord":"G♯"},{"note":"A","pitch":5,"chord":"A"},{},{"note":"^A","pitch":5,"chord":"A♯"},{"note":"B","pitch":6,"chord":"B"},{"note":"^B","pitch":6,"chord":"C"},{"note":"c","pitch":7,"chord":"C♯"},{},{"note":"_e","pitch":9,"chord":"D♯"},{"note":"=f","pitch":10,"chord":"F"},{"note":"_A","pitch":5,"chord":"G♯"},{"note":"_B","pitch":6,"chord":"A♯"},{},{"note":"=c","pitch":7,"chord":"C"},{}]}]
+	var expectedChords_2 = [{"key":"Bb","notes":[{ note: 'G', pitch: 4, chord: 'N.C.' },{ note: 'A', pitch: 5 },{},{"note":"B","pitch":6,"chord":"B♭"},{"note":"=B","pitch":6,"chord":"B"},{"note":"c","pitch":7,"chord":"C"},{"note":"^c","pitch":7,"chord":"D♭"},{},{"note":"d","pitch":8,"chord":"D"},{"note":"E","pitch":2,"chord":"E♭"},{"note":"=E","pitch":2,"chord":"E"},{"note":"F","pitch":3,"chord":"F"},{},{"note":"^F","pitch":3,"chord":"G♭"},{"note":"G","pitch":4,"chord":"G/E"},{"note":"^G","pitch":4,"chord":"A♭"},{"note":"A","pitch":5,"chord":"A"},{},{"note":"_c","pitch":7,"chord":"B"},{"note":"_d","pitch":8,"chord":"D♭"},{"note":"_F","pitch":3,"chord":"E"},{"note":"_G","pitch":4,"chord":"G♭"},{},{"note":"_A","pitch":5,"chord":"A♭"},{}]}]
+	var expectedChords_1 = [{"key":"B","notes":[{ note: 'G', pitch: 4, chord: 'N.C.' },{ note: 'A', pitch: 5 },{},{"note":"B","pitch":6,"chord":"B"},{"note":"^B","pitch":6,"chord":"C"},{"note":"c","pitch":7,"chord":"C♯"},{"note":"^^c","pitch":7,"chord":"D"},{},{"note":"d","pitch":8,"chord":"D♯"},{"note":"E","pitch":2,"chord":"E"},{"note":"^E","pitch":2,"chord":"F"},{"note":"F","pitch":3,"chord":"F♯"},{},{"note":"^^F","pitch":3,"chord":"G"},{"note":"G","pitch":4,"chord":"G♯/F"},{"note":"^^G","pitch":4,"chord":"A"},{"note":"A","pitch":5,"chord":"A♯"},{},{"note":"=c","pitch":7,"chord":"C"},{"note":"=d","pitch":8,"chord":"D"},{"note":"=F","pitch":3,"chord":"F"},{"note":"=G","pitch":4,"chord":"G"},{},{"note":"=A","pitch":5,"chord":"A"},{}]}]
+	var expectedChords0 = [{"key":"C","notes":[{ note: 'A', pitch: 5, chord: 'N.C.' },{ note: 'B', pitch: 6 },{},{"note":"c","pitch":7,"chord":"C"},{"note":"^c","pitch":7,"chord":"C♯"},{"note":"d","pitch":8,"chord":"D"},{"note":"^d","pitch":8,"chord":"D♯"},{},{"note":"e","pitch":9,"chord":"E"},{"note":"F","pitch":3,"chord":"F"},{"note":"^F","pitch":3,"chord":"F♯"},{"note":"G","pitch":4,"chord":"G"},{},{"note":"^G","pitch":4,"chord":"G♯"},{"note":"A","pitch":5,"chord":"A/F♯"},{"note":"^A","pitch":5,"chord":"A♯"},{"note":"B","pitch":6,"chord":"B"},{},{"note":"_d","pitch":8,"chord":"D♭"},{"note":"_e","pitch":9,"chord":"E♭"},{"note":"_G","pitch":4,"chord":"G♭"},{"note":"_A","pitch":5,"chord":"A♭"},{},{"note":"_B","pitch":6,"chord":"B♭"},{}]}]
+	var expectedChords1 = [{"key":"Db","notes":[{ note: 'B', pitch: 6, chord: 'N.C.' },{ note: 'c', pitch: 7 },{},{"note":"d","pitch":8,"chord":"D♭"},{"note":"=d","pitch":8,"chord":"D"},{"note":"e","pitch":9,"chord":"E♭"},{"note":"=e","pitch":9,"chord":"E"},{},{"note":"f","pitch":10,"chord":"F"},{"note":"G","pitch":4,"chord":"G♭"},{"note":"=G","pitch":4,"chord":"G"},{"note":"A","pitch":5,"chord":"A♭"},{},{"note":"=A","pitch":5,"chord":"A"},{"note":"B","pitch":6,"chord":"B♭/G"},{"note":"=B","pitch":6,"chord":"B"},{"note":"c","pitch":7,"chord":"C"},{},{"note":"__e","pitch":9,"chord":"D"},{"note":"_f","pitch":10,"chord":"E"},{"note":"__A","pitch":5,"chord":"G"},{"note":"__B","pitch":6,"chord":"A"},{},{"note":"_c","pitch":7,"chord":"B"},{}]}]
+	var expectedChords2 = [{"key":"D","notes":[{ note: 'B', pitch: 6, chord: 'N.C.' },{ note: 'c', pitch: 7 },{},{"note":"d","pitch":8,"chord":"D"},{"note":"^d","pitch":8,"chord":"D♯"},{"note":"e","pitch":9,"chord":"E"},{"note":"^e","pitch":9,"chord":"F"},{},{"note":"f","pitch":10,"chord":"F♯"},{"note":"G","pitch":4,"chord":"G"},{"note":"^G","pitch":4,"chord":"G♯"},{"note":"A","pitch":5,"chord":"A"},{},{"note":"^A","pitch":5,"chord":"A♯"},{"note":"B","pitch":6,"chord":"B/G♯"},{"note":"^B","pitch":6,"chord":"C"},{"note":"c","pitch":7,"chord":"C♯"},{},{"note":"_e","pitch":9,"chord":"D♯"},{"note":"=f","pitch":10,"chord":"F"},{"note":"_A","pitch":5,"chord":"G♯"},{"note":"_B","pitch":6,"chord":"A♯"},{},{"note":"=c","pitch":7,"chord":"C"},{}]}]
 
 	var abcNone = "X:1\n" +
 	"K:none\n" +
@@ -98,13 +98,47 @@ describe("Transpose", function() {
 		{"note":"c","pitch":7},{"note":"d","pitch":8},{"note":"e","pitch":9},{"note":"f","pitch":10},{"note":"g","pitch":11},{"note":"a","pitch":12},{"note":"B''","pitch":20},{"note":"c'","pitch":14},{}
 	]}]
 
+	var abcDirective = "K: C\n" +
+		"C D E F||\n"
+
+	var expectedDirective = [{
+		"key":"Eb","notes":[
+			{"note":"E","pitch":2},
+			{"note":"F","pitch":3},
+			{"note":"G","pitch":4},
+			{"note":"A","pitch":5},
+			{}
+		]
+	}]
+
+	// issue #1073
+	var abcMissesAccidental = "L:1/4  \n" +
+		"K:C  \n" +
+		"\"Ebdim7\" D ^C/ =C/- C B, |"
+
+	var expectedMissesAccidental = [{"key":"Bb","notes":[{"note":"C","pitch":0,"chord":"D♭dim7"},{"note":"=B,","pitch":-1},{"note":"_B,","pitch":-1},{"note":"B,","pitch":-1},{"note":"A,","pitch":-2},{}]}]
+
+	var abcDimChords = "L:1/4\n" +
+		"K:C\n" +
+		"\"Ebdim7\" C \"E°7\" C |"
+	var expectedDimChords1 = [{"key":"Db","notes":[{"note":"D","pitch":1,"chord":"Edim7"},{"note":"D","pitch":1,"chord":"F°7"},{}]}]
+	var expectedDimChords2 = [{"key":"D","notes":[{"note":"D","pitch":1,"chord":"Fdim7"},{"note":"D","pitch":1,"chord":"F♯°7"},{}]}]
+	var expectedDimChords3 = [{"key":"Eb","notes":[{"note":"E","pitch":2,"chord":"G♭dim7"},{"note":"E","pitch":2,"chord":"G°7"},{}]}]
+	var expectedDimChords4 = [{"key":"E","notes":[{"note":"E","pitch":2,"chord":"Gdim7"},{"note":"E","pitch":2,"chord":"G♯°7"},{}]}]
+	var expectedDimChords5 = [{"key":"F","notes":[{"note":"F","pitch":3,"chord":"A♭dim7"},{"note":"F","pitch":3,"chord":"A°7"},{}]}]
+	var expectedDimChords6 = [{"key":"F#","notes":[{"note":"F","pitch":3,"chord":"Adim7"},{"note":"F","pitch":3,"chord":"B♭°7"},{}]}]
+	var expectedDimChords7 = [{"key":"G","notes":[{"note":"G","pitch":4,"chord":"B♭dim7"},{"note":"G","pitch":4,"chord":"B°7"},{}]}]
+	var expectedDimChords8 = [{"key":"Ab","notes":[{"note":"A","pitch":5,"chord":"Bdim7"},{"note":"A","pitch":5,"chord":"C°7"},{}]}]
+	var expectedDimChords9 = [{"key":"A","notes":[{"note":"A","pitch":5,"chord":"Cdim7"},{"note":"A","pitch":5,"chord":"C♯°7"},{}]}]
+	var expectedDimChords10 = [{"key":"Bb","notes":[{"note":"B","pitch":6,"chord":"D♭dim7"},{"note":"B","pitch":6,"chord":"D°7"},{}]}]
+	var expectedDimChords11 = [{"key":"B","notes":[{"note":"B","pitch":6,"chord":"Ddim7"},{"note":"B","pitch":6,"chord":"E♭°7"},{}]}]
 
 	it("transpose-inline", function () {
 		transposeTest(abcInline, 3, expectedInline)
 	})
 
 	it("transpose-directive", function () {
-		transposeTestDirective(abcInline, 3, expectedInline)
+		transposeTestDirective(abcDirective, 3, expectedDirective)
 	})
 
 	it("transpose-accidentals", function () {
@@ -151,6 +185,24 @@ describe("Transpose", function() {
 		transposeTest(abcNone, 4, expectedNone4)
 		transposeTest(abcNone, 1, expectedNone1)
 		transposeTest(abcNone, -1, expectedNone_1)
+	})
+
+	it("transpose-misses-accidental", function () {
+		transposeTestDirective(abcMissesAccidental, -2, expectedMissesAccidental)
+	})
+
+	it("transpose-dim-chords", function () {
+		transposeTest(abcDimChords, 1, expectedDimChords1)
+		transposeTest(abcDimChords, 2, expectedDimChords2)
+		transposeTest(abcDimChords, 3, expectedDimChords3)
+		transposeTest(abcDimChords, 4, expectedDimChords4)
+		transposeTest(abcDimChords, 5, expectedDimChords5)
+		transposeTest(abcDimChords, 6, expectedDimChords6)
+		transposeTest(abcDimChords, 7, expectedDimChords7)
+		transposeTest(abcDimChords, 8, expectedDimChords8)
+		transposeTest(abcDimChords, 9, expectedDimChords9)
+		transposeTest(abcDimChords, 10, expectedDimChords10)
+		transposeTest(abcDimChords, 11, expectedDimChords11)
 	})
 })
 
@@ -201,8 +253,11 @@ function transposeTest(abc, halfSteps, expected) {
 }
 
 function transposeTestDirective(abc, halfSteps, expected) {
-	abc = "%%visualTranspose "+halfSteps
+	abc = "%%visualTranspose "+halfSteps+"\n"+abc
 	var visualObj = abcjs.renderAbc("paper", abc);
+	var warnings = visualObj[0].warnings
+	var msg = warnings && warnings.length > 0 ? warnings[0] : ''
+	chai.assert.equal(msg, '', "Unexpected warning: "+msg)
 	var lines = extractTransposeInfo(visualObj)
 	compareResults(lines, expected, halfSteps)
 }

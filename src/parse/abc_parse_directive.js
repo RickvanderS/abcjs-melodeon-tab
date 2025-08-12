@@ -938,14 +938,27 @@ var parseDirective = {};
 				}
 				multilineVars.currBarNumber = tuneBuilder.setBarNumberImmediate(tokens[0].intt);
 				break;
+			case "keywarn":
+				if (tokens.length !== 1 || tokens[0].type !== 'number' || (tokens[0].intt !== 1 && tokens[0].intt !== 0)) {
+					return 'Directive ' + cmd + ' requires 0 or 1 as a parameter.';
+				}
+				multilineVars[cmd] = tokens[0].intt === 1
+				break;
 			case "begintext":
 				var textBlock = '';
 				line = tokenizer.nextLine();
 				while(line && line.indexOf('%%endtext') !== 0) {
-					if (parseCommon.startsWith(line, "%%"))
-						textBlock += line.substring(2) + "\n";
-					else
-						textBlock += line + "\n";
+		          // MAE 9 May 2025 - for text blocks with just white space
+		          if (parseCommon.startsWith(line, "%%")){
+
+		            var theLine = line.substring(2);
+		            theLine = theLine.trim() + "\n";
+		            textBlock += theLine;
+
+		          }
+		          else{
+		            textBlock += line.trim() + "\n";
+		          }
 					line = tokenizer.nextLine();
 				}
 				tuneBuilder.addText(textBlock, { startChar: multilineVars.iChar, endChar: multilineVars.iChar+textBlock.length+7});
@@ -1119,6 +1132,17 @@ var parseDirective = {};
 				}
 				break;
 
+			case "maxstaves":
+				var nStaves = tokenizer.getInt(restOfString)
+				if (nStaves.digits === 0)
+					warn("Expected number of staves in maxstaves")
+				else{
+					if (nStaves.value > 0){
+						tune.formatting.maxStaves = nStaves.value;
+					}
+				}
+				break;
+
 			case "newpage":
 				var pgNum = tokenizer.getInt(restOfString);
 				tuneBuilder.addNewPage(pgNum.digits === 0 ? -1 : pgNum.value);
@@ -1177,6 +1201,14 @@ var parseDirective = {};
 						tune.formatting.percmap = {};
 					tune.formatting.percmap[percmap.key] = percmap.value;
 				}
+				break;
+
+			case "visualtranspose":
+				var halfSteps = tokenizer.getInt(restOfString)
+				if (halfSteps.digits === 0)
+					warn("Expected number of half steps in visualTranspose")
+				else
+					multilineVars.globalTranspose = halfSteps.value
 				break;
 
 			case "map":

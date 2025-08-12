@@ -149,6 +149,65 @@ describe("Parsing", function () {
 		]
 	]
 
+	var abcKeyWarn = "K:Gm\n" +
+		"G8|\n" +
+		"%%keywarn 0\n" +
+		"K:F\n" +
+		"F8|\n" +
+		"%%keywarn 1\n" +
+		"K:G\n" +
+		"G8| [K:F]F8|\n" +
+		"%%keywarn 0\n" +
+		"F8| [K:A]A8|\n"
+
+	var expectedKeyWarn = [
+		{"line":0,"staff":0,"type":"initial-clef","style":"treble"},
+		{"line":0,"staff":0,"type":"initial-key","name":"Gm","accidentals":"B flat,e flat"},
+		{"line":0,"staff":0,"type":"note","duration":1,"pitches":"G"},
+		{"line":0,"staff":0,"type":"bar","style":"bar_thin"},
+		{"line":1,"staff":0,"type":"initial-clef","style":"treble"},
+		{"line":1,"staff":0,"type":"initial-key","name":"F","accidentals":"B flat"},
+		{"line":1,"staff":0,"type":"note","duration":1,"pitches":"F"},
+		{"line":1,"staff":0,"type":"bar","style":"bar_thin"},
+		{"line":1,"staff":0,"type":"key","name":"G","accidentals":"B natural,f sharp"},
+		{"line":2,"staff":0,"type":"initial-clef","style":"treble"},
+		{"line":2,"staff":0,"type":"initial-key","name":"G","accidentals":"f sharp,B natural"},
+		{"line":2,"staff":0,"type":"note","duration":1,"pitches":"G"},
+		{"line":2,"staff":0,"type":"bar","style":"bar_thin"},
+		{"line":2,"staff":0,"type":"key","name":"F","accidentals":"f natural,B flat"},
+		{"line":2,"staff":0,"type":"note","duration":1,"pitches":"F"},
+		{"line":2,"staff":0,"type":"bar","style":"bar_thin"},
+		{"line":3,"staff":0,"type":"initial-clef","style":"treble"},
+		{"line":3,"staff":0,"type":"initial-key","name":"F","accidentals":"B flat,f natural"},
+		{"line":3,"staff":0,"type":"note","duration":1,"pitches":"F"},
+		{"line":3,"staff":0,"type":"bar","style":"bar_thin"},
+		{"line":3,"staff":0,"type":"key","name":"A","accidentals":"f sharp,c sharp,g sharp"},
+		{"line":3,"staff":0,"type":"note","duration":1,"pitches":"A"},
+		{"line":3,"staff":0,"type":"bar","style":"bar_thin"}
+	]
+
+
+	var abcBarNumberSubtitle = "X:1\n" +
+		"T:song\n" +
+		"T:subtitle\n" +
+		"C:composer\n" +
+		"L:1/4\n" +
+		"M:2/4\n" +
+		"K:BbMaj\n" +
+		"%%barnumbers 5\n" +
+		"%%setbarnb 24\n" +
+		"Z24 | F2 |\n" +
+		"\n"
+
+	var expectedBarNumberSubtitle = [
+		[
+			{ el_type: 'note', duration: 12, rest: { type: 'multimeasure', text: 24 } },
+			{ el_type: 'bar', type: 'bar_thin'},
+			{ el_type: 'note', pitches: [{ pitch: 3, name: 'F', verticalPos: 3, highestVert: 9}], duration: 0.5},
+			{ el_type: 'bar', type: 'bar_thin'},
+		]
+	]
+
 	it("crashes", function () {
 		testParser(abc1, expected1, "abc1");
 	})
@@ -185,12 +244,22 @@ describe("Parsing", function () {
 		testParser(abc9, expected9, "abc9");
 	})
 
+	it("barNumSubtitle", function () {
+		testParser(abcBarNumberSubtitle, expectedBarNumberSubtitle, "BarNumberSubtitle");
+	})
+
+	it("keyWarn", function () {
+		const ret = flattenResults(abcKeyWarn)
+		//console.log(JSON.stringify(ret))
+		chai.assert.deepStrictEqual(ret, expectedKeyWarn, "KeyWarn");
+	})
+
 	function testParser(abc, expectedLines, comment) {
 		var visualObj = abcjs.renderAbc("paper", abc);
 		var testIndex = 0
 		for (var lineNum = 0; lineNum < visualObj[0].lines.length; lineNum++) {
 			var line = visualObj[0].lines[lineNum]
-			for (var staffNum = 0; staffNum < line.staff.length; staffNum++) {
+			for (var staffNum = 0; line.staff && staffNum < line.staff.length; staffNum++) {
 				for (var voiceNum = 0; voiceNum < line.staff[staffNum].voices.length; voiceNum++) {
 					var line1 = line.staff[staffNum].voices[voiceNum]
 					var expected = expectedLines[testIndex++]

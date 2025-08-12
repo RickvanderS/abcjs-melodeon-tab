@@ -294,8 +294,7 @@ MusicParser.prototype.parseMusic = function(line) {
 					else if (bar.endEnding)
 						multilineVars.barFirstEndingNum = undefined;
 					if (bar.type !== 'bar_invisible' && multilineVars.measureNotEmpty) {
-						var isFirstVoice = multilineVars.currentVoice === undefined || (multilineVars.currentVoice.staffNum ===  0 && multilineVars.currentVoice.index ===  0);
-						if (isFirstVoice) {
+						if (isFirstVoice()) {
 							multilineVars.currBarNumber++;
 							if (multilineVars.barNumbers && multilineVars.currBarNumber % multilineVars.barNumbers === 0)
 								bar.barNumber = multilineVars.currBarNumber;
@@ -510,6 +509,8 @@ MusicParser.prototype.parseMusic = function(line) {
 							if (el.startTie !== undefined) el.pitches[0].startTie = el.startTie;
 						} else {
 							el.rest = core.rest;
+							if (core.rest.type === 'multimeasure' && isFirstVoice())
+								multilineVars.currBarNumber += core.rest.text - 1 // The minus one is because the measure with the rest is already counted once normally.
 							if (core.endSlur !== undefined) el.endSlur = core.endSlur;
 							if (core.endTie !== undefined) el.rest.endTie = core.endTie;
 							if (core.startSlur !== undefined) el.startSlur = core.startSlur;
@@ -863,6 +864,8 @@ var letter_to_accent = function(line, i) {
 		case 'R':return [1, 'roll'];
 		case 'S':return [1, 'segno'];
 		case 'T':return [1, 'trill'];
+		case 't':return [1, 'trillh'];
+		
 	}
 	return [0, 0];
 };
@@ -1059,8 +1062,7 @@ MusicParser.prototype.startNewLine = function() {
 				params.currentVoiceName = voices[mv]
 		}
 	}
-	var isFirstVoice = multilineVars.currentVoice === undefined || (multilineVars.currentVoice.staffNum ===  0 && multilineVars.currentVoice.index ===  0);
-	if (multilineVars.barNumbers === 0 && isFirstVoice && multilineVars.currBarNumber !== 1)
+	if (multilineVars.barNumbers === 0 && isFirstVoice() && multilineVars.currBarNumber !== 1)
 		params.barNumber = multilineVars.currBarNumber;
 	tuneBuilder.startNewLine(params);
 	if (multilineVars.key.impliedNaturals)
@@ -1343,5 +1345,9 @@ var getBrokenRhythm = function(line, index) {
 	}
 	return null;
 };
+
+function isFirstVoice() {
+	return multilineVars.currentVoice === undefined || (multilineVars.currentVoice.staffNum ===  0 && multilineVars.currentVoice.index ===  0);
+}
 
 module.exports = MusicParser;

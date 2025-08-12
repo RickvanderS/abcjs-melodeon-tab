@@ -9,7 +9,7 @@ var TuneBuilder = function (tune) {
 	tune.reset();
 
 	this.setVisualTranspose = function (visualTranspose) {
-		if (visualTranspose)
+		if (visualTranspose!==undefined)
 			tune.visualTranspose = visualTranspose;
 	};
 
@@ -382,7 +382,7 @@ var TuneBuilder = function (tune) {
 
 	this.getCurrentVoice = function () {
 		//console.log("getCurrentVoice", tune.lineNum)
-		var currLine = tune.lines[tune.lineNum];
+		var currLine = getPrevMusicLine(tune.lines, tune.lineNum)
 		if (!currLine)
 			return null;
 		var currStaff = currLine.staff[tune.staffNum];
@@ -801,6 +801,18 @@ function wrapMusicLines(lines, barsperstaff) {
 		}
 	}
 	return false;
+}
+
+function getPrevMusicLine(lines, currentLine) {
+	if (lines.length <= currentLine)
+		return null
+	// If the current line doesn't have music, search backwards until one is found.
+	while (currentLine >= 0) {
+		if (lines[currentLine].staff)
+			return lines[currentLine];
+		currentLine--;
+	}
+	return null;
 }
 
 function getNextMusicLine(lines, currentLine) {

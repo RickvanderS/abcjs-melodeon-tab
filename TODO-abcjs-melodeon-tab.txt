@@ -3,13 +3,18 @@ Bugs:
 - Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 - "Show all (remaining) possibilities" should not show ties
+- Transpost chords +12, wrong number 11, fixed after transpose ABC due to use of d, instead of D
+- Show not names sometime displays # instead of b
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Support 4th row (one harmonica bend is currently missing)
 New features:
-- Optional push/pull indicators for notes (color?)
+- Start number of helper row for at 1 for club and 2.5 row instruments
+- Optional push/pull indicators for notes (color? or next to chords)
+- Tablature push/pull indicators (if not defined in tablature style): -, circle, box
+- Button label style: Show note names, numbers per row, numbers per row unaligned, number through
+- Row label style: cicle, box, underline, overline
+- Option to disable chord thirds (so chord is neither minor or major)
 - Custom layout inputs
 - Export ABC with injected tablature
 - Option to disable chord thirds (so chord is neither minor or major)
-abcjs:
-- Key change end of bar

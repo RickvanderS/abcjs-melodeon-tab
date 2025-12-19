@@ -266,6 +266,9 @@ function DiatonicPatterns(plugin) {
 	this.showall_ignorechords = plugin.params.showall_ignorechords;
 	if (this.showall_ignorechords === null)
 		this.showall_ignorechords = false;
+	this.Row1Marker = plugin.params.Row1Marker;
+	if (this.Row1Marker == null)
+		this.Row1Marker = "";
 	this.Row2Marker = plugin.params.Row2Marker;
 	if (this.Row2Marker == null)
 		this.Row2Marker = "'";
@@ -2660,14 +2663,14 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	if (this.tabstyle == 1) {
 		strBoth = "";
 		if (strPush.length) {
-			strPush = strPush.replaceAll("$" , "");
+			strPush = strPush.replaceAll("$" , this.Row1Marker);
 			strPush = strPush.replaceAll("'" , this.Row2Marker);
 			strPush = strPush.replaceAll("\"", this.Row3Marker);
 			strBoth = strPush;
 		}
 		if (strPull.length) {
 			strPull = "-" + strPull;
-			strPull = strPull.replaceAll("$" , "");
+			strPull = strPull.replaceAll("$" , this.Row1Marker);
 			strPull = strPull.replaceAll("'" , this.Row2Marker);
 			strPull = strPull.replaceAll("\"", this.Row3Marker);
 			strBoth += strPull;
@@ -2684,7 +2687,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	//Tab line for push and pull
 	else if (this.tabstyle == 2) {
 		if (strPush.length) {
-			strPush = strPush.replaceAll("$" , "");
+			strPush = strPush.replaceAll("$" , this.Row1Marker);
 			strPush = strPush.replaceAll("'" , this.Row2Marker);
 			strPush = strPush.replaceAll("\"", this.Row3Marker);
 
@@ -2697,7 +2700,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			retNotes.push(number);
 		}
 		if (strPull.length) {
-			strPull = strPull.replaceAll("$" , "");
+			strPull = strPull.replaceAll("$" , this.Row1Marker);
 			strPull = strPull.replaceAll("'" , this.Row2Marker);
 			strPull = strPull.replaceAll("\"", this.Row3Marker);
 

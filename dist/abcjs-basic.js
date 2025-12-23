@@ -16636,6 +16636,8 @@ module.exports = DiatonicHelper;
 var TabNote = __webpack_require__(/*! ./tab-note */ "./src/tablatures/instruments/tab-note.js");
 var DiatonicHelper = __webpack_require__(/*! ./diatonic-helper */ "./src/tablatures/instruments/diatonic-helper.js");
 DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName, keyAccidentals, measureAccidentals) {
+  //Normalize first, when visual transpose is used, non-normalized note names can appear here
+  NoteName = this.helper.NoteNameNormalize(NoteName);
   var TNote = new TabNote(NoteName);
   TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
   if (TNote.isAltered || TNote.natural) {

@@ -2,6 +2,9 @@ var TabNote = require('./tab-note');
 var DiatonicHelper = require('./diatonic-helper');
 
 DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName, keyAccidentals, measureAccidentals) {
+	//Normalize first, when visual transpose is used, non-normalized note names can appear here
+	NoteName = this.helper.NoteNameNormalize(NoteName);
+	
 	var TNote = new TabNote(NoteName);
 	TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
 	if (TNote.isAltered || TNote.natural) {

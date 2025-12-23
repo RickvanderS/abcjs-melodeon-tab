@@ -1,10 +1,11 @@
 var TabNote = require('./tab-note');
 var DiatonicHelper = require('./diatonic-helper');
 
-DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName, keyAccidentals, measureAccidentals) {
-	//Normalize first, when visual transpose is used, non-normalized note names can appear here
-	NoteName = this.helper.NoteNameNormalize(NoteName);
+DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName) {
+	//Normalize octave first, when visual transpose is used, non-normalized note names can appear here
+	NoteName = this.helper.NoteOctaveNormalize(NoteName);
 	
+	//Add accidentals from key signature or already used in bar
 	var TNote = new TabNote(NoteName);
 	TNote.checkKeyAccidentals(this.accidentals, this.measureAccidentals);
 	if (TNote.isAltered || TNote.natural) {
@@ -35,8 +36,6 @@ DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName, keyAccid
 	else if (TNote.acc <= -2)
 		NoteName = "__" + NoteName;
 	
-	//Normalize the , and ' in the note name
-	NoteName = this.helper.NoteNameNormalize(NoteName);
 	return NoteName;
 }
 
@@ -2055,11 +2054,12 @@ DiatonicPatterns.prototype.MarkBar = function () {
 	this.BarIndex++;
 }
 
-DiatonicPatterns.prototype.AppendButton = function(strButtons, Button, noteName) {
+DiatonicPatterns.prototype.AppendButton = function(strButtons, Button, FriendlyNoteName) {
 	//Append hair space if required
 	if (strButtons.length > 0 && strButtons[strButtons.length-1] != "'" && strButtons[strButtons.length-1] != "\"")
 		strButtons += "\u200A";
 	
+	//Split button number and row marker
 	let RowMarker = "";
 	if (Button.includes("$")) {
 		RowMarker = "$";
@@ -2077,36 +2077,36 @@ DiatonicPatterns.prototype.AppendButton = function(strButtons, Button, noteName)
 	//Format user readable note name
 	var Flat  = false;
 	var Sharp = false;
-	if (noteName.includes("_")) {
-		noteName = noteName.replaceAll("_", "");
+	if (FriendlyNoteName.includes("_")) {
+		FriendlyNoteName = FriendlyNoteName.replaceAll("_", "");
 		Flat     = true;
 	}
-	else if (noteName.includes("^")) {
-		noteName = noteName.replaceAll("^", "");
+	else if (FriendlyNoteName.includes("^")) {
+		FriendlyNoteName = FriendlyNoteName.replaceAll("^", "");
 		Sharp    = true;
 	}
 	var Octave = "";
-	if (noteName.includes("''")) {
-		noteName = noteName.replaceAll("''", ""); 
+	if (FriendlyNoteName.includes("''")) {
+		FriendlyNoteName = FriendlyNoteName.replaceAll("''", ""); 
 		Octave = '\u2087'; //Octave 7
 	}
-	else if (noteName.includes("'")) {
-		noteName = noteName.replaceAll("'" , "");
+	else if (FriendlyNoteName.includes("'")) {
+		FriendlyNoteName = FriendlyNoteName.replaceAll("'" , "");
 		Octave = '\u2086'; //Octave 6
 	}
-	else if (noteName.includes(",,")) {
-		noteName = noteName.replaceAll(",,", "");
+	else if (FriendlyNoteName.includes(",,")) {
+		FriendlyNoteName = FriendlyNoteName.replaceAll(",,", "");
 		Octave = '\u2082'; //Octave 2
 	}
-	else if (noteName.includes(",")) {
-		noteName = noteName.replaceAll("," , "");
+	else if (FriendlyNoteName.includes(",")) {
+		FriendlyNoteName = FriendlyNoteName.replaceAll("," , "");
 		Octave = '\u2083'; //Octave 3
 	}
 	if (Flat)
-		noteName += "♭";
+		FriendlyNoteName += "♭";
 	if (Sharp)
-		noteName += "♯";
-	noteName += Octave;
+		FriendlyNoteName += "♯";
+	FriendlyNoteName += Octave;
 	
 	//Append to string depending on the chosen format
 	switch (this.tabformat) {
@@ -2114,13 +2114,13 @@ DiatonicPatterns.prototype.AppendButton = function(strButtons, Button, noteName)
 			strButtons += Button + RowMarker;
 			break;
 		case 1:
-			strButtons += noteName + RowMarker;
+			strButtons += FriendlyNoteName + RowMarker;
 			break;
 		case 2:
-			strButtons += Button + noteName + RowMarker;
+			strButtons += Button + FriendlyNoteName + RowMarker;
 			break;
 		case 3:
-			strButtons += noteName + Button + RowMarker;
+			strButtons += FriendlyNoteName + Button + RowMarker;
 			break;
 	}
 	
@@ -2251,17 +2251,20 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	}
 
 	//For all notes at this count
-	let aNoteNames     = new Array();
-	let PushButtons    = new Array();
-	let PullButtons    = new Array();
-	let strPush        = "";
-	let strPull        = "";
-	let aDiamandNotes  = new Array();
-	let aTriangleNotes = new Array();
+	let aNoteNames         = new Array();
+	let aFriendlyNoteNames = new Array();
+	let PushButtons        = new Array();
+	let PullButtons        = new Array();
+	let strPush            = "";
+	let strPull            = "";
+	let aDiamandNotes      = new Array();
+	let aTriangleNotes     = new Array();
 	for (var i = 0; notes && i < notes.length; ++i) {
 		//Get the normalized note name with accidentals from key and measure
-		noteName = this.NoteNameAddAccidentals(notes[i].name);
+		let FriendlyNoteName = this.NoteNameAddAccidentals(notes[i].name);
+		let noteName = this.helper.NoteAccidentalNormalize(FriendlyNoteName);
 		aNoteNames.push(noteName);
+		aFriendlyNoteNames.push(FriendlyNoteName);
 		
 		//Run the tablature algorithm if not in 'show all' mode or node heads need to be changed
 		if (!this.showall || this.changenoteheads) {
@@ -2559,9 +2562,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 					//Add it to tablature push or pull
 					if (!Hidden) {
 						if (Push)
-							strPush = this.AppendButton(strPush, Button, noteName);
+							strPush = this.AppendButton(strPush, Button, FriendlyNoteName);
 						else
-							strPull = this.AppendButton(strPull, Button, noteName);
+							strPull = this.AppendButton(strPull, Button, FriendlyNoteName);
 					}
 					
 					//Only when the note head change option is enabled
@@ -2586,7 +2589,8 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		
 		//For all notes at this count
 		for (var i = 0; i < aNoteNames.length; ++i) {
-			let noteName = aNoteNames[i];
+			let noteName         = aNoteNames[i];
+			let FriendlyNoteName = aFriendlyNoteNames[i];
 		
 			//Get possibilities for the note on all rows in both directions
 			let _push1 = this.noteToPushButtonRow1(noteName);
@@ -2641,16 +2645,16 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 			
 			//Set push buttons
 			if (AllowPush) {
-				if (AllowRow1 && _push1.length) strPush = this.AppendButton(strPush, _push1, noteName);
-				if (AllowRow2 && _push2.length) strPush = this.AppendButton(strPush, _push2, noteName);
-				if (AllowRow3 && _push3.length) strPush = this.AppendButton(strPush, _push3, noteName);
+				if (AllowRow1 && _push1.length) strPush = this.AppendButton(strPush, _push1, FriendlyNoteName);
+				if (AllowRow2 && _push2.length) strPush = this.AppendButton(strPush, _push2, FriendlyNoteName);
+				if (AllowRow3 && _push3.length) strPush = this.AppendButton(strPush, _push3, FriendlyNoteName);
 			}
 			
 			//Set pull buttons
 			if (AllowPull) {
-				if (AllowRow1 && _pull1.length) strPull = this.AppendButton(strPull, _pull1, noteName);
-				if (AllowRow2 && _pull2.length) strPull = this.AppendButton(strPull, _pull2, noteName);
-				if (AllowRow3 && _pull3.length) strPull = this.AppendButton(strPull, _pull3, noteName);
+				if (AllowRow1 && _pull1.length) strPull = this.AppendButton(strPull, _pull1, FriendlyNoteName);
+				if (AllowRow2 && _pull2.length) strPull = this.AppendButton(strPull, _pull2, FriendlyNoteName);
+				if (AllowRow3 && _pull3.length) strPull = this.AppendButton(strPull, _pull3, FriendlyNoteName);
 			}
 		}
 	}

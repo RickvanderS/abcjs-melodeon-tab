@@ -29,7 +29,8 @@ DiatonicHelper.prototype.TransposeNote = function(noteName, TransposeHalfSteps) 
 		return "";
 	
 	//Normalize the name for the lookup
-	noteName = this.NoteNameNormalize(noteName);
+	noteName = this.NoteOctaveNormalize(noteName);
+	noteName = this.NoteAccidentalNormalize(noteName);
 	
 	//No lookup required if there is nothing to transpose
 	if (TransposeHalfSteps == 0)
@@ -51,8 +52,8 @@ DiatonicHelper.prototype.TransposeNote = function(noteName, TransposeHalfSteps) 
 	return "";
 }
 
-/// Normalize note octave notation and make it natural or sharp, but not flat
-DiatonicHelper.prototype.NoteNameNormalize = function(NoteName) {
+/// Normalize note octave notation, examples D' -> d and d, -> D
+DiatonicHelper.prototype.NoteOctaveNormalize = function(NoteName) {
 	//Check lowercase high note
 	if (NoteName == NoteName.toLowerCase()) {
 		//Convert to upper case note if it has a lower octave symbol
@@ -72,7 +73,12 @@ DiatonicHelper.prototype.NoteNameNormalize = function(NoteName) {
 		}
 	}
 	
-	//Normalize to natural of single #
+	return NoteName;
+}
+
+/// Normalize note accidental notation, make it natural or sharp, but not flat
+DiatonicHelper.prototype.NoteAccidentalNormalize = function(NoteName) {
+	//Normalize to natural or single #
 	let DoubleSharpIndex = NoteName.indexOf("^^");
 	let DoubleFlatIndex  = NoteName.indexOf("__");
 	let FlatIndex        = NoteName.indexOf("_");
@@ -94,6 +100,14 @@ DiatonicHelper.prototype.NoteNameNormalize = function(NoteName) {
 	if (TransposeHalfSteps != 0)
 		NoteName = this.TransposeNote(NoteName, TransposeHalfSteps);
 	
+	//Handle notes that do not have sharps
+	if (NoteName[0] == "^") {
+		if (NoteName[1] == 'e' || NoteName[1] == 'b') {
+			NoteName = NoteName.substr(1);
+			NoteName = this.TransposeNote(NoteName, 1);
+		}
+	}
+
 	return NoteName;
 }
 

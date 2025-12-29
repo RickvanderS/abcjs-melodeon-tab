@@ -16874,6 +16874,10 @@ function DiatonicPatterns(plugin) {
   if (this.showall == null) this.showall = false;
   this.showall_ignorechords = plugin.params.showall_ignorechords;
   if (this.showall_ignorechords === null) this.showall_ignorechords = false;
+  this.PushMarker = plugin.params.PushMarker;
+  if (this.PushMarker == null) this.PushMarker = "";
+  this.PullMarker = plugin.params.PullMarker;
+  if (this.PullMarker == null) this.PullMarker = "-";
   this.Row1Marker = plugin.params.Row1Marker;
   if (this.Row1Marker == null) this.Row1Marker = "";
   this.Row2Marker = plugin.params.Row2Marker;
@@ -18617,7 +18621,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   var PullButtons = new Array();
   var strPush = "";
   var strPull = "";
-  var aDiamandNotes = new Array();
+  var aDiamondNotes = new Array();
   var aTriangleNotes = new Array();
   for (var i = 0; notes && i < notes.length; ++i) {
     //Get the normalized note name with accidentals from key and measure
@@ -18876,7 +18880,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
           //Only when the note head change option is enabled
           if (this.changenoteheads) {
             //Row2 gets diamonds, row3 gets triangles
-            if (Button.search("'") >= 0) aDiamandNotes.push(notes[i]);else if (Button.search("\"") >= 0) aTriangleNotes.push(notes[i]);
+            if (Button.search("'") >= 0) aDiamondNotes.push(notes[i]);else if (Button.search("\"") >= 0) aTriangleNotes.push(notes[i]);
           }
         }
       }
@@ -18967,13 +18971,14 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   if (this.tabstyle == 1) {
     strBoth = "";
     if (strPush.length) {
+      strPush = this.PushMarker + strPush;
       strPush = strPush.replaceAll("$", this.Row1Marker);
       strPush = strPush.replaceAll("'", this.Row2Marker);
       strPush = strPush.replaceAll("\"", this.Row3Marker);
       strBoth = strPush;
     }
     if (strPull.length) {
-      strPull = "-" + strPull;
+      strPull = this.PullMarker + strPull;
       strPull = strPull.replaceAll("$", this.Row1Marker);
       strPull = strPull.replaceAll("'", this.Row2Marker);
       strPull = strPull.replaceAll("\"", this.Row3Marker);
@@ -19021,15 +19026,15 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
     var Strings = ButtonStringToArrays("");
     if (strPush.length) {
       var PushStrings = ButtonStringToArrays(strPush);
-      Strings.strRow1 = PushStrings.strRow1;
-      Strings.strRow2 = PushStrings.strRow2;
-      Strings.strRow3 = PushStrings.strRow3;
+      if (PushStrings.strRow1.length) Strings.strRow1 = this.PushMarker + PushStrings.strRow1;
+      if (PushStrings.strRow2.length) Strings.strRow2 = this.PushMarker + PushStrings.strRow2;
+      if (PushStrings.strRow3.length) Strings.strRow3 = this.PushMarker + PushStrings.strRow3;
     }
     if (strPull.length) {
       var PullStrings = ButtonStringToArrays(strPull);
-      if (PullStrings.strRow1.length) Strings.strRow1 = "-" + PullStrings.strRow1;
-      if (PullStrings.strRow2.length) Strings.strRow2 = "-" + PullStrings.strRow2;
-      if (PullStrings.strRow3.length) Strings.strRow3 = "-" + PullStrings.strRow3;
+      if (PullStrings.strRow1.length) Strings.strRow1 = this.PullMarker + PullStrings.strRow1;
+      if (PullStrings.strRow2.length) Strings.strRow2 = this.PullMarker + PullStrings.strRow2;
+      if (PullStrings.strRow3.length) Strings.strRow3 = this.PullMarker + PullStrings.strRow3;
     }
     var note = new TabNote("");
     if (Strings.strRow1.length) {
@@ -19059,9 +19064,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
   }
 
   //Create returns values for note head changes
-  for (var _i16 = 0; _i16 < aDiamandNotes.length; ++_i16) {
+  for (var _i16 = 0; _i16 < aDiamondNotes.length; ++_i16) {
     var note = new TabNote("");
-    note.pitch = aDiamandNotes[_i16].pitch;
+    note.pitch = aDiamondNotes[_i16].pitch;
     var number = {
       num: "",
       str: -10,
@@ -20420,13 +20425,13 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
           //Skip if not a note head
           if (!absChild.children[s].c || absChild.children[s].c.substr(0, 10) != "noteheads.") continue;
 
-          //Search for not pitch listed as diamand or triangle
-          var NoteHeadDiamand = false;
+          //Search for note pitch listed as diamond or triangle
+          var NoteHeadDiamond = false;
           var NoteHeadTriangle = false;
           for (var n = 0; n < tabPos.notes.length; n++) {
             if (tabPos.notes[n].note.pitch == absChild.children[s].pitch) {
               if (tabPos.notes[n].str == -10) {
-                NoteHeadDiamand = true;
+                NoteHeadDiamond = true;
                 break;
               } else if (tabPos.notes[n].str == -20) {
                 NoteHeadTriangle = true;
@@ -20436,27 +20441,27 @@ TabAbsoluteElements.prototype.build = function (plugin, staffAbsolute, tabVoice,
           }
 
           //Skip if this note head does not have to be changed
-          if (!NoteHeadDiamand && !NoteHeadTriangle) continue;
+          if (!NoteHeadDiamond && !NoteHeadTriangle) continue;
 
           //Lookup the replacement note head
           var StemPitch = NaN;
           switch (absChild.children[s].c) {
             case "noteheads.dbl":
-              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.whole";else absChild.children[s].c = "noteheads.triangle2.whole";
+              if (NoteHeadDiamond) absChild.children[s].c = "noteheads.diamond.whole";else absChild.children[s].c = "noteheads.triangle2.whole";
               break;
             case "noteheads.whole":
-              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.whole";else absChild.children[s].c = "noteheads.triangle2.whole";
+              if (NoteHeadDiamond) absChild.children[s].c = "noteheads.diamond.whole";else absChild.children[s].c = "noteheads.triangle2.whole";
               break;
             case "noteheads.half":
               StemPitch = absChild.children[s].pitch;
-              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.half";else {
+              if (NoteHeadDiamond) absChild.children[s].c = "noteheads.diamond.half";else {
                 absChild.children[s].c = "noteheads.triangle2.half";
                 StemPitch -= 0.5;
               }
               break;
             case "noteheads.quarter":
               StemPitch = absChild.children[s].pitch;
-              if (NoteHeadDiamand) absChild.children[s].c = "noteheads.diamand.quarter";else {
+              if (NoteHeadDiamond) absChild.children[s].c = "noteheads.diamond.quarter";else {
                 absChild.children[s].c = "noteheads.triangle2.quarter";
                 StemPitch -= 0.5;
               }
@@ -24717,17 +24722,17 @@ var glyphs = (_glyphs = {
     w: 9.856,
     h: 8.893
   },
-  'noteheads.diamand.whole': {
+  'noteheads.diamond.whole': {
     d: [['M', 4.66, -2.69], ['c', 2.53, -1.21, 3.71, -1.75, 3.78, -1.75], ['c', 0.10, 0.00, 1.22, 0.51, 4.12, 1.91], ['c', 2.19, 1.01, 4.05, 1.91, 4.08, 1.95], ['c', 0.34, 0.27, 0.34, 0.90, 0.00, 1.17], ['c', -0.17, 0.16, -8.07, 3.86, -8.20, 3.86], ['c', -0.07, 0.00, -1.38, -0.58, -4.05, -1.87], ['c', -2.19, -1.05, -4.02, -1.91, -4.05, -1.95], ['c', -0.30, -0.16, -0.41, -0.58, -0.27, -0.97], ['c', 0.10, -0.27, -0.37, -0.04, 4.59, -2.34], ['z'], ['m', 6.38, 1.44], ['c', -1.65, -0.78, -3.00, -1.40, -3.04, -1.40], ['c', -0.07, 0.00, -5.16, 2.46, -5.13, 2.46], ['l', 3.00, 1.44], ['l', 3.00, 1.40], ['l', 0.17, -0.08], ['c', 0.84, -0.39, 5.03, -2.38, 5.00, -2.38], ['z']],
     w: 16.883,
     h: 8.892
   },
-  'noteheads.diamand.half': {
+  'noteheads.diamond.half': {
     d: [['M', 5.33, -4.41], ['c', 0.10, -0.04, 0.30, -0.04, 0.41, 0.00], ['c', 0.14, 0.04, 5.03, 3.74, 5.16, 3.86], ['c', 0.10, 0.12, 0.20, 0.39, 0.20, 0.55], ['c', 0.00, 0.16, -0.10, 0.43, -0.20, 0.55], ['c', -0.14, 0.12, -5.03, 3.82, -5.16, 3.86], ['c', -0.10, 0.04, -0.27, 0.04, -0.37, 0.00], ['c', -0.14, -0.04, -5.03, -3.74, -5.16, -3.86], ['c', -0.10, -0.12, -0.20, -0.39, -0.20, -0.55], ['c', 0.00, -0.16, 0.10, -0.43, 0.20, -0.55], ['c', 0.10, -0.08, 5.03, -3.82, 5.13, -3.86], ['z'], ['m', 1.52, 3.04], ['c', -0.84, -0.62, -1.55, -1.13, -1.59, -1.17], ['c', -0.03, 0.00, -0.74, 0.51, -1.59, 1.17], ['l', -1.52, 1.13], ['l', 0.30, 0.23], ['c', 0.17, 0.12, 0.98, 0.74, 1.79, 1.36], ['c', 0.84, 0.62, 1.55, 1.13, 1.59, 1.17], ['l', 1.59, -1.17], ['l', 1.52, -1.13], ['l', -0.30, -0.23], ['c', -0.17, -0.12, -0.98, -0.74, -1.79, -1.36], ['z']],
     w: 11.104,
     h: 8.873
   },
-  'noteheads.diamand.quarter': {
+  'noteheads.diamond.quarter': {
     d: [['M', 5.33, -4.41], ['c', 0.10, -0.04, 0.30, -0.04, 0.41, 0.00], ['c', 0.14, 0.04, 5.03, 3.74, 5.16, 3.86], ['c', 0.10, 0.12, 0.20, 0.39, 0.20, 0.55], ['c', 0.00, 0.16, -0.10, 0.43, -0.20, 0.55], ['c', -0.14, 0.12, -5.03, 3.82, -5.16, 3.86], ['c', -0.10, 0.04, -0.27, 0.04, -0.37, 0.00], ['c', -0.14, -0.04, -5.03, -3.74, -5.16, -3.86], ['c', -0.10, -0.12, -0.20, -0.39, -0.20, -0.55], ['c', 0.00, -0.16, 0.10, -0.43, 0.20, -0.55], ['c', 0.10, -0.08, 5.03, -3.82, 5.13, -3.86], ['z']],
     w: 11.104,
     h: 8.873
@@ -26171,6 +26176,14 @@ function drawRelativeElement(renderer, params, bartop) {
         dim: params.dim,
         cursor: 'default'
       }, false);
+
+      //DIA:{
+      //Underline if string starts with _
+      if (params.graphelem.textContent.startsWith("_")) {
+        params.graphelem.textContent = params.graphelem.textContent.substr(1);
+        params.graphelem.style.textDecoration = "underline";
+      }
+      //DIA:}
       break;
     case "barNumber":
       params.graphelem = renderText(renderer, {

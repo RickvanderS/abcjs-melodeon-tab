@@ -7,11 +7,10 @@ Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Support 4th row (one harmonica bend is currently missing)
 New features:
-- Start number of helper row for at 1 for club and 2.5 row instruments
-- Optional push/pull indicators for notes (color? or next to chords)
-- Tablature push/pull indicators (if not defined in tablature style): -, underline
+- Start button number of helper row for at 1 for club and 2.5 row instruments
 - Button label style: Show note names, numbers per row, numbers per row unaligned, number through
-- Row label style: cicle, box, underline, overline
+- Optional push/pull indicators for notes (color? or next to chords)
+- Row label style: cicle around
 - Option to disable chord thirds (so chord is neither minor or major)
 - Custom layout inputs
 - Export ABC with injected tablature

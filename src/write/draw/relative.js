@@ -34,6 +34,14 @@ function drawRelativeElement(renderer, params, bartop) {
 				tabClass = 'tab-grace'
 			}
 			params.graphelem = renderText(renderer, { x: params.x, y: y, text: "" + params.c, type: tabFont, klass: renderer.controller.classes.generate(tabClass), anchor: hAnchor, centerVertically: false, dim: params.dim, cursor: 'default' }, false);
+			
+			//DIA:{
+			//Underline if string starts with _
+			if (params.graphelem.textContent.startsWith("_")) {
+				params.graphelem.textContent = params.graphelem.textContent.substr(1);
+				params.graphelem.style.textDecoration = "underline";
+			}
+			//DIA:}
 			break;
 		case "barNumber":
 			params.graphelem = renderText(renderer, { x: params.x, y: y, text: "" + params.c, type: "measurefont", klass: renderer.controller.classes.generate('bar-number'), anchor: "middle", dim: params.dim, name: "bar-number" }, true);

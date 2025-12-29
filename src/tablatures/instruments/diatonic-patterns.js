@@ -268,6 +268,12 @@ function DiatonicPatterns(plugin) {
 	this.showall_ignorechords = plugin.params.showall_ignorechords;
 	if (this.showall_ignorechords === null)
 		this.showall_ignorechords = false;
+	this.PushMarker = plugin.params.PushMarker;
+	if (this.PushMarker == null)
+		this.PushMarker = "";
+	this.PullMarker = plugin.params.PullMarker;
+	if (this.PullMarker == null)
+		this.PullMarker = "-";
 	this.Row1Marker = plugin.params.Row1Marker;
 	if (this.Row1Marker == null)
 		this.Row1Marker = "";
@@ -2670,13 +2676,14 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	if (this.tabstyle == 1) {
 		strBoth = "";
 		if (strPush.length) {
+			strPush = this.PushMarker + strPush;
 			strPush = strPush.replaceAll("$" , this.Row1Marker);
 			strPush = strPush.replaceAll("'" , this.Row2Marker);
 			strPush = strPush.replaceAll("\"", this.Row3Marker);
 			strBoth = strPush;
 		}
 		if (strPull.length) {
-			strPull = "-" + strPull;
+			strPull = this.PullMarker + strPull;
 			strPull = strPull.replaceAll("$" , this.Row1Marker);
 			strPull = strPull.replaceAll("'" , this.Row2Marker);
 			strPull = strPull.replaceAll("\"", this.Row3Marker);
@@ -2725,21 +2732,22 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		var Strings = ButtonStringToArrays("");
 		if (strPush.length) {
 			var PushStrings = ButtonStringToArrays(strPush);
-			Strings.strRow1 = PushStrings.strRow1;
-			Strings.strRow2 = PushStrings.strRow2;
-			Strings.strRow3 = PushStrings.strRow3;
+			if (PushStrings.strRow1.length)
+				Strings.strRow1 = this.PushMarker + PushStrings.strRow1;
+			if (PushStrings.strRow2.length)
+				Strings.strRow2 = this.PushMarker + PushStrings.strRow2;
+			if (PushStrings.strRow3.length)
+				Strings.strRow3 = this.PushMarker + PushStrings.strRow3;
 		}
 		
 		if (strPull.length) {
 			var PullStrings = ButtonStringToArrays(strPull);
 			if (PullStrings.strRow1.length)
-				Strings.strRow1 = "-" + PullStrings.strRow1;
+				Strings.strRow1 = this.PullMarker + PullStrings.strRow1;
 			if (PullStrings.strRow2.length)
-				Strings.strRow2 = "-" + PullStrings.strRow2;
+				Strings.strRow2 = this.PullMarker + PullStrings.strRow2;
 			if (PullStrings.strRow3.length)
-				Strings.strRow3 = "-" + PullStrings.strRow3;
-			
-			
+				Strings.strRow3 = this.PullMarker + PullStrings.strRow3;
 		}
 		
 		var note = new TabNote("");

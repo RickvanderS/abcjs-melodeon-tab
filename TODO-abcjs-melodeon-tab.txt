@@ -9,10 +9,9 @@ Improvements:
 New features:
 - Start number of helper row for at 1 for club and 2.5 row instruments
 - Optional push/pull indicators for notes (color? or next to chords)
-- Tablature push/pull indicators (if not defined in tablature style): -, circle, box
+- Tablature push/pull indicators (if not defined in tablature style): -, underline
 - Button label style: Show note names, numbers per row, numbers per row unaligned, number through
 - Row label style: cicle, box, underline, overline
 - Option to disable chord thirds (so chord is neither minor or major)
 - Custom layout inputs
 - Export ABC with injected tablature
-- Option to disable chord thirds (so chord is neither minor or major)

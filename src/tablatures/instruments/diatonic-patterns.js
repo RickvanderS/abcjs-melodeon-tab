@@ -2257,7 +2257,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	let PullButtons        = new Array();
 	let strPush            = "";
 	let strPull            = "";
-	let aDiamandNotes      = new Array();
+	let aDiamondNotes      = new Array();
 	let aTriangleNotes     = new Array();
 	for (var i = 0; notes && i < notes.length; ++i) {
 		//Get the normalized note name with accidentals from key and measure
@@ -2571,7 +2571,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 					if (this.changenoteheads) {
 						//Row2 gets diamonds, row3 gets triangles
 						if (Button.search("'") >= 0)
-							aDiamandNotes.push(notes[i]);
+							aDiamondNotes.push(notes[i]);
 						else if (Button.search("\"") >= 0)
 							aTriangleNotes.push(notes[i]);
 					}
@@ -2770,9 +2770,9 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	}
 
 	//Create returns values for note head changes
-	for (let i = 0; i < aDiamandNotes.length; ++i) {
+	for (let i = 0; i < aDiamondNotes.length; ++i) {
 		var note = new TabNote("");
-		note.pitch = aDiamandNotes[i].pitch;
+		note.pitch = aDiamondNotes[i].pitch;
 		var number = {
 			num : "",
 			str : -10, //Diamond indicator

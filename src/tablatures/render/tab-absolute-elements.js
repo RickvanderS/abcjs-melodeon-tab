@@ -268,11 +268,11 @@ TabAbsoluteElements.prototype.build = function (plugin,
 		// }
 		if ((absChild.isClef)) {
 			//DIA:{
-      		if (plugin.buildTabAbsolute)
-        		dest.children.push(plugin.buildTabAbsolute(absX, relX));
-      		else
-      		//DIA:}
-        		dest.children.push(buildTabAbsolute(plugin, absX, relX));
+			if (plugin.buildTabAbsolute)
+				dest.children.push(plugin.buildTabAbsolute(absX, relX));
+			else
+			//DIA:}
+				dest.children.push(buildTabAbsolute(plugin, absX, relX));
 			if (absChild.abcelem.type.indexOf('-8') >= 0) plugin.semantics.clefTranspose = -12
 			if (absChild.abcelem.type.indexOf('+8') >= 0) plugin.semantics.clefTranspose = 12
 		}
@@ -381,13 +381,13 @@ TabAbsoluteElements.prototype.build = function (plugin,
 					if (!absChild.children[s].c || absChild.children[s].c.substr(0, 10) != "noteheads.")
 						continue;
 					
-					//Search for not pitch listed as diamand or triangle
-					let NoteHeadDiamand	= false;
+					//Search for note pitch listed as diamond or triangle
+					let NoteHeadDiamond  = false;
 					let NoteHeadTriangle = false;
 					for (let n = 0; n < tabPos.notes.length; n++) {
 						if (tabPos.notes[n].note.pitch == absChild.children[s].pitch) {
 							if (tabPos.notes[n].str == -10) {
-								NoteHeadDiamand = true;
+								NoteHeadDiamond = true;
 								break;
 							}
 							else if (tabPos.notes[n].str == -20) {
@@ -398,28 +398,28 @@ TabAbsoluteElements.prototype.build = function (plugin,
 					}
 					
 					//Skip if this note head does not have to be changed
-					if (!NoteHeadDiamand && !NoteHeadTriangle)
+					if (!NoteHeadDiamond && !NoteHeadTriangle)
 						continue;
 					
 					//Lookup the replacement note head
 					let StemPitch = NaN;
 					switch (absChild.children[s].c) {
 						case "noteheads.dbl":
-							if (NoteHeadDiamand)
-								absChild.children[s].c = "noteheads.diamand.whole";
+							if (NoteHeadDiamond)
+								absChild.children[s].c = "noteheads.diamond.whole";
 							else
 								absChild.children[s].c = "noteheads.triangle2.whole";
 							break;
 						case "noteheads.whole":
-							if (NoteHeadDiamand)
-								absChild.children[s].c = "noteheads.diamand.whole";
+							if (NoteHeadDiamond)
+								absChild.children[s].c = "noteheads.diamond.whole";
 							else
 								absChild.children[s].c = "noteheads.triangle2.whole";
 							break;
 						case "noteheads.half":
 							StemPitch = absChild.children[s].pitch;
-							if (NoteHeadDiamand)
-								absChild.children[s].c = "noteheads.diamand.half";
+							if (NoteHeadDiamond)
+								absChild.children[s].c = "noteheads.diamond.half";
 							else {
 								absChild.children[s].c = "noteheads.triangle2.half";
 								StemPitch -= 0.5;
@@ -428,8 +428,8 @@ TabAbsoluteElements.prototype.build = function (plugin,
 							break;
 						case "noteheads.quarter":
 							StemPitch = absChild.children[s].pitch;
-							if (NoteHeadDiamand)
-								absChild.children[s].c = "noteheads.diamand.quarter";
+							if (NoteHeadDiamond)
+								absChild.children[s].c = "noteheads.diamond.quarter";
 							else {
 								absChild.children[s].c = "noteheads.triangle2.quarter";
 								StemPitch -= 0.5;

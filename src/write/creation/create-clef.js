@@ -25,6 +25,7 @@ var createClef = function (elem, tuneNumber) {
 		case 'alto-8': clef = "clefs.C"; octave = -1; break;
 		case 'none': return null;
 		case 'perc': clef = "clefs.perc"; break;
+		case 'clarinet': clef = "clefs.Bb"; break; //DIA:
 		default: abselem.addFixed(new RelativeElement("clef=" + elem.type, 0, 0, undefined, { type: "debug" }));
 	}
 	// if (elem.verticalPos) {
@@ -65,6 +66,7 @@ function clefOffsets(clef) {
 		case "clefs.C": return -4;
 		case "clefs.F": return -4;
 		case "clefs.perc": return -2;
+		case "clefs.Bb": return -5;
 		default: return 0;
 	}
 }

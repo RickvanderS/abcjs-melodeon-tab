@@ -63,7 +63,8 @@ var parseKeyVoice = {};
 		'alto+8': { clef: 'alto+8', pitch: 6, mid: -6 },
 		'alto-8': { clef: 'alto-8', pitch: 6, mid: -6 },
 		'alto^8': { clef: 'alto+8', pitch: 6, mid: -6 },
-		'alto_8': { clef: 'alto-8', pitch: 6, mid: -6 }
+		'alto_8': { clef: 'alto-8', pitch: 6, mid: -6 },
+		'clarinet': { clef: 'clarinet', pitch: 6, mid: 0 } //DIA:
 	};
 
 	var calcMiddle = function(clef, oct) {
@@ -449,6 +450,7 @@ var parseKeyVoice = {};
 				case "alto":
 				case "tenor":
 				case "perc":
+				case "clarinet": //DIA:
 				case "none":
 					// clef is [clef=] [⟨clef type⟩] [⟨line number⟩] [+8|-8]
 					var clef = tokens.shift();
@@ -458,8 +460,10 @@ var parseKeyVoice = {};
 						case 'alto':
 						case 'bass':
 						case 'perc':
+						case "clarinet": //DIA:
 						case 'none':
 							break;
+						case 'Bb': clef.token = 'clarinet'; break; //DIA:
 						case 'C': clef.token = 'alto'; break;
 						case 'F': clef.token = 'bass'; break;
 						case 'G': clef.token = 'treble'; break;
@@ -682,6 +686,7 @@ var parseKeyVoice = {};
 					case 'alto^8':
 					case 'alto_8':
 // MAE 26 May 2025 End of additional clefs
+                    case 'clarinet': //DIA:
 
 						// TODO-PER: handle the octave indicators on the clef by changing the middle property
 						var oct2 = 0;

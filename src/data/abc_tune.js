@@ -614,6 +614,9 @@ var Tune = function() {
 	this.setUpAudio = function(options) {
 		if (!options) options = {};
 		var seq = sequence(this, options);
+		
+		this.formatting.midi.rhythm = this.metaText.rhythm; //DIA: Get R: text
+		
 		return flatten(seq, options, this.formatting.percmap, this.formatting.midi);
 	};
 	this.deline = function(options) {

@@ -1720,6 +1720,8 @@ var Tune = function Tune() {
   this.setUpAudio = function (options) {
     if (!options) options = {};
     var seq = sequence(this, options);
+    this.formatting.midi.rhythm = this.metaText.rhythm; //DIA: Get R: text
+
     return flatten(seq, options, this.formatting.percmap, this.formatting.midi);
   };
   this.deline = function (options) {
@@ -13483,7 +13485,9 @@ var ChordTrack = function ChordTrack(numVoices, chordsOff, midiOptions, meter) {
   } else {
     this.overridePattern = undefined;
   }
+  this.rhythm = midiOptions.rhythm.toLowerCase(); //DIA:
 };
+
 ChordTrack.prototype.setMeter = function (meter) {
   this.meter = meter;
 };
@@ -13729,6 +13733,15 @@ ChordTrack.prototype.resolveChords = function (startTime, endTime) {
   var currentChordsExpanded = expandCurrentChords(this.currentChords, 8 * num / den, beatLength);
   //console.log(currentChordsExpanded)
   var thisPattern = this.overridePattern ? this.overridePattern : this.rhythmPatterns[num + '/' + den];
+
+  //DIA:{
+  //Override Balfolk rhythm patterns
+  var Meter = num + '/' + den;
+  if (Meter == "3/4" && this.rhythm.includes("mazu")) thisPattern = ['boom', '', '', '', 'chick', ''];
+  if (Meter == "4/4" && this.rhythm.includes("scot")) thisPattern = ['boom', '', 'chick', '', '', '', 'chick', ''];
+  if (Meter == "4/4" && this.rhythm.includes("bour")) thisPattern = ['boom', '', '', '', '', '', 'chick', ''];
+  //DIA:}
+
   if (portionOfAMeasure) {
     thisPattern = [];
     var beatsPresent = (endTime - startTime) / this.tempoChangeFactor * 8;

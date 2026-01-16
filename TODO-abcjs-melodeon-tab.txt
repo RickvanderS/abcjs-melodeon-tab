@@ -3,6 +3,7 @@ Bugs:
 - Melodeon: Multiple notes between [] does not properly determine push/pull dir (special handling required for bar and count)
 - Melodeon: Begin of tune with "" seems to have different behaviour than no chord at all
 - "Show all (remaining) possibilities" should not show ties
+- Transpose ABC gives problems with clarinet cleff
 Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Support 4th row (one harmonica bend is currently missing)

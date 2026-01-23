@@ -40,22 +40,23 @@ DiatonicPatterns.prototype.NoteNameAddAccidentals = function (NoteName) {
 }
 
 function DecodeRowInfo(TuningString) {
-	let Buttons = parseInt(TuningString.substring(0, 2));
-	let Key     = TuningString.replace(/[0-9]/g, '');
-	Key = Key.replaceAll("^", "");
-	Key = Key.replaceAll(">", "");
-	Key = Key.replaceAll("~", "");
-	Key = Key.replaceAll("+", "");
-	let Acc       = TuningString.includes("^");
-	let Start     = TuningString.includes(">") ? 4 : 3;
-	let Harmonica = TuningString.includes("~");
+	let Buttons   = parseInt(TuningString.substring(0, 2));
+	let Key       = TuningString.replace(/[0-9^>~+$%]/g, '');
+	let Acc       = TuningString.includes("^");         //Top accidentals
+	let Start     = TuningString.includes(">") ? 4 : 3; //4th button start
+	let Harmonica = TuningString.includes("~");         //Harmonica
+	let AltBass   = 0;
+	if (TuningString.includes("%"))
+		AltBass |= 1;
+	else if (TuningString.includes("$"))
+		AltBass |= 2;
 	
 	aInvert    = new Array();
 	aInvertAll = new Array();
 	for (let i = TuningString.length - 1; i >= 0; --i) {
 		if ('0' <= TuningString[i] && TuningString[i] <= '9') {
 			aInvert.push(TuningString[i]);
-			if (TuningString[i+1] == '+')
+			if (TuningString[i+1] == '+') //Invert all
 				aInvertAll.push(true);
 			else
 				aInvertAll.push(false);
@@ -70,6 +71,7 @@ function DecodeRowInfo(TuningString) {
 		Acc        : Acc       ,
 		Start      : Start     ,
 		Harmonica  : Harmonica ,
+		AltBass    : AltBass   ,
 		aInvert    : aInvert   ,
 		aInvertAll : aInvertAll
 	}
@@ -220,6 +222,87 @@ function LoadRowC(aOutPush, aOutPull, RowInfo) {
 	if (RowInfo.Acc) {
 		aOutPush[0] = "_B"; // 0' or 1'
 		aOutPull[0] = "^G";
+	}
+}
+
+function LoadRowSemitoneB(aOutPush, aOutPull, RowInfo) {
+	aOutPush.length = 0;
+	aOutPull.length = 0;
+	
+	if (isNaN(RowInfo.Buttons))
+		RowInfo.Buttons = 11;
+	
+	if (RowInfo.Buttons == 12) {
+		aOutPush.push("B,,"); // 0
+		aOutPull.push("E,");
+	}
+	aOutPush.push("^D,"); // 1
+	aOutPull.push("^G,");
+	aOutPush.push("^F,"); // 2
+	aOutPull.push("^A,");
+	aOutPush.push("B," ); // 3
+	aOutPull.push("^C" );
+	aOutPush.push("^D" ); // 4
+	aOutPull.push("E"  );
+	aOutPush.push("^F" ); // 5
+	aOutPull.push("^G" );
+	aOutPush.push("B"  ); // 6
+	aOutPull.push("^A" );
+	aOutPush.push("^d" ); // 7
+	aOutPull.push("^c" );
+	aOutPush.push("^f" ); // 8
+	aOutPull.push("e"  );
+	aOutPush.push("b"  ); // 9
+	aOutPull.push("^g" );
+	aOutPush.push("^d'"); // 10
+	aOutPull.push("^a" );
+	aOutPush.push("^f'"); // 11
+	aOutPull.push("^c'");
+	
+	//Remove buttons not required
+	while (aOutPush.length > RowInfo.Buttons) {
+		aOutPush.splice(aOutPush.length-1, 1);
+		aOutPull.splice(aOutPull.length-1, 1);
+	}
+}
+
+function LoadRowSemitoneC(aOutPush, aOutPull, RowInfo) {
+	aOutPush.length = 0;
+	aOutPull.length = 0;
+	
+	if (isNaN(RowInfo.Buttons))
+		RowInfo.Buttons = 10;
+	
+	//Define C row
+	if (RowInfo.Buttons == 11) {
+		aOutPush.push("C,"); // 0'
+		aOutPull.push("F,");
+	}
+	aOutPush.push("E,"); // 1'
+	aOutPull.push("A,");
+	aOutPush.push("G,"); // 2'
+	aOutPull.push("B,");
+	aOutPush.push("C" ); // 3'
+	aOutPull.push("D" );
+	aOutPush.push("E" ); // 4'
+	aOutPull.push("F" );
+	aOutPush.push("G" ); // 5'
+	aOutPull.push("A" );
+	aOutPush.push("c" ); // 6'
+	aOutPull.push("B" );
+	aOutPush.push("e" ); // 7'
+	aOutPull.push("d" );
+	aOutPush.push("g" ); // 8'
+	aOutPull.push("f" );
+	aOutPush.push("c'"); // 9'
+	aOutPull.push("a" );
+	aOutPush.push("e'"); // 10'
+	aOutPull.push("b" );
+	
+	//Remove buttons not required
+	while (aOutPush.length > RowInfo.Buttons) {
+		aOutPush.splice(aOutPush.length-1, 1);
+		aOutPull.splice(aOutPull.length-1, 1);
 	}
 }
 
@@ -545,6 +628,7 @@ function DiatonicPatterns(plugin) {
 			Row3Info = DecodeRowInfo(this.tuning[2]);
 		
 		//For non-G/C figure out how to transpose
+		let Semitone = false;
 		if      ((Row1Info.Key == "Eb" || Row1Info.Key == "D#") && (Row2Info.Key == "Ab" || Row2Info.Key == "G#")) //Very rare
 			TransposeHalfSteps = -3;
 		else if ((Row1Info.Key == "E"                         ) && (Row2Info.Key == "A"                         )) //Very rare
@@ -570,22 +654,57 @@ function DiatonicPatterns(plugin) {
 		else if ((Row1Info.Key == "D"                         ) && (Row2Info.Key == "G"                         )) //England
 			TransposeHalfSteps =  7;
 		else {
-			if (this.tuning.length == 2)
+			Semitone = true;
+			if      ((Row1Info.Key == "B"                         ) && (Row2Info.Key == "C"                         ))
+				TransposeHalfSteps = 0;
+			else if ((Row1Info.Key == "C"                         ) && (Row2Info.Key == "C#" || Row2Info.Key == "Db"))
+				TransposeHalfSteps = 1;
+			else if ((Row1Info.Key == "C#" || Row1Info.Key == "Db") && (Row2Info.Key == "D"                         ))
+				TransposeHalfSteps = 2;
+			else if (this.tuning.length == 2) {
 				console.error('2 row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' is not supported');
-			else if (this.tuning.length == 3)
+				return;
+			}
+			
+			if (this.tuning.length == 3) {
 				console.error('3 row melodeon with row1 key \'' + Row1Info.Key + '\' and row2 key \'' + Row2Info.Key + '\' and row3 key \'' + Row3Info.Key + '\' is not supported');
-			return;
+				return;
+			}
 		}
 		
-		//Define left hand chords for G/C melodeon with 8 base buttons
-		this.BassRow1Push  = new Array("G", "C");
-		this.BassRow1Pull  = new Array("D", "G");
-		this.BassRow2Push  = new Array("E", "F");
-		this.BassRow2Pull  = new Array("Am", "F");
-		
-		//Define right hand buttons for G/C melodeon
-		LoadRowG(push_row1, pull_row1, Row1Info);
-		LoadRowC(push_row2, pull_row2, Row2Info);
+		if (!Semitone) {
+			//Define left hand chords for G/C melodeon with 8 bass buttons
+			this.BassRow1Push  = new Array("G", "C");
+			this.BassRow1Pull  = new Array("D", "G");
+			this.BassRow2Push  = new Array("E", "F");
+			this.BassRow2Pull  = new Array("Am", "F");
+			
+			//Define right hand buttons for G/C melodeon
+			LoadRowG(push_row1, pull_row1, Row1Info);
+			LoadRowC(push_row2, pull_row2, Row2Info);
+		}
+		else {
+			//Define left hand chords for B/C melodeon with 8 bass buttons
+			if (Row1Info.AltBass <= 1) {
+				this.BassRow1Push  = new Array("G", "C");
+				this.BassRow1Pull  = new Array("D", "G");
+				if (Row1Info.AltBass == 0)
+					this.BassRow2Push  = new Array("E", "D");
+				else
+					this.BassRow2Push  = new Array("E", "C");
+				this.BassRow2Pull  = new Array("A", "F");
+			}
+			else {
+				this.BassRow1Push  = new Array("B"  , "C");
+				this.BassRow1Pull  = new Array("F#" , "G");
+				this.BassRow2Push  = new Array("D#" , "F#");
+				this.BassRow2Pull  = new Array("G#m", "E");
+			}
+			
+			//Define right hand buttons for B/C melodeon
+			LoadRowSemitoneB(push_row1, pull_row1, Row1Info);
+			LoadRowSemitoneC(push_row2, pull_row2, Row2Info);
+		}
 		
 		//Lookup extra row3 by its special name
 		if (this.tuning.length == 3) {

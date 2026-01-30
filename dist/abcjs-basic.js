@@ -13485,7 +13485,10 @@ var ChordTrack = function ChordTrack(numVoices, chordsOff, midiOptions, meter) {
   } else {
     this.overridePattern = undefined;
   }
-  this.rhythm = midiOptions.rhythm.toLowerCase(); //DIA:
+
+  //DIA:{
+  if (midiOptions.rhythm) this.rhythm = midiOptions.rhythm.toLowerCase();else this.rhythm = "";
+  //DIA:}
 };
 
 ChordTrack.prototype.setMeter = function (meter) {

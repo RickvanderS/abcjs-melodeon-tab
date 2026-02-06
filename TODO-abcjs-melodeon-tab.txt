@@ -8,8 +8,6 @@ Improvements:
 - Minimize the number of changes in non-melodeon source files (TabRenderer.prototype.doScan)
 - Support 4th row (one harmonica bend is currently missing)
 New features:
-- Start button number of helper row for at 1 for club and 2.5 row instruments
-- Button label style: Show note names, numbers per row, numbers per row unaligned, number through
 - Optional push/pull indicators for notes (color? or next to chords)
 - Row label style: cicle around
 - Option to disable chord thirds (so chord is neither minor or major)

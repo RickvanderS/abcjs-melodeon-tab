@@ -16971,6 +16971,12 @@ DiatonicPatterns.prototype.RowInvert = function (RowInfo, push_row, pull_row) {
     }
   }
 };
+function FindFirstUsedIndex(push_row) {
+  for (var i = 0; i < push_row.length; ++i) {
+    if (push_row[i] != "") return i;
+  }
+  return 0;
+}
 function DiatonicPatterns(plugin) {
   this.helper = new DiatonicHelper();
 
@@ -16998,13 +17004,24 @@ function DiatonicPatterns(plugin) {
   this.tabstyle = plugin.params.tabstyle;
   if (this.tabstyle == null) this.tabstyle = 2;
 
-  //Tablature format
+  //Number/Note format
   //0 Button numbers
   //1 Note names
   //2 Button+Note
   //3 Note+Button
-  this.tabformat = plugin.params.tabformat;
-  if (this.tabformat == null) this.tabformat = 0;
+  this.numformat = plugin.params.numformat;
+  if (this.numformat == null) this.numformat = 1;
+
+  //Row button start number
+  var numstart = plugin.params.numstart;
+  if (numstart == null) numstart = 1;
+
+  //Row number aligment
+  //0 Do not align
+  //1 Align
+  //2 Align, except row 3
+  var numalign = plugin.params.numalign;
+  if (numalign == null) numalign = 1;
   this.changenoteheads = plugin.params.changenoteheads;
   if (this.changenoteheads == null) this.changenoteheads = false;
 
@@ -17015,11 +17032,6 @@ function DiatonicPatterns(plugin) {
     this.tuning.push("G");
     this.tuning.push("C5");
     plugin.tuning = this.tuning;
-  }
-  this.startzero = plugin.params.startzero;
-  if (this.startzero == null) {
-    this.startzero = false;
-    plugin.startzero = this.startzero;
   }
 
   //Define empty base rows (used for external access)
@@ -17617,8 +17629,6 @@ function DiatonicPatterns(plugin) {
         push_row3.push("^g'"); // 10"
         pull_row3.push("^c'");
       } else if (Row3Tuning == "gaillard") {
-        this.startzero = true;
-
         //Add bass chords to existing rows
         this.BassRow1Push.push("Eb");
         this.BassRow1Pull.push("Bb");
@@ -17666,8 +17676,6 @@ function DiatonicPatterns(plugin) {
         push_row3.push("^g'"); // 10"
         pull_row3.push("^c'");
       } else if (Row3Tuning == "milleret" || Row3Tuning == "pignol") {
-        this.startzero = true;
-
         //Add bass chords to existing rows
         this.BassRow1Push.push("Eb");
         this.BassRow1Pull.push("Bb");
@@ -17990,21 +17998,23 @@ function DiatonicPatterns(plugin) {
   this.RowInvert(Row2Info, push_row2, pull_row2);
   this.RowInvert(Row3Info, push_row3, pull_row3);
 
-  //If not starting the numbering at 0, add empty buttons to the beginning of the arrays
-  if (!this.startzero) {
-    if (push_row1.length) {
-      push_row1.splice(0, 0, "");
-      pull_row1.splice(0, 0, "");
-    }
-    if (push_row2.length) {
-      push_row2.splice(0, 0, "");
-      pull_row2.splice(0, 0, "");
-    }
-    if (push_row3.length) {
-      push_row3.splice(0, 0, "");
-      pull_row3.splice(0, 0, "");
-    }
+  //Layouts are defined starting button numbering at zero (array index)
+  this.aRowButtonStart = [0, 0, 0];
+
+  //Find the first button for each unaligned row
+  if (numalign == 0) {
+    this.aRowButtonStart[0] = -FindFirstUsedIndex(push_row1);
+    this.aRowButtonStart[1] = -FindFirstUsedIndex(push_row2);
+    this.aRowButtonStart[2] = -FindFirstUsedIndex(push_row3);
+  } else if (numalign == 2) {
+    //Row 3 always starts at 1
+    this.aRowButtonStart[2] = -FindFirstUsedIndex(push_row3) + 1;
   }
+
+  //Increase number with the start number
+  this.aRowButtonStart[0] += numstart;
+  this.aRowButtonStart[1] += numstart;
+  if (numalign != 2) this.aRowButtonStart[2] += numstart;
 
   //Transpose left hand bass chords if required
   if (TransposeHalfSteps != 0) {
@@ -18153,41 +18163,41 @@ function DiatonicPatterns(plugin) {
   this.accidentals = {};
   this.measureAccidentals = {};
 }
-function noteToButton(noteName, LookupArray) {
+function noteToButton(noteName, LookupArray, RowButtonStart) {
   for (var i = 0; i < LookupArray.length; ++i) {
     if (LookupArray[i] == noteName) {
-      return i.toString();
+      return (i + RowButtonStart).toString();
     }
   }
   return "";
 }
 DiatonicPatterns.prototype.noteToPushButtonRow1 = function (noteName) {
-  var ButtonNumber = noteToButton(noteName, this.push_row1);
+  var ButtonNumber = noteToButton(noteName, this.push_row1, this.aRowButtonStart[0]);
   if (ButtonNumber.length > 0) ButtonNumber += "$";
   return ButtonNumber;
 };
 DiatonicPatterns.prototype.noteToPullButtonRow1 = function (noteName) {
-  var ButtonNumber = noteToButton(noteName, this.pull_row1);
+  var ButtonNumber = noteToButton(noteName, this.pull_row1, this.aRowButtonStart[0]);
   if (ButtonNumber.length > 0) ButtonNumber += "$";
   return ButtonNumber;
 };
 DiatonicPatterns.prototype.noteToPushButtonRow2 = function (noteName) {
-  var ButtonNumber = noteToButton(noteName, this.push_row2);
+  var ButtonNumber = noteToButton(noteName, this.push_row2, this.aRowButtonStart[1]);
   if (ButtonNumber.length > 0) ButtonNumber += "'";
   return ButtonNumber;
 };
 DiatonicPatterns.prototype.noteToPullButtonRow2 = function (noteName) {
-  var ButtonNumber = noteToButton(noteName, this.pull_row2);
+  var ButtonNumber = noteToButton(noteName, this.pull_row2, this.aRowButtonStart[1]);
   if (ButtonNumber.length > 0) ButtonNumber += "'";
   return ButtonNumber;
 };
 DiatonicPatterns.prototype.noteToPushButtonRow3 = function (noteName) {
-  var ButtonNumber = noteToButton(noteName, this.push_row3);
+  var ButtonNumber = noteToButton(noteName, this.push_row3, this.aRowButtonStart[2]);
   if (ButtonNumber.length > 0) ButtonNumber += "\"";
   return ButtonNumber;
 };
 DiatonicPatterns.prototype.noteToPullButtonRow3 = function (noteName) {
-  var ButtonNumber = noteToButton(noteName, this.pull_row3);
+  var ButtonNumber = noteToButton(noteName, this.pull_row3, this.aRowButtonStart[2]);
   if (ButtonNumber.length > 0) ButtonNumber += "\"";
   return ButtonNumber;
 };
@@ -18629,7 +18639,7 @@ DiatonicPatterns.prototype.AppendButton = function (strButtons, Button, Friendly
   FriendlyNoteName += Octave;
 
   //Append to string depending on the chosen format
-  switch (this.tabformat) {
+  switch (this.numformat) {
     case 0:
       strButtons += Button + RowMarker;
       break;

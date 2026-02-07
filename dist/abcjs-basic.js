@@ -18091,6 +18091,8 @@ function DiatonicPatterns(plugin) {
   var Row3HandPosCount = Math.ceil(this.push_row3.length);
   HandPosCount = Math.max(Row1HandPosCount, Row2HandPosCount, Row3HandPosCount);
   HandPosCount -= 3;
+
+  //Build the array of buttons reachable from hand positions
   this.HandPos = new Array();
   for (var h = 0; h < HandPosCount; ++h) {
     this.HandPos[h] = {};
@@ -18101,13 +18103,13 @@ function DiatonicPatterns(plugin) {
       for (var Finger = 0; Finger < 4; ++Finger) {
         if (Row == 1) {
           var Row1Index = h + Finger;
-          if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push(Row1Index.toString() + "$");
+          if (0 <= Row1Index && Row1Index < this.push_row1.length) this.HandPos[h].easy.push((Row1Index + this.aRowButtonStart[0]).toString() + "$");
         } else if (Row == 2) {
           var Row2Index = h + Finger;
-          if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push(Row2Index.toString() + "'");
+          if (0 <= Row2Index && Row2Index < this.push_row2.length) this.HandPos[h].easy.push((Row2Index + this.aRowButtonStart[1]).toString() + "'");
         } else if (Row == 3) {
           var Row3Index = h + Finger;
-          if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push(Row3Index.toString() + "\"");
+          if (0 <= Row3Index && Row3Index < this.push_row3.length) this.HandPos[h].easy.push((Row3Index + this.aRowButtonStart[2]).toString() + "\"");
         }
       }
     }
@@ -18120,13 +18122,13 @@ function DiatonicPatterns(plugin) {
         var _Finger = aFinger[_i10];
         if (_Row == 1) {
           var _Row1Index = h + _Finger;
-          if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push(_Row1Index.toString() + "$");
+          if (0 <= _Row1Index && _Row1Index < this.push_row1.length) this.HandPos[h].hard.push((_Row1Index + this.aRowButtonStart[0]).toString() + "$");
         } else if (_Row == 2) {
           var _Row2Index = h + _Finger;
-          if (0 <= _Row2Index && _Row2Index < this.push_row2.length) this.HandPos[h].hard.push(_Row2Index.toString() + "'");
+          if (0 <= _Row2Index && _Row2Index < this.push_row2.length) this.HandPos[h].hard.push((_Row2Index + this.aRowButtonStart[1]).toString() + "'");
         } else if (_Row == 3) {
           var _Row3Index = h + _Finger;
-          if (0 <= _Row3Index && _Row3Index < this.push_row3.length) this.HandPos[h].hard.push(_Row3Index.toString() + "\"");
+          if (0 <= _Row3Index && _Row3Index < this.push_row3.length) this.HandPos[h].hard.push((_Row3Index + this.aRowButtonStart[2]).toString() + "\"");
         }
       }
     }

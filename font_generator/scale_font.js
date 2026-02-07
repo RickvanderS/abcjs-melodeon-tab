@@ -16,20 +16,20 @@ var glyphnames = {
   "\ue113":"accidentals.halfflat",
   "\ue114":"accidentals.dblflat",
   "\ue116":"accidentals.dblsharp",
-  "\ue119":"tab.push",
-  "\ue11a":"tab.pull",
+  "\ue119":"tab.push", //DIA:
+  "\ue11a":"tab.pull", //DIA:
   "\ue121":"dots.dot",
   "\ue124":"noteheads.dbl",
   "\ue125":"noteheads.whole",
   "\ue126":"noteheads.half",
   "\ue127":"noteheads.quarter",
   "\ue135":"noteheads.indeterminate",
-  "\ue137":"noteheads.triangle2.whole",
-  "\ue138":"noteheads.triangle2.half",
-  "\ue13a":"noteheads.triangle2.quarter",
-  "\ue141":"noteheads.diamand.whole",
-  "\ue142":"noteheads.diamand.half",
-  "\ue143":"noteheads.diamand.quarter",
+  "\ue137":"noteheads.triangle2.whole",   //DIA:
+  "\ue138":"noteheads.triangle2.half",    //DIA:
+  "\ue13a":"noteheads.triangle2.quarter", //DIA:
+  "\ue141":"noteheads.diamond.whole",     //DIA:
+  "\ue142":"noteheads.diamond.half",      //DIA:
+  "\ue143":"noteheads.diamond.quarter",   //DIA:
   "\ue152":"scripts.ufermata",
   "\ue153":"scripts.dfermata",
   "\ue15b":"scripts.sforzato",
@@ -207,30 +207,33 @@ window.scale_font = function(font, size, raphael, output) {
 			}
 			path = raphael.toRelative(path);
 			
+			//DIA:{
 			var scalex = scale;
 			var scaley = scale;
-			if (glyphnames[glyph].substr(0, 17) == "noteheads.diamand") {
-				scalex *= 1.125;
-				scaley *= 1.3;
+			if (glyphnames[glyph].substr(0, 17) == "noteheads.diamond") {
+				scalex *= 1.2;
+				scaley *= 1.1;
 			}
-			else if (glyphnames[glyph].substr(0, 19) == "noteheads.triangle2") {
-				scaley *= 1.3;
-			}
+			else if (glyphnames[glyph].substr(0, 19) == "noteheads.triangle2")
+				scaley *= 1.1;
+			//DIA:}
 			
 			// Do the scaling
 			for (var i = 0; i < path.length; i++) {
 				path[i][0] = "'" + path[i][0] + "'";
 				for (var j = 1; j < path[i].length; j++) {
+					//DIA:{
 					if (j % 2)
 						path[i][j] = (path[i][j] * scalex).toFixed(2);
 					else
 						path[i][j] = (path[i][j] * scaley).toFixed(2);
+					//DIA:}
 				}
 			}
 //			path[0][1] = +path[0][1].toFixed(3); // round out the M part
 //			path[0][2] = +path[0][2].toFixed(3);
-			var w = Math.round(symb.getBBox().width * scalex * 1000) / 1000;
-			var h = Math.round(symb.getBBox().height * scaley * 1000) / 1000;
+			var w = Math.round(symb.getBBox().width  * scalex * 1000) / 1000; //DIA:
+			var h = Math.round(symb.getBBox().height * scaley * 1000) / 1000; //DIA:
 			var gstr = "'";
 			gstr += glyphnames[glyph];
 			gstr += "':{d:";

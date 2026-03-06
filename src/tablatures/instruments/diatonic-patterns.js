@@ -971,6 +971,55 @@ function DiatonicPatterns(plugin) {
 				push_row3.push("^g'"); // 10"
 				pull_row3.push("^c'");
 			}
+			else if (Row3Tuning == "leray") {
+				//Add bass chords to existing rows
+				this.BassRow1Push.splice(0, 0, "Ab");
+				this.BassRow1Pull.splice(0, 0, "Bm");
+				this.BassRow2Push.splice(0, 0, "Eb");
+				this.BassRow2Pull.splice(0, 0, "Bb");
+				this.BassRow3Push.push("B");
+				this.BassRow3Pull.push("C#m");
+				this.BassRow3Push.push("A");
+				this.BassRow3Pull.push("F#m");
+				this.BassRow3Push.push("D");
+				this.BassRow3Pull.push("C");
+				
+				//Change row1
+				Row1Info.Buttons = 12;
+				LoadRowG(push_row1, pull_row1, Row1Info);
+				pull_row1[0] = "E,"; //1
+				pull_row1[11] = "d'"; //1
+				
+				//Change row2
+				Row2Info.Buttons = 11;
+				LoadRowC(push_row2, pull_row2, Row2Info);
+				pull_row2[0] = "F,"; //1'
+				push_row2[10] = "^g'"; //11'
+				pull_row2[10] = "_e'";
+				
+				//Add row3
+				push_row3.push("^G,"); // 1"
+				pull_row3.push("G,");
+				push_row3.push("A,"); // 2"
+				pull_row3.push("_B,");
+				push_row3.push("_E"); // 3"
+				pull_row3.push("^C");
+				push_row3.push("^G"); // 4"
+				pull_row3.push("G");
+				push_row3.push("A"); // 5"
+				pull_row3.push("_B");
+				push_row3.push("_e"); // 6"
+				pull_row3.push("^c");
+				push_row3.push("^g"); // 7"
+				pull_row3.push("g");
+				push_row3.push("a"); // 8"
+				pull_row3.push("_b");
+				push_row3.push("_e'"); // 9"
+				pull_row3.push("c'");
+				push_row3.push("a'"); // 10"
+				pull_row3.push("e'");
+			
+			}
 			else if (Row3Tuning == "heima") { //Heim No1
 				//Add bass chords to existing rows
 				this.BassRow1Push.splice(0, 0, "Ab");

@@ -332,6 +332,10 @@ ChordTrack.prototype.resolveChords = function (startTime, endTime) {
 		thisPattern = ['boom', '', 'chick', '',     '' , '', 'chick', ''];
 	if (Meter == "4/4" && this.rhythm.includes("bour"))
 		thisPattern = ['boom', '', ''     , '',     '' , '', 'chick', ''];
+//	if (Meter == "6/8" && this.rhythm.includes("rond"))
+//		thisPattern = ['boom', '', '', 'boom', '', 'chick'];
+	if (Meter == "9/8" && (this.rhythm.includes("wal") || this.rhythm.includes("val")))
+		thisPattern = ['boom', '', '', 'chick', '' , '', 'chick', '', ''];
 	//DIA:}
 	
 	if (portionOfAMeasure) {

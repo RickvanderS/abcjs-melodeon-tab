@@ -13746,6 +13746,7 @@ ChordTrack.prototype.resolveChords = function (startTime, endTime) {
   //	if (Meter == "6/8" && this.rhythm.includes("rond"))
   //		thisPattern = ['boom', '', '', 'boom', '', 'chick'];
   if (Meter == "9/8" && (this.rhythm.includes("wal") || this.rhythm.includes("val"))) thisPattern = ['boom', '', '', 'chick', '', '', 'chick', '', ''];
+  if (Meter == "9/8" && this.rhythm.includes("mazu")) thisPattern = ['boom', '', '', '', '', '', 'chick', '', ''];
   //DIA:}
 
   if (portionOfAMeasure) {
@@ -17210,7 +17211,7 @@ function DiatonicPatterns(plugin) {
     if ((Row1Info.Key == "Eb" || Row1Info.Key == "D#") && (Row2Info.Key == "Ab" || Row2Info.Key == "G#"))
       //Very rare
       TransposeHalfSteps = -3;else if (Row1Info.Key == "E" && Row2Info.Key == "A")
-      //Very rare
+      //Very rare, Madagascar
       TransposeHalfSteps = -3;else if (Row1Info.Key == "F" && (Row2Info.Key == "Bb" || Row2Info.Key == "A#")) TransposeHalfSteps = -2;else if ((Row1Info.Key == "Gb" || Row1Info.Key == "F#") && Row2Info.Key == "B")
       //Very rare
       TransposeHalfSteps = -1;else if (Row1Info.Key == "G" && Row2Info.Key == "C")

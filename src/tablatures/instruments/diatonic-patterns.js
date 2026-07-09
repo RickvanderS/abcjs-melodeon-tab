@@ -651,7 +651,7 @@ function DiatonicPatterns(plugin) {
 		let Semitone = false;
 		if      ((Row1Info.Key == "Eb" || Row1Info.Key == "D#") && (Row2Info.Key == "Ab" || Row2Info.Key == "G#")) //Very rare
 			TransposeHalfSteps = -3;
-		else if ((Row1Info.Key == "E"                         ) && (Row2Info.Key == "A"                         )) //Very rare
+		else if ((Row1Info.Key == "E"                         ) && (Row2Info.Key == "A"                         )) //Very rare, Madagascar
 			TransposeHalfSteps = -3;
 		else if ((Row1Info.Key == "F"                         ) && (Row2Info.Key == "Bb" || Row2Info.Key == "A#"))
 			TransposeHalfSteps = -2;

@@ -398,7 +398,7 @@ function DiatonicPatterns(plugin) {
 	if (numstart == null)
 		numstart = 1;
 	
-	//Row number aligment
+	//Row number alignment
 	//0 Do not align
 	//1 Align
 	//2 Align, except row 3
@@ -406,10 +406,14 @@ function DiatonicPatterns(plugin) {
 	if (numalign == null)
 		numalign = 1;
 	
-
+	//Change note heads
+	//0 Do not Change
+	//1 Change note head for row
+	//2 Change note head for push/pull
+	//3 Both
 	this.changenoteheads = plugin.params.changenoteheads;
 	if (this.changenoteheads == null)
-		this.changenoteheads = false;
+		this.changenoteheads = 0;
 
 	//Set default tuning if not specified
 	this.tuning = plugin.params.tuning;
@@ -2452,8 +2456,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	let PullButtons        = new Array();
 	let strPush            = "";
 	let strPull            = "";
-	let aDiamondNotes      = new Array();
-	let aTriangleNotes     = new Array();
+	let aSpecialNoteHeads  = new Array();
 	for (var i = 0; notes && i < notes.length; ++i) {
 		//Get the normalized note name with accidentals from key and measure
 		let FriendlyNoteName = this.NoteNameAddAccidentals(notes[i].name);
@@ -2462,7 +2465,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		aFriendlyNoteNames.push(FriendlyNoteName);
 		
 		//Run the tablature algorithm if not in 'show all' mode or node heads need to be changed
-		if (!this.showall || this.changenoteheads) {
+		if (!this.showall || this.changenoteheads > 0) {
 			//Get possibilities for the note on all rows in both directions
 			let _push1 = this.noteToPushButtonRow1(noteName);
 			let _push2 = this.noteToPushButtonRow2(noteName);
@@ -2763,12 +2766,37 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 					}
 					
 					//Only when the note head change option is enabled
-					if (this.changenoteheads) {
-						//Row2 gets diamonds, row3 gets triangles
-						if (Button.search("'") >= 0)
-							aDiamondNotes.push(notes[i]);
-						else if (Button.search("\"") >= 0)
-							aTriangleNotes.push(notes[i]);
+					if (this.changenoteheads > 0) {
+						var note = new TabNote("");
+						note.pitch = notes[i].pitch;
+						var number = {
+							num : "",
+							str : -10, //Diamond indicator
+							note: note
+						};
+						aSpecialNoteHeads.push(number);
+						
+						//Row2 gets diamonds
+						if ((this.changenoteheads & 1) && Button.search("'") >= 0) {
+							if (Push || !(this.changenoteheads & 2))
+								aSpecialNoteHeads[aSpecialNoteHeads.length - 1].str = -10; //Diamond head
+							else
+								aSpecialNoteHeads[aSpecialNoteHeads.length - 1].str = -15; //Diamond head encircled
+						}
+						//Row3 gets triangles
+						else if ((this.changenoteheads & 1) && Button.search("\"") >= 0) {
+							if (Push || !(this.changenoteheads & 2))
+								aSpecialNoteHeads[aSpecialNoteHeads.length - 1].str = -20; //Triangle head
+							else
+								aSpecialNoteHeads[aSpecialNoteHeads.length - 1].str = -25; //Triangle head encircled
+						}
+						//Row1 or change for row not activated
+						else {
+							if (Push || !(this.changenoteheads & 2))
+								aSpecialNoteHeads.pop();                                   //Normal head
+							else
+								aSpecialNoteHeads[aSpecialNoteHeads.length - 1].str = -5;  //Normal head encircled
+						}
 					}
 				}
 			}
@@ -2967,25 +2995,8 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 	}
 
 	//Create returns values for note head changes
-	for (let i = 0; i < aDiamondNotes.length; ++i) {
-		var note = new TabNote("");
-		note.pitch = aDiamondNotes[i].pitch;
-		var number = {
-			num : "",
-			str : -10, //Diamond indicator
-			note: note
-		};
-		retNotes.push(number);
-	}
-	for (let i = 0; i < aTriangleNotes.length; ++i) {
-		var note = new TabNote("");
-		note.pitch = aTriangleNotes[i].pitch;
-		var number = {
-			num : "",
-			str : -20, //Triangle indicator
-			note: note
-		};
-		retNotes.push(number);
+	for (let i = 0; i < aSpecialNoteHeads.length; ++i) {
+		retNotes.push(aSpecialNoteHeads[i]);
 	}
 	
 	return {

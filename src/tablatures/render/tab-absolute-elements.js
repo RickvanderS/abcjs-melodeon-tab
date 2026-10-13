@@ -382,60 +382,57 @@ TabAbsoluteElements.prototype.build = function (plugin,
 						continue;
 					
 					//Search for note pitch listed as diamond or triangle
+					let NoteHeadCircled  = false;
 					let NoteHeadDiamond  = false;
 					let NoteHeadTriangle = false;
 					for (let n = 0; n < tabPos.notes.length; n++) {
 						if (tabPos.notes[n].note.pitch == absChild.children[s].pitch) {
-							if (tabPos.notes[n].str == -10) {
-								NoteHeadDiamond = true;
-								break;
-							}
-							else if (tabPos.notes[n].str == -20) {
-								NoteHeadTriangle = true;
-								break;
+							switch (tabPos.notes[n].str) {
+								case -5:
+									NoteHeadCircled = true;
+									break;
+								case -10:
+									NoteHeadDiamond = true;
+									break;
+								case -15:
+									NoteHeadCircled = true;
+									NoteHeadDiamond = true;
+									break;
+								case -20:
+									NoteHeadTriangle = true;
+									break;
+								case -25:
+									NoteHeadCircled  = true;
+									NoteHeadTriangle = true;
+									break;
 							}
 						}
 					}
+					if (absChild.children[s].c.includes("indeterminate")) {
+						NoteHeadDiamond  = false;
+						NoteHeadTriangle = false;
+					}
 					
 					//Skip if this note head does not have to be changed
-					if (!NoteHeadDiamond && !NoteHeadTriangle)
+					if (!NoteHeadCircled && !NoteHeadDiamond && !NoteHeadTriangle)
 						continue;
 					
-					//Lookup the replacement note head
+					//Set alternative note head glyph
+					if (NoteHeadDiamond)
+						absChild.children[s].c = absChild.children[s].c.replaceAll("noteheads.", "noteheads.diamond.");
+					else if (NoteHeadTriangle)
+						absChild.children[s].c = absChild.children[s].c.replaceAll("noteheads.", "noteheads.triangle2.");
+					
+					//Set circled glyph
+					if (NoteHeadCircled)
+						absChild.children[s].c += ".circled";
+					
+					//Set start of stem
 					let StemPitch = NaN;
-					switch (absChild.children[s].c) {
-						case "noteheads.dbl":
-							if (NoteHeadDiamond)
-								absChild.children[s].c = "noteheads.diamond.whole";
-							else
-								absChild.children[s].c = "noteheads.triangle2.whole";
-							break;
-						case "noteheads.whole":
-							if (NoteHeadDiamond)
-								absChild.children[s].c = "noteheads.diamond.whole";
-							else
-								absChild.children[s].c = "noteheads.triangle2.whole";
-							break;
-						case "noteheads.half":
-							StemPitch = absChild.children[s].pitch;
-							if (NoteHeadDiamond)
-								absChild.children[s].c = "noteheads.diamond.half";
-							else {
-								absChild.children[s].c = "noteheads.triangle2.half";
-								StemPitch -= 0.5;
-							}
-							
-							break;
-						case "noteheads.quarter":
-							StemPitch = absChild.children[s].pitch;
-							if (NoteHeadDiamond)
-								absChild.children[s].c = "noteheads.diamond.quarter";
-							else {
-								absChild.children[s].c = "noteheads.triangle2.quarter";
-								StemPitch -= 0.5;
-							}
-							
-							break;
+					if (absChild.children[s].c.includes(".half") || absChild.children[s].c.includes(".quarter")) {
+						StemPitch = absChild.children[s].pitch;
+						if (NoteHeadTriangle)
+							StemPitch -= 0.5;
 					}
 					
 					//For 1/8 notes and smaller, adjust vertical lines to connect to the note head

@@ -210,12 +210,16 @@ window.scale_font = function(font, size, raphael, output) {
 			//DIA:{
 			var scalex = scale;
 			var scaley = scale;
+			var AddCircle = false;
 			if (glyphnames[glyph].substr(0, 17) == "noteheads.diamond") {
 				scalex *= 1.2;
 				scaley *= 1.1;
+				AddCircle = true;
 			}
-			else if (glyphnames[glyph].substr(0, 19) == "noteheads.triangle2")
+			else if (glyphnames[glyph].substr(0, 19) == "noteheads.triangle2") {
 				scaley *= 1.1;
+				AddCircle = true;
+			}
 			//DIA:}
 			
 			// Do the scaling
@@ -243,7 +247,63 @@ window.scale_font = function(font, size, raphael, output) {
 			}
 			gstr += '[' + arr.join(',') + ']';
 			gstr += ",w:" + w + ",h:" + h + "}";
+			
+			//DIA:{
+			//Create encircled note heads
+			var cstr = "";
+			if (glyphnames[glyph].substr(0, 10) == "noteheads.") {
+				cstr += "'";
+				cstr += glyphnames[glyph] + ".circled";
+				cstr += "':{d:";
+				
+				//Circle around note head
+				cstr += '[' + "['M',6,-8],['a',8,8,0,1,1,0,16],['a',8,8,0,1,1,0,-16],['m',0,1],['a',7,7,0,1,0,0,14],['a',7,7,0,1,0,0,-14],";
+				
+				//Relative movement to original note head
+				if (glyphnames[glyph].includes('diamond') || glyphnames[glyph].includes('triangle2')) {
+					if (glyphnames[glyph].includes('diamond.whole'))
+						cstr += "['m',-4,4],";
+					else if (glyphnames[glyph].includes('triangle2.whole'))
+						cstr += "['m',-0.5,3],";
+					else
+						cstr += "['m',-1,3],";
+				}
+				else if (glyphnames[glyph].includes('noteheads.dbl'))
+					cstr += "['m',-8,3.5],";
+				else if (glyphnames[glyph].includes('noteheads.whole'))
+					cstr += "['m',-1,3],";
+				else if (glyphnames[glyph].includes('noteheads.half'))
+					cstr += "['m',1.5,3],";
+				else if (glyphnames[glyph].includes('noteheads.quarter'))
+					cstr += "['m',-0.5,3],";
+				else if (glyphnames[glyph].includes('indeterminate'))
+					cstr += "['m',-5.5,3],";
+				
+				//Original note head
+				var arr = [];
+				for (i = 1; i < path.length; i++) {
+					arr.push('[' + path[i].join(',') + ']');
+				}
+				
+				cstr += arr.join(',') + ']';
+				cstr += ",w:" + w + ",h:" + h + "}";
+			}
+			
+			//Write missing .dbl glyphs for diamond and triangle
+			if (glyphnames[glyph] == "noteheads.diamond.whole" || glyphnames[glyph] == "noteheads.triangle2.whole") {
+				let gstr_cpy = gstr.replace(".whole", ".dbl");
+				let cstr_cpy = cstr.replace(".whole", ".dbl");
+				
+				res[res.length] = gstr_cpy;
+				if (cstr_cpy.length != 0)
+					res[res.length] = cstr_cpy;
+			}
+			
+			//Write glyph line and optionally the circled glyph
 			res[res.length] = gstr;
+			if (cstr.length != 0)
+				res[res.length] = cstr;
+			//DIA:}
 		}
 	}
 	var div = document.getElementById(output);

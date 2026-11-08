@@ -54,11 +54,28 @@ Plugin.prototype.init = function (abcTune, tuneNumber, params, tabSettings) {
 	this.semantics = new DiatonicPatterns(this);
 };
 
-function TuningStrip(RowTuning) {
-	RowTuning = RowTuning.replace(/[^A-Za-z]/g, '');
+function TuningRowDisplayName(RowTuning) {
+	RowTuning = RowTuning.replace(/[^A-Za-z#]/g, '');
+	RowTuning = RowTuning.replaceAll("b", "♭");
 	if (RowTuning.length > 2)
 		RowTuning = "♯";
 	return RowTuning;
+}
+
+function CreateRowLabelRelativeElement(RowTuning, isTabBig, relX, Y) {
+	var Xadjust = 25;
+	if (isTabBig)
+		Xadjust += 5;
+	var opt = {
+		type: 'tabNumber'
+	};
+	
+	var RowLabel = TuningRowDisplayName(RowTuning);
+	var tabRelativeRowLabel = new RelativeElement(RowLabel, 0, 0, Y, opt);
+	if (RowLabel.length > 1)
+		Xadjust += 4;
+	tabRelativeRowLabel.x = relX + Xadjust;
+	return tabRelativeRowLabel;
 }
 
 Plugin.prototype.buildTabAbsolute = function (absX, relX) {
@@ -104,39 +121,24 @@ Plugin.prototype.buildTabAbsolute = function (absX, relX) {
 		}
 		//For tab row per instrument row style, set the row keys
 		else if (this.params.tabstyle == 3) {
-			var Xadjust = 25;
-			if (this.isTabBig)
-				Xadjust += 5;
-				var opt = {
-					type: 'tabNumber'
-				};
-			var Y = 10;
-			
-			//TODO:
-			if (this.params.tuning.length >= 1) {
-				var str1 = TuningStrip(this.params.tuning[0]);
-				str1 = str1.replaceAll("b", "♭");
-				var tabRelativeRow1 = new RelativeElement(str1, 0, 0, Y, opt);
-				tabRelativeRow1.x = relX + Xadjust;
-				tabAbsolute.children.push(tabRelativeRow1);
+			//Create row labels for all rows
+			let StartIndex = tabAbsolute.children.length;
+			let MoveLeft   = false;
+			let Y          = 10;
+			for (let RowIndex = 0; RowIndex < this.params.tuning.length; ++RowIndex) {
+				let RelativeElement = CreateRowLabelRelativeElement(this.params.tuning[RowIndex], this.isTabBig, relX, Y);
+				if (RelativeElement.name.length > 1)
+					MoveLeft = true;
+				tabAbsolute.children.push(RelativeElement);
+				Y += this.linePitch;
 			}
 			
-			if (this.params.tuning.length >= 2) {
-				Y += this.linePitch;
-				var str2 = TuningStrip(this.params.tuning[1]);
-				str2 = str2.replaceAll("b", "♭");
-				var tabRelativeRow2 = new RelativeElement(str2, 0, 0, Y, opt);
-				tabRelativeRow2.x = relX + Xadjust;
-				tabAbsolute.children.push(tabRelativeRow2);
-			}
-			
-			if (this.params.tuning.length >= 3) {
-				Y += this.linePitch;
-				var str3 = TuningStrip(this.params.tuning[2]);
-				str3 = str3.replaceAll("b", "♭");
-				var tabRelativeRow3 = new RelativeElement(str3, 0, 0, Y, opt);
-				tabRelativeRow3.x = relX + Xadjust;
-				tabAbsolute.children.push(tabRelativeRow3);
+			if (MoveLeft) {
+				let AdjustX = 4;
+				if (this.isTabBig)
+					AdjustX = 6;
+				for (let i = StartIndex; i < tabAbsolute.children.length; ++i)
+					tabAbsolute.children[i].x -= AdjustX;
 			}
 		}
 	}

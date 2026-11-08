@@ -2397,6 +2397,12 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 		this.ChordPush = false;
 		this.ChordPull = false;
 		for (let MaxLength = 5; MaxLength >= 1; --MaxLength) {
+			//Detect both push and pull markers
+			if (Chord.includes("<") && Chord.includes(">")) {
+				this.ChordPush = true;
+				this.ChordPull = true;
+			}
+			
 			//Can the current chord be played in push?
 			if (!Chord.includes("<")) {
 				if (Chord.length == 0 || Chord.includes(">")) {
@@ -2427,7 +2433,7 @@ DiatonicPatterns.prototype.notesToNumber = function (notes, graces, chord) {
 				}
 			}
 			
-			//No need to continue of a match was found
+			//No need to continue when a match was found
 			if (this.ChordPush || this.ChordPull)
 				break;
 		}
